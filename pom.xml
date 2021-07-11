@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <name>SyndicatePlugins</name>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>gg.bridgesyndicate</groupId>
+    <artifactId>SyndicatePlugins</artifactId>
+    <version>1</version>
+    <packaging>pom</packaging>
+
+    <profiles>
+        <profile>
+            <id>package-all</id>
+            <modules>
+                <module>NoThrow</module>
+                <module>ArrowRegen</module>
+            </modules>
+        </profile>
+    </profiles>
+</project>
