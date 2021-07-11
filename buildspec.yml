@@ -12,4 +12,3 @@ artifacts:
     - NoThrow/target/NoThrow-1.0-SNAPSHOT.jar
     - ArrowRegen/target/ArrowRegen-1.0-SNAPSHOT.jar
   discard-paths: yes
-  name: syndicate-plugins.$CODEBUILD_BUILD_NUMBER.zip
