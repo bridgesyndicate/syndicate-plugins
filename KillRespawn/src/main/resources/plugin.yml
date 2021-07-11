@@ -1,0 +1,6 @@
+name: BridgeRespawn
+version: ${project.version}
+main: me.bdamja.bridgerespawn.BridgeRespawn
+api-version: 1.8
+authors: [ bdamja ]
+description: Instantly respawns to the desired side when killed
