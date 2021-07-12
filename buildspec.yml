@@ -31,7 +31,5 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 artifacts:
   files:
-    - NoThrow/target/NoThrow-1.0-SNAPSHOT.jar
-    - BridgeRespawn/target/BridgeRespawn-1.0-SNAPSHOT.jar
-    - ArrowRegen/target/ArrowRegen-1.0-SNAPSHOT.jar
+    - "**/target/*"
   discard-paths: yes
