@@ -16,6 +16,7 @@
             <modules>
                 <module>NoThrow</module>
                 <module>ArrowRegen</module>
+                <module>BridgeRespawn</module>
             </modules>
         </profile>
     </profiles>

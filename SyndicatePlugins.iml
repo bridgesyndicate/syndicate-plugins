@@ -8,8 +8,11 @@
       <sourceFolder url="file://$MODULE_DIR$/ArrowRegen/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/NoThrow/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/NoThrow/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/BridgeRespawn/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/BridgeRespawn/src/main/resources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/ArrowRegen/target" />
       <excludeFolder url="file://$MODULE_DIR$/NoThrow/target" />
+      <excludeFolder url="file://$MODULE_DIR$/BridgeRespawn/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />

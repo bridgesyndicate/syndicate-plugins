@@ -1,4 +1,4 @@
-package me.bdamja.bridgerespawn;
+package gg.bridgesyndicate.bridgerespawn;
 
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;

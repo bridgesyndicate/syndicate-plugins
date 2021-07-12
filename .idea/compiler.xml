@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="ArrowRegen" />
+        <module name="NoThrow" />
+        <module name="BridgeRespawn" />
+      </profile>
+    </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="ArrowRegen" target="1.8" />
+      <module name="BridgeRespawn" target="1.8" />
+      <module name="NoThrow" target="1.8" />
       <module name="SyndicatePlugins" target="1.5" />
     </bytecodeTargetLevel>
   </component>
