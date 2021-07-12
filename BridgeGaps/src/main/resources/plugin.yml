@@ -1,0 +1,6 @@
+name: BridgeGaps
+version: ${project.version}
+main: me.bdamja.bridgegaps.BridgeGaps
+api-version: 1.8
+authors: [ bdamja ]
+description: Eating a golden apple will restore you to full health and give you absorption without particles

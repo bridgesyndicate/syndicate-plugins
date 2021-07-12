@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ArrowRegen/ArrowRegen.iml" filepath="$PROJECT_DIR$/ArrowRegen/ArrowRegen.iml" />
+      <module fileurl="file://$PROJECT_DIR$/BridgeGaps/BridgeGaps.iml" filepath="$PROJECT_DIR$/BridgeGaps/BridgeGaps.iml" />
       <module fileurl="file://$PROJECT_DIR$/BridgeRespawn/BridgeRespawn.iml" filepath="$PROJECT_DIR$/BridgeRespawn/BridgeRespawn.iml" />
       <module fileurl="file://$PROJECT_DIR$/NoThrow/NoThrow.iml" filepath="$PROJECT_DIR$/NoThrow/NoThrow.iml" />
       <module fileurl="file://$PROJECT_DIR$/SyndicatePlugins.iml" filepath="$PROJECT_DIR$/SyndicatePlugins.iml" />
