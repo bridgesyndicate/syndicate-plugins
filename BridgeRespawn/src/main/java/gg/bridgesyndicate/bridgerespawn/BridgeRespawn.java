@@ -141,7 +141,7 @@ public final class BridgeRespawn extends JavaPlugin implements Listener {
         if (player.getLocation().getY() < 83) {
             Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
             player.teleport(redLoc);
-            player.sendMessage(ChatColor.RED + playerName + ChatColor.GRAY + " fell into the void.");
+            player.sendMessage(ChatColor.RED + playerName + ChatColor.GRAY + " fell into the void. :)");
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
