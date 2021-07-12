@@ -1,0 +1,12 @@
+name: BridgeTeams
+version: ${project.version}
+main: me.bdamja.bridgeteams.BridgeTeams
+api-version: 1.8
+authors: [ bdamja ]
+
+commands:
+  assign:
+    description: Assigns players to red and blue teams.
+  myteam:
+    description: Displays which team you are on.
+
