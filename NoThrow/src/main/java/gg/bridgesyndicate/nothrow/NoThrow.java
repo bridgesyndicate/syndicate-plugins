@@ -19,17 +19,6 @@ public final class NoThrow extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onMove(InventoryClickEvent e){
-        ItemStack i = e.getWhoClicked().getInventory().getItem(0);
-        if(i != null)
-        {
-            if(e.getSlot() == 0 && i.getType() == Material.BOW || i.getType() == Material.ARROW || i.getType() == Material.GOLDEN_APPLE || i.getType() == Material.IRON_SWORD || i.getType() == Material.DIAMOND_PICKAXE || i.getType() == Material.STAINED_CLAY)
-            {
-                e.setCancelled(false);
-            }
-        }
-    }
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
@@ -41,11 +30,15 @@ public final class NoThrow extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onClick(InventoryClickEvent event)
-    {
-        if(event.getSlotType() == InventoryType.SlotType.ARMOR)
-        {
-            event.setCancelled(true);
+    public void onClick(InventoryClickEvent e) {
+        Material clickedItem = e.getClickedInventory().getItem(e.getSlot()).getType();
+
+        if (clickedItem == Material.ARROW) {
+            e.setCancelled(true);
+        }
+
+        if( e.getSlotType() == InventoryType.SlotType.ARMOR) {
+            e.setCancelled(true);
         }
     }
 
