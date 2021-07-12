@@ -1,0 +1,6 @@
+version: 0.2
+phases:
+  build:
+    commands:
+      - echo updating ecs service
+      - aws ecs update-service --service arn:aws:ecs:us-west-2:595508394202:service/default/bridge-dev-server --force-new-deployment
