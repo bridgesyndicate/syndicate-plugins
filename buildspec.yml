@@ -3,7 +3,7 @@ phases:
   install:
     runtime-versions:
       java: corretto8
-   pre_build:
+  pre_build:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
