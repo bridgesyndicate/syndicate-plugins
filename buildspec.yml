@@ -3,13 +3,33 @@ phases:
   install:
     runtime-versions:
       java: corretto8
+   pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - REPOSITORY_URI=595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
     commands:
-      - echo Build started on `date`
+      - echo Compile jars started on `date`
       - mvn clean package -P package-all
+      - echo Building the Docker image...
+      - echo package the plugins as a tar
+      - find . -type f -name \*jar > plugin-list.txt
+      - tar -T ./plugin-list.txt -cvf plugins.tar
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
 artifacts:
   files:
-    - ArrowRegen/target/ArrowRegen-1.0-SNAPSHOT.jar
-    - BridgeRespawn/target/BridgeRespawn-1.1.jar
     - NoThrow/target/NoThrow-1.0-SNAPSHOT.jar
+    - BridgeRespawn/target/BridgeRespawn-1.0-SNAPSHOT.jar
+    - ArrowRegen/target/ArrowRegen-1.0-SNAPSHOT.jar
   discard-paths: yes
