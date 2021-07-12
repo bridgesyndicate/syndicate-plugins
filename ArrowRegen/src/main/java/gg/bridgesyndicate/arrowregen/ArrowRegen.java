@@ -34,7 +34,7 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 Entity entity = event.getEntity();
-                entity.sendMessage("It has been 3.5 seconds since you shot your bow " + entity.getName());
+                entity.sendMessage("It has been 3.5 seconds since you shot your bow, congrats " + entity.getName());
                 ItemStack arrow = new ItemStack(Material.ARROW);
                 ItemMeta itemMetaArrow = arrow.getItemMeta();
                 itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
