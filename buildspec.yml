@@ -18,8 +18,9 @@ phases:
       - mvn clean package -P package-all
       - echo Building the Docker image...
       - echo package the plugins as a tar
-      - find . -type f -name \*jar > plugin-list.txt
-      - tar -T ./plugin-list.txt -cvf plugins.tar
+      - mkdir tmp
+      - find . -type f -path \*target\* -name \*jar -exec cp -p {} tmp/ \;
+      - tar -C tmp -cvf ./plugins.tar .
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
