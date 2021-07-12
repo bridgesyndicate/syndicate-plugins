@@ -18,6 +18,7 @@
                 <module>ArrowRegen</module>
                 <module>BridgeRespawn</module>
                 <module>BridgeGaps</module>
+                <module>BridgeTeams</module>
             </modules>
         </profile>
     </profiles>
