@@ -9,13 +9,14 @@
         <module name="ArrowRegen" />
         <module name="BridgeGaps" />
         <module name="NoThrow" />
-        <module name="BridgeRespawn" />
+        <module name="BridgeTeams" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="ArrowRegen" target="1.8" />
       <module name="BridgeGaps" target="1.8" />
       <module name="BridgeRespawn" target="1.8" />
+      <module name="BridgeTeams" target="1.8" />
       <module name="NoThrow" target="1.8" />
       <module name="SyndicatePlugins" target="1.5" />
     </bytecodeTargetLevel>
