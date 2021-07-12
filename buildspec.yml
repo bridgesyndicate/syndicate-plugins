@@ -9,6 +9,7 @@ phases:
       - mvn clean package -P package-all
 artifacts:
   files:
-    - NoThrow/target/NoThrow-1.0-SNAPSHOT.jar
     - ArrowRegen/target/ArrowRegen-1.0-SNAPSHOT.jar
+    - BridgeRespawn/target/BridgeRespawn-1.1.jar
+    - NoThrow/target/NoThrow-1.0-SNAPSHOT.jar
   discard-paths: yes
