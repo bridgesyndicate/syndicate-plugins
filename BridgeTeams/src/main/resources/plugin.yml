@@ -1,6 +1,6 @@
 name: BridgeTeams
 version: ${project.version}
-main: me.bdamja.bridgeteams.BridgeTeams
+main: gg.bridgesyndicate.bridgeteams.BridgeTeams
 api-version: 1.8
 authors: [ bdamja ]
 
