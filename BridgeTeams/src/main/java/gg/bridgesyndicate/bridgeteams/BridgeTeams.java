@@ -8,7 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.NameTagVisibility;
@@ -23,7 +22,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     @Override
     public void onEnable() {
         System.out.println( this.getClass() + " is loading." );
-        this.getServer().getPluginManager().registerEvents((Listener) this, (Plugin) this);
+        this.getServer().getPluginManager().registerEvents(this, this);
         Team.clearTeams();
     }
 
@@ -43,17 +42,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
         Team.getTeam(player);
         player.teleport(Team.getSpawnLocation(player));
-        Inventory.setInventory(player, TeamType.BLUE);
+        Inventory.setInventory(player);
 
         String killed = event.getEntity().getName();
         String killer = event.getEntity().getKiller().getName();
 
-        StringBuilder deathMessage = new StringBuilder();
-        deathMessage.append(Team.getChatColor(player) + killed);
-        deathMessage.append(ChatColor.GRAY + " was killed by ");
-        deathMessage.append(Team.getChatColor(player) + killer);
-        deathMessage.append(ChatColor.GRAY + ".");
-        event.setDeathMessage(deathMessage.toString());
+        String deathMessage = Team.getChatColor(player).toString() +
+                killed +
+                ChatColor.GRAY + " was killed by " +
+                Team.getChatColor(player) + killer +
+                ChatColor.GRAY + ".";
+        event.setDeathMessage(deathMessage);
         event.setDroppedExp(0);
     }
 
@@ -69,12 +68,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         }
 
         player.teleport(Team.getSpawnLocation(player));
-        Inventory.setInventory(player, Team.getTeam(player));
+        Inventory.setInventory(player);
 
-        StringBuilder voidMessage = new StringBuilder();
-        voidMessage.append(Team.getChatColor(player) + killed);
-        voidMessage.append(ChatColor.GRAY + " fell into the void.");
-        Bukkit.broadcastMessage(voidMessage.toString());
+        String voidMessage = Team.getChatColor(player) + killed +
+                ChatColor.GRAY + " fell into the void.";
+        Bukkit.broadcastMessage(voidMessage);
     }
 
     public void toteScore(Player player, GoalMeta goal){
@@ -92,9 +90,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
-            TeamType teamType = Team.getTeam(player);
             player.teleport(Team.getCageLocation(player));
-            Inventory.setInventory(player, teamType);
+            Inventory.setInventory(player);
         }
     }
 

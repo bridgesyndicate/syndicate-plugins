@@ -38,38 +38,22 @@ public class Team
     }
 
     public static TeamType getTeam(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
         return Team.redTeam.contains(player.getName()) ? TeamType.RED : TeamType.BLUE;
     }
 
     public static Color getArmorColor(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
         return Team.redTeam.contains(player.getName()) ? Color.RED : Color.BLUE;
     }
 
     public static ChatColor getChatColor(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
         return Team.redTeam.contains(player.getName()) ? ChatColor.RED : ChatColor.BLUE;
     }
 
     public static String getTeamName(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
         return Team.redTeam.contains(player.getName()) ? "Red Team" : "Blue Team";
     }
 
     public static Location getSpawnLocation(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
-
         final Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
         final Location blueLoc = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
 
@@ -77,10 +61,6 @@ public class Team
     }
 
     public static Location getCageLocation(final Player player) {
-        if (!isInTeam(player)) {
-            return null;
-        }
-
         final Location redCage = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
         final Location blueCage = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
 

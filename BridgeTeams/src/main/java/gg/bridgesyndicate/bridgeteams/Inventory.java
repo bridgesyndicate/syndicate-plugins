@@ -1,7 +1,6 @@
 package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -13,7 +12,7 @@ import java.util.ArrayList;
 
 public class Inventory {
 
-    public static void setInventory(Player player, TeamType teamType) {
+    public static void setInventory(Player player) {
         // HOTBAR
         player.getInventory().clear();
         ItemStack ironSword = new ItemStack(Material.IRON_SWORD);
@@ -31,7 +30,7 @@ public class Inventory {
         ItemMeta itemMetaBow = bow.getItemMeta();
         itemMetaBow.setDisplayName(ChatColor.GREEN + "Bow");
 
-        ArrayList<String> bowLore = new ArrayList<String>();
+        ArrayList<String> bowLore = new ArrayList<>();
         bowLore.add(ChatColor.GRAY + "Arrows regenerate every");
         bowLore.add(ChatColor.GREEN + "3.5s" + ChatColor.GRAY + ". You can have a maximum");
         bowLore.add(ChatColor.GRAY + "of " + ChatColor.GREEN + "1 " + ChatColor.GRAY + "arrow at a time.");
@@ -72,7 +71,7 @@ public class Inventory {
         ItemMeta itemMetaArrow = arrow.getItemMeta();
         itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
 
-        ArrayList<String> arrowLore = new ArrayList<String>();
+        ArrayList<String> arrowLore = new ArrayList<>();
         arrowLore.add(ChatColor.GRAY + "Regenerates every " + ChatColor.GREEN + "3.5s" + ChatColor.GRAY + "!");
         itemMetaArrow.setLore(arrowLore);
 
