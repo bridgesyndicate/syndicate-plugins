@@ -1,5 +1,6 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import gg.bridgesyndicate.util.BoundingBox;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -16,6 +17,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.avaje.ebean.Ebean.update;
 
@@ -23,6 +25,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
     @Override
     public void onEnable() {
+        System.out.println( this.getClass() + " is loading." );
         this.getServer().getPluginManager().registerEvents((Listener) this, (Plugin) this);
         Team.clearTeams();
     }
@@ -45,70 +48,124 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         }
 
         Team.getTeamType(player);
-        if(Team.getTeamType(player) == TeamType.BLUE){
+        if (Team.getTeamType(player) == TeamType.BLUE){
             player.teleport(blueLoc);
-            Inventory.blueInv(player);
-        }
-        else{
+            Inventory.setInventory(player, TeamType.BLUE);
+        } else {
             player.teleport(redLoc);
-            Inventory.redInv(player);
+            Inventory.setInventory(player, TeamType.RED);
         }
 
         String killed = event.getEntity().getName();
         String killer = event.getEntity().getKiller().getName();
-        if(Team.getTeamType(player) == TeamType.BLUE){
+        if(Team.getTeamType(player) == TeamType.BLUE) {
             event.setDeathMessage(ChatColor.BLUE + killed + ChatColor.GRAY + " was killed by " + ChatColor.RED + killer + ChatColor.GRAY + ".");
-        }
-        else{
-
+        } else {
             event.setDeathMessage(ChatColor.RED + killed + ChatColor.GRAY + " was killed by " + ChatColor.BLUE + killer + ChatColor.GRAY + ".");
         }
         event.setDroppedExp(0);
+    }
 
+    public void playerInVoid(Player player) {
+        String killed = player.getName();
+
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setSaturation(20);
+
+        Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
+        Location blueLoc = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
+
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+
+        Team.getTeamType(player);
+        if (Team.getTeamType(player) == TeamType.BLUE) {
+            player.teleport(blueLoc);
+            Inventory.setInventory(player, TeamType.BLUE);
+        } else {
+            player.teleport(redLoc);
+            Inventory.setInventory(player, TeamType.RED);
+        }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (Team.getTeamType(player) == TeamType.BLUE) {
+                p.sendMessage(ChatColor.BLUE + killed + ChatColor.GRAY + " fell into the void.");
+            } else {
+                p.sendMessage(ChatColor.RED + killed + ChatColor.GRAY + " fell into the void.");
+            }
+        }
+    }
+
+    public TeamType getPlayerTeam(Player player){
+        TeamType playerTeam;
+        if ( Team.getBlueTeam().contains(player) ) {
+            playerTeam = TeamType.BLUE;
+        } else {
+            playerTeam = TeamType.RED;
+        }
+        return(playerTeam);
+    }
+    public void toteScore(Player player, GoalMeta goal){
+        player.sendMessage(getPlayerTeam(player).toString() + " team entered the " + goal.getGoalName());
+        Score score = Score.getInstance();
+        if ( getPlayerTeam(player) != goal.getTeam() ) {
+            score.increment(getPlayerTeam(player));
+        }
+        sendPlayersToCages();
+        score.printScore();
+    }
+
+    private void sendPlayersToCages() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setHealth(20.0);
+            player.setFoodLevel(20);
+            player.setSaturation(20);
+            TeamType teamType = Team.getTeamType(player);
+            player.teleport(getCageLocation(teamType));
+            Inventory.setInventory(player, teamType);
+        }
+    }
+
+    private Location getCageLocation(TeamType teamType) {
+        final Location RED_CAGE = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
+        final Location BLUE_CAGE = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
+        if (teamType == TeamType.BLUE) {
+            return(BLUE_CAGE);
+        } else {
+            return(RED_CAGE);
+        }
+    }
+
+    public void checkForGoal(Player player){
+        GoalMeta blueGoal = new GoalMeta( new BoundingBox(-30,83,3,-36,88,-3), TeamType.BLUE, "Blue Goal");
+        GoalMeta redGoal = new GoalMeta( new BoundingBox(30,83,-3,36,88,3), TeamType.RED, "Red Goal");
+
+        final List<GoalMeta> goalList = new ArrayList<>();
+        goalList.add(redGoal);
+        goalList.add(blueGoal);
+        for (GoalMeta goal : goalList) {
+            if (goal.getBoundingBox().contains(
+                    player.getLocation().getX(),
+                    player.getLocation().getY(),
+                    player.getLocation().getZ())
+            ) {
+                toteScore(player, goal);
+            }
+        }
     }
 
     @EventHandler
     public void playerMove(PlayerMoveEvent e) {
         Player player = e.getPlayer();
-        String killed = player.getName();
         if (player.getLocation().getY() < 83) {
-            player.setHealth(20.0);
-            player.setFoodLevel(20);
-            player.setSaturation(20);
-
-            Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
-            Location blueLoc = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
-
-            for(PotionEffect effect:player.getActivePotionEffects()){
-                player.removePotionEffect(effect.getType());
-            }
-
-            Team.getTeamType(player);
-            if(Team.getTeamType(player) == TeamType.BLUE){
-                player.teleport(blueLoc);
-                Inventory.blueInv(player);
-            }
-            else{
-                player.teleport(redLoc);
-                Inventory.redInv(player);
-            }
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if(Team.getTeamType(player) == TeamType.BLUE){
-                    p.sendMessage(ChatColor.BLUE + killed + ChatColor.GRAY + " fell into the void.");
-                }
-                else{
-                    p.sendMessage(ChatColor.RED + killed + ChatColor.GRAY + " fell into the void.");
-                }
-
-            }
-
+            playerInVoid(player);
+        } else {
+            checkForGoal(player);
         }
-
-
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         ScoreboardManager sm = Bukkit.getScoreboardManager();
         Scoreboard scoreboard = sm.getNewScoreboard();
         if (label.equalsIgnoreCase("assign")) {
@@ -121,19 +178,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
                     Red.addEntry(player.getName());
                     Red.setPrefix(ChatColor.RED + "");
                     Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
-
                 } else {
-
                     Team.addToTeam(TeamType.BLUE, player);
                     org.bukkit.scoreboard.Team Blue = scoreboard.registerNewTeam("Blue");
                     player.setScoreboard(scoreboard);
                     Blue.addEntry(player.getName());
                     Blue.setPrefix(ChatColor.BLUE + "");
                     Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
-
                 }
-
-
                 i++;
             }
 
@@ -148,9 +200,30 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     public void onDisable(){
         Team.clearTeams();
     }
+
+    class GoalMeta {
+        private final BoundingBox boundingBox;
+        private final String goalName;
+
+        private final TeamType team;
+
+        public BoundingBox getBoundingBox() {
+            return boundingBox;
+        }
+
+        public String getGoalName() {
+            return goalName;
+        }
+
+        public TeamType getTeam() { return team; }
+
+        public GoalMeta(BoundingBox boundingBox, TeamType team, String goalName){
+            this.boundingBox = boundingBox;
+            this.goalName = goalName;
+            this.team = team;
+        }
+    }
 }
-
-
 
 
 
