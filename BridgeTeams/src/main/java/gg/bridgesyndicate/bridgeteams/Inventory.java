@@ -84,19 +84,9 @@ public class Inventory {
 
         ItemStack chest = new ItemStack(Material.LEATHER_CHESTPLATE);
 
-        Color armorColor = Color.RED;
-        ChatColor chatColor = ChatColor.RED;
-        String teamNameString = "Red Team";
-
-        if (teamType == TeamType.BLUE) {
-            armorColor = Color.BLUE;
-            chatColor = ChatColor.BLUE;
-            teamNameString = "Blue Team";
-        }
-
         LeatherArmorMeta leatherArmorMeta = (LeatherArmorMeta) chest.getItemMeta();
-        leatherArmorMeta.setColor(armorColor);
-        leatherArmorMeta.setDisplayName(chatColor + teamNameString);
+        leatherArmorMeta.setColor(Team.getArmorColor(player));
+        leatherArmorMeta.setDisplayName(Team.getChatColor(player) + Team.getTeamName(player));
         leatherArmorMeta.spigot().setUnbreakable(true);
 
         chest.setItemMeta(leatherArmorMeta);
