@@ -1,9 +1,15 @@
 package gg.bridgesyndicate.bridgeteams;
 
 import gg.bridgesyndicate.util.BoundingBox;
-import org.bukkit.entity.*;
-import org.bukkit.*;
-import java.util.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class Team
 {
@@ -60,11 +66,28 @@ public class Team
         return Team.redTeam.contains(player.getName()) ? redLoc : blueLoc;
     }
 
-    public static Location getCageLocation(final Player player) {
-        final Location redCage = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
-        final Location blueCage = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
+    public static Location getRedCageLocation() {
+        return(new Location(Bukkit.getWorld("world"), 28.5, 104, 0.5, 90, 0));
+    }
 
-        return Team.redTeam.contains(player.getName()) ? redCage : blueCage;
+    public static Location getBlueCageLocation() {
+        return(new Location(Bukkit.getWorld("world"), -27.5, 104, 0.5, -90, 0));
+    }
+
+    public static Location getRedPlayerCageLocation() {
+        return(new Location(Bukkit.getWorld("world"), 28.5, 105, 0.5, 90, 0));
+    }
+
+    public static Location getBluePlayerCageLocation() {
+        return(new Location(Bukkit.getWorld("world"), -27.5, 105, 0.5, -90, 0));
+    }
+
+    public static Location getCageLocation(TeamType team) {
+        return team == TeamType.RED ? getRedCageLocation() : getBlueCageLocation();
+    }
+
+    public static Location getCagePlayerLocation(final Player player) {
+        return Team.redTeam.contains(player.getName()) ? getRedPlayerCageLocation() : getBluePlayerCageLocation();
     }
 
     public static GoalMeta getRedGoalMeta() {
@@ -73,6 +96,13 @@ public class Team
 
     public static GoalMeta getBlueGoalMeta() {
         return (new GoalMeta( new BoundingBox(30,83,-3,36,88,3), TeamType.RED, "Red Goal"));
+    }
+
+    public static Collection<TeamType> getTeams(){
+        ArrayList<TeamType> teams = new ArrayList<>();
+        teams.add(TeamType.BLUE);
+        teams.add(TeamType.RED);
+        return(teams);
     }
 
     static {

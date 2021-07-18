@@ -1,6 +1,16 @@
 package gg.bridgesyndicate.bridgeteams;
 
-import org.bukkit.*;
+import com.sk89q.worldedit.CuboidClipboard;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.bukkit.BukkitUtil;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.sk89q.worldedit.world.DataException;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -14,15 +24,21 @@ import org.bukkit.scoreboard.NameTagVisibility;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class BridgeTeams extends JavaPlugin implements Listener{
 
+    private static final int MAX_BLOCKS = 10000;
+    static WorldEditPlugin worldEditPlugin;
+
     @Override
     public void onEnable() {
         System.out.println( this.getClass() + " is loading." );
         this.getServer().getPluginManager().registerEvents(this, this);
+        worldEditPlugin = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
         Team.clearTeams();
     }
 
@@ -81,8 +97,37 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         if ( Team.getTeam(player) != goal.getTeam() ) {
             score.increment(Team.getTeam(player));
         }
+        buildCages();
         sendPlayersToCages();
         score.printScore();
+    }
+
+    private Location getOrigin(){
+        return(new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
+    }
+
+    private void buildCages() {
+        EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
+        editSession.enableQueue();
+        for (TeamType team : Team.getTeams()) {
+            Location cageLocation = Team.getCageLocation(team);
+            final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
+            try {
+                SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
+                CuboidClipboard clipboard = schematicFormat.load(schematic);
+                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
+            } catch (MaxChangedBlocksException | DataException | IOException e) {
+                e.printStackTrace();
+            }
+        }
+        editSession.flushQueue();
+        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                Bukkit.broadcastMessage("FIGHT!");
+                editSession.undo(editSession);
+            }
+        }, 100);
     }
 
     private void sendPlayersToCages() {
@@ -90,7 +135,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
-            player.teleport(Team.getCageLocation(player));
+            player.teleport(Team.getCagePlayerLocation(player));
             Inventory.setInventory(player);
         }
     }

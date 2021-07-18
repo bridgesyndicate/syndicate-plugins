@@ -19,8 +19,10 @@ phases:
       - echo Building the Docker image...
       - echo package the plugins as a tar
       - mkdir tmp
+      - aws s3 cp s3://syndicate-plugins-artifacts/worldedit-bukkit-6.1.9.jar tmp/
       - find . -type f -path \*target\* -name \*jar -exec cp -p {} tmp/ \;
       - tar -C tmp -cvf ./plugins.tar .
+      - aws s3 cp s3://syndicate-plugins-artifacts/mushroomcage.schematic .
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:

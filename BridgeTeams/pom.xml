@@ -39,6 +39,10 @@
 
     <repositories>
         <repository>
+            <id>enginehub-maven</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+        <repository>
             <id>spigotmc-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
@@ -47,7 +51,6 @@
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
     </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -64,6 +67,16 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>21.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>6.1.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-core</artifactId>
+            <version>6.1.4-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
