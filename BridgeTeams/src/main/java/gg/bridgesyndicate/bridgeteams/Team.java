@@ -105,9 +105,21 @@ public class Team
         return(teams);
     }
 
+    public static List<String> getRedTeam() {
+        return redTeam;
+    }
+
+    public static List<String> getBlueTeam() {
+        return blueTeam;
+    }
+
     static {
         Team.redTeam = new ArrayList<>();
         Team.blueTeam = new ArrayList<>();
+    }
+
+    public static short getBlockColor(Player player) {
+        return Team.redTeam.contains(player.getName()) ? (short) 14 : (short) 11;
     }
 }
 

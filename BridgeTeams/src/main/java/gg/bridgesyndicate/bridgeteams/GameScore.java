@@ -2,20 +2,20 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 
-class Score {
-    private static Score single_instance = null;
+class GameScore {
+    private static GameScore single_instance = null;
 
     public int red;
     public int blue;
 
-    private Score() {
+    private GameScore() {
         red = 0;
         blue = 0;
     }
 
-    public static Score getInstance() {
+    public static GameScore getInstance() {
         if (single_instance == null)
-            single_instance = new Score();
+            single_instance = new GameScore();
         return single_instance;
     }
 

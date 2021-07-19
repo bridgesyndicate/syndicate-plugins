@@ -17,22 +17,28 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scoreboard.NameTagVisibility;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener{
 
     private static final int MAX_BLOCKS = 10000;
     static WorldEditPlugin worldEditPlugin;
+    private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
+    private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    public static int timeLeft = 900;
+
 
     @Override
     public void onEnable() {
@@ -43,38 +49,112 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     }
 
     @EventHandler
+    public void onJoin(PlayerJoinEvent event){
+        Player player = event.getPlayer();
+        setBoard(player);
+    }
+
+    public void setBoard(Player player){
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        Scoreboard board = manager.getNewScoreboard();
+        UUID id = player.getUniqueId();
+
+        scoreboards.put(player.getUniqueId(), board);
+        player.setScoreboard(scoreboards.get(id));
+
+        Objective title = board.registerNewObjective("title","dummy");
+        title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
+        title.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        org.bukkit.scoreboard.Team Red = board.registerNewTeam("Red");
+        Red.setPrefix(ChatColor.RED + "");
+        Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
+
+        org.bukkit.scoreboard.Team Blue = board.registerNewTeam("Blue");
+        Blue.setPrefix(ChatColor.BLUE + "");
+        Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
+
+        org.bukkit.scoreboard.Team kill = board.registerNewTeam("kills");
+        kill.setSuffix("0");
+        kill.addEntry("Kills: §a");
+        title.getScore("Kills: §a").setScore(8);
+
+        org.bukkit.scoreboard.Team timer = board.registerNewTeam("timer");
+        timer.addEntry("Time Left: §a");
+        timer.setSuffix("15:00");
+        timer.setPrefix("");
+        title.getScore("Time Left: §a").setScore(13);
+
+        Score date = title.getScore(ChatColor.GRAY + "--/--/--   " + ChatColor.DARK_GRAY + "" + player.getName());
+        date.setScore(15);
+
+        Score blank1 = title.getScore("§1");
+        blank1.setScore(14);
+
+        Score blank2 = title.getScore("§2");
+        blank2.setScore(12);
+
+        Score bluegoals = title.getScore(ChatColor.BLUE + "[B] ⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
+        bluegoals.setScore(11);
+        Score redgoals = title.getScore(ChatColor.RED + "[R] ⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
+        redgoals.setScore(10);
+
+        Score blank3 = title.getScore("§3");
+        blank3.setScore(9);
+
+        Score goals = title.getScore(ChatColor.WHITE + "Goals: " + ChatColor.GREEN + "0");
+        goals.setScore(7);
+
+        Score blank4 = title.getScore("§4");
+        blank4.setScore(6);
+
+        Score mode = title.getScore(ChatColor.WHITE + "Mode: " + ChatColor.GREEN + "The Bridge Duel");
+        mode.setScore(5);
+        Score dailyStreak = title.getScore(ChatColor.WHITE + "Daily Streak: " + ChatColor.GREEN + "999");
+        dailyStreak.setScore(4);
+        Score bestDailyStreak = title.getScore(ChatColor.WHITE + "Best Daily Streak: " + ChatColor.GREEN + "999");
+        bestDailyStreak.setScore(3);
+
+        Score blank5 = title.getScore("§5");
+        blank5.setScore(2);
+
+        Score server = title.getScore(ChatColor.YELLOW + "localhost");
+        server.setScore(1);
+
+        if (board.getObjective("health") != null){
+            board.getObjective("health").unregister();
+        }
+        Objective o = board.registerNewObjective("health", "health");
+        o.setDisplayName(ChatColor.RED + "❤");
+        o.setDisplaySlot(DisplaySlot.BELOW_NAME);
+    }
+
+    @EventHandler
     public void onDeathOfPlayer(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        player.setHealth(20.0);
-        player.setFoodLevel(20);
-        player.setSaturation(20);
+        sendDeadPlayerToSpawn(player);
+        Player killer = player.getKiller();
+        Scoreboard killerboard = killer.getScoreboard();
+        killerboard.getTeam("kills").setSuffix("");
 
-        event.getDrops().clear();
-        player.getInventory().clear();
+        String killerString = killer.getName();
+        String killedString = player.getName();
 
-        for(PotionEffect effect:player.getActivePotionEffects()){
-            player.removePotionEffect(effect.getType());
-        }
+        UUID killerId = killer.getUniqueId();
+        int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
 
-        Team.getTeam(player);
-        player.teleport(Team.getSpawnLocation(player));
-        Inventory.setInventory(player);
-
-        String killed = event.getEntity().getName();
-        String killer = event.getEntity().getKiller().getName();
+        killerboard.getTeam("kills").setSuffix("" + newKills);
 
         String deathMessage = Team.getChatColor(player).toString() +
-                killed +
+                killedString +
                 ChatColor.GRAY + " was killed by " +
-                Team.getChatColor(player) + killer +
+                Team.getChatColor(player) + killerString +
                 ChatColor.GRAY + ".";
         event.setDeathMessage(deathMessage);
         event.setDroppedExp(0);
     }
 
-    public void playerInVoid(Player player) {
-        String killed = player.getName();
-
+    private void sendDeadPlayerToSpawn(Player player) {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
@@ -85,7 +165,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
         player.teleport(Team.getSpawnLocation(player));
         Inventory.setInventory(player);
+    }
 
+    public void playerInVoid(Player player) {
+        String killed = player.getName();
+        sendDeadPlayerToSpawn(player);
         String voidMessage = Team.getChatColor(player) + killed +
                 ChatColor.GRAY + " fell into the void.";
         Bukkit.broadcastMessage(voidMessage);
@@ -93,7 +177,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
     public void toteScore(Player player, GoalMeta goal){
         player.sendMessage(Team.getTeam(player).toString() + " team entered the " + goal.getGoalName());
-        Score score = Score.getInstance();
+        GameScore score = GameScore.getInstance();
         if ( Team.getTeam(player) != goal.getTeam() ) {
             score.increment(Team.getTeam(player));
         }
@@ -155,6 +239,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         }
     }
 
+
+
+
+
     @EventHandler
     public void playerMove(PlayerMoveEvent e) {
         Player player = e.getPlayer();
@@ -165,36 +253,76 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         }
     }
 
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        ScoreboardManager sm = Bukkit.getScoreboardManager();
-        Scoreboard scoreboard = sm.getNewScoreboard();
+
+
+    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
+
         if (label.equalsIgnoreCase("assign")) {
+            if (commandSender instanceof Player) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (timeLeft > 0) {
+                            timeLeft--;
+                            String formattedTime = formatTime(timeLeft);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                org.bukkit.scoreboard.Team timer = player.getScoreboard().getTeam("timer");
+                                timer.setSuffix("" + formattedTime);
+                            }
+                        } else {
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(this, 0, 20);
+            }
+
             int i = 0;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (i < Bukkit.getOnlinePlayers().toArray().length / 2) {
                     Team.addToTeam(TeamType.RED, player);
-                    org.bukkit.scoreboard.Team Red = scoreboard.registerNewTeam("Red");
-                    player.setScoreboard(scoreboard);
+                    Scoreboard board = player.getScoreboard();
+                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
                     Red.addEntry(player.getName());
-                    Red.setPrefix(ChatColor.RED + "");
-                    Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            List<String> blueTeam = Team.getBlueTeam();
+                            String blueTeamString = blueTeam.toString().replace("[", "").replace("]", "");
+                            org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
+                            Blue.addEntry(blueTeamString);
+                        }
+                    }.runTaskLater(this, 1);
                 } else {
                     Team.addToTeam(TeamType.BLUE, player);
-                    org.bukkit.scoreboard.Team Blue = scoreboard.registerNewTeam("Blue");
-                    player.setScoreboard(scoreboard);
+                    Scoreboard board = player.getScoreboard();
+                    org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
                     Blue.addEntry(player.getName());
-                    Blue.setPrefix(ChatColor.BLUE + "");
-                    Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
+                    List<String> redTeam = Team.getRedTeam();
+                    String redTeamString = redTeam.toString().replace("[", "").replace("]", "");
+                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
+                    Red.addEntry(redTeamString);
                 }
                 i++;
             }
-
         }
-        if(label.equalsIgnoreCase("myteam")){
-            sender.sendMessage(Team.getTeam(((Player)sender)).name());
+
+        if (label.equalsIgnoreCase("myteam")) {
+            commandSender.sendMessage(Team.getTeamName((Player) commandSender));
         }
         return true;
 
+    }
+
+
+    public static String formatTime(int sc) {
+        if (sc <= 0) return "0:00";
+        int m = sc % 3600 / 60;
+        int s = sc % 60;
+        if (s < 10) {
+            return m + ":0" + s;
+        } else {
+            return m + ":" + s;
+        }
     }
 
     public void onDisable(){

@@ -55,7 +55,7 @@ public class Inventory {
 
         ItemStack blocks1 = new ItemStack(Material.STAINED_CLAY, 64);
 
-        blocks1.setDurability((short) 14);
+        blocks1.setDurability(Team.getBlockColor(player));
 
         player.getInventory().setItem(3, blocks1);
         player.getInventory().setItem(4, blocks1);
