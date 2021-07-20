@@ -210,13 +210,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         GameScore score = GameScore.getInstance();
         if ( Team.getTeam(player) != goal.getTeam() ) {
             score.increment(Team.getTeam(player));
+
+            UUID ScorerId = player.getUniqueId();
+            int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
+
+            Scoreboard board = player.getScoreboard();
+            board.getTeam("goals").setSuffix("" + newGoals);
         }
-
-        UUID ScorerId = player.getUniqueId();
-        int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
-
-        Scoreboard board = player.getScoreboard();
-        board.getTeam("goals").setSuffix("" + newGoals);
 
         buildCages();
         sendPlayersToCages();
