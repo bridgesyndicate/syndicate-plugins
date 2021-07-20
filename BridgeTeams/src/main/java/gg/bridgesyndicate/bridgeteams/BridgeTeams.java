@@ -99,9 +99,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         Score blank2 = title.getScore("§2");
         blank2.setScore(12);
 
-        Score bluegoals = title.getScore(ChatColor.BLUE + "[B] ⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
+        Score bluegoals = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
         bluegoals.setScore(11);
-        Score redgoals = title.getScore(ChatColor.RED + "[R] ⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
+        Score redgoals = title.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
         redgoals.setScore(10);
 
         Score blank3 = title.getScore("§3");
@@ -222,7 +222,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         editSession.enableQueue();
         for (TeamType team : Team.getTeams()) {
             Location cageLocation = Team.getCageLocation(team);
-            final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
+            final File schematic = new File("C:/Users/benal/Desktop/spigot/plugins/schematics/mushroomcage.schematic");
             try {
                 SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
                 CuboidClipboard clipboard = schematicFormat.load(schematic);
