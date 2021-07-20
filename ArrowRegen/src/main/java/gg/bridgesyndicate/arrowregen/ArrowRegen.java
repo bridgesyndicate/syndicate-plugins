@@ -26,7 +26,7 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onEntityShootBowEvent(EntityShootBowEvent event) {
+    public void onEntityShootBowEvent(final EntityShootBowEvent event) {
         Entity entity = event.getEntity();
         entity.sendMessage("You shot your bow, " + entity.getName());
 

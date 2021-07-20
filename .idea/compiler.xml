@@ -18,7 +18,7 @@
       <module name="BridgeRespawn" target="1.8" />
       <module name="BridgeTeams" target="1.8" />
       <module name="NoThrow" target="1.8" />
-      <module name="SyndicatePlugins" target="1.5" />
+      <module name="SyndicatePlugins" target="6" />
     </bytecodeTargetLevel>
   </component>
 </project>

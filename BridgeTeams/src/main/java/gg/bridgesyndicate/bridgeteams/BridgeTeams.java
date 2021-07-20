@@ -11,11 +11,15 @@ import com.sk89q.worldedit.world.DataException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -148,10 +152,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         String deathMessage = Team.getChatColor(player).toString() +
                 killedString +
                 ChatColor.GRAY + " was killed by " +
-                Team.getChatColor(player) + killerString +
+                Team.getChatColor(killer) + killerString +
                 ChatColor.GRAY + ".";
         event.setDeathMessage(deathMessage);
         event.setDroppedExp(0);
+
+        killer.playSound(killer.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
     }
 
     private void sendDeadPlayerToSpawn(Player player) {
@@ -165,6 +171,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
         player.teleport(Team.getSpawnLocation(player));
         Inventory.setInventory(player);
+        player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
 
     public void playerInVoid(Player player) {
@@ -222,6 +229,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
             player.teleport(Team.getCagePlayerLocation(player));
             Inventory.setInventory(player);
         }
+
     }
 
     public void checkForGoal(Player player){
@@ -239,9 +247,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         }
     }
 
+    @EventHandler
+    public void onBowHit(EntityDamageByEntityEvent event){
 
+        Entity entityHitter = event.getDamager();
 
+        if(entityHitter instanceof Arrow) {
+            Player shoota = (Player) entityHitter;
+            shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
+        }
 
+    }
 
     @EventHandler
     public void playerMove(PlayerMoveEvent e) {
