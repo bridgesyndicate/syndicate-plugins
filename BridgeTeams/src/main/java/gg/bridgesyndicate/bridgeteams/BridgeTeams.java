@@ -27,6 +27,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
+import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
@@ -164,12 +165,31 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
+        player.setNoDamageTicks(50);
 
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
 
         player.teleport(Team.getSpawnLocation(player));
+
+        Vector v = player.getVelocity();
+        v.setX(0);
+        v.setY(0);
+        v.setZ(0);
+        player.setVelocity(v);
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                v.setX(0);
+                v.setY(0);
+                v.setZ(0);
+                player.setVelocity(v);
+            }
+        }.runTaskLater(this, 1);
+
+
+
         Inventory.setInventory(player);
         player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
