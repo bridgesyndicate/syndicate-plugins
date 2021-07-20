@@ -42,6 +42,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     static WorldEditPlugin worldEditPlugin;
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    private static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
 
 
@@ -107,8 +108,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         Score blank3 = title.getScore("§3");
         blank3.setScore(9);
 
-        Score goals = title.getScore(ChatColor.WHITE + "Goals: " + ChatColor.GREEN + "0");
-        goals.setScore(7);
+        org.bukkit.scoreboard.Team goal = board.registerNewTeam("goals");
+        goal.setSuffix("0");
+        goal.addEntry("Goals: §a");
+        title.getScore("Goals: §a").setScore(7);
 
         Score blank4 = title.getScore("§4");
         blank4.setScore(6);
@@ -208,6 +211,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         if ( Team.getTeam(player) != goal.getTeam() ) {
             score.increment(Team.getTeam(player));
         }
+
+        UUID ScorerId = player.getUniqueId();
+        int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
+
+        Scoreboard board = player.getScoreboard();
+        board.getTeam("goals").setSuffix("" + newGoals);
+
         buildCages();
         sendPlayersToCages();
         score.printScore();
