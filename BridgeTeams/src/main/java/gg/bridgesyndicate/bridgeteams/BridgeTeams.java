@@ -199,7 +199,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             player.sendMessage(ChatColor.RED + "You can't place blocks there!");
             return;
         }
-        if(bY > 99 || bY < 85){
+        if(bY > 99 || bY < 84){
             event.setCancelled(true);
             player.sendMessage(ChatColor.RED + "You can't place blocks there!");
             return;
