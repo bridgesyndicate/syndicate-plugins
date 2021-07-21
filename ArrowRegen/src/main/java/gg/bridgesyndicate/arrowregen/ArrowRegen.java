@@ -1,6 +1,5 @@
 package gg.bridgesyndicate.arrowregen;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Arrow;
@@ -14,6 +13,7 @@ import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 
@@ -25,30 +25,40 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
     }
 
+    private void reload(Player player) {
+        player.sendMessage("It has been 3.5 seconds since you shot your bow, congrats " + player.getName());
+        ItemStack arrow = new ItemStack(Material.ARROW);
+        ItemMeta itemMetaArrow = arrow.getItemMeta();
+        itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
+
+        ArrayList<String> arrowLore = new ArrayList<>();
+        arrowLore.add(ChatColor.GRAY + "Regenerates every " + ChatColor.GREEN + "3.5s" + ChatColor.GRAY + "!");
+        itemMetaArrow.setLore(arrowLore);
+
+        Player p = player.getServer().getPlayer(player.getUniqueId());
+        arrow.setItemMeta(itemMetaArrow);
+        p.getInventory().setItem(8, arrow);
+        p.updateInventory();
+    }
+
     @EventHandler
     public void onEntityShootBowEvent(final EntityShootBowEvent event) {
-        Entity entity = event.getEntity();
-        entity.sendMessage("You shot your bow, " + entity.getName());
+        Player player = (Player) event.getEntity();
+        player.sendMessage("You shot your bow, " + player.getName());
 
-        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-            @Override
+        new BukkitRunnable() {
+            int ticksSinceShootBow = 0;
+
             public void run() {
-                Entity entity = event.getEntity();
-                entity.sendMessage("It has been 3.5 seconds since you shot your bow, congrats " + entity.getName());
-                ItemStack arrow = new ItemStack(Material.ARROW);
-                ItemMeta itemMetaArrow = arrow.getItemMeta();
-                itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
-
-                ArrayList<String> arrowLore = new ArrayList<String>();
-                arrowLore.add(ChatColor.GRAY + "Regenerates every " + ChatColor.GREEN + "3.5s" + ChatColor.GRAY + "!");
-                itemMetaArrow.setLore(arrowLore);
-
-                Player p = entity.getServer().getPlayer(entity.getUniqueId());
-                arrow.setItemMeta(itemMetaArrow);
-                p.getInventory().setItem(8, arrow);
-                p.updateInventory();
+                if (ticksSinceShootBow < 70) {
+                    ticksSinceShootBow++;
+                    player.setExp(1-ticksSinceShootBow / 70F);
+                } else {
+                    reload(player);
+                    this.cancel();
+                }
             }
-        }, 70);
+        }.runTaskTimer(this, 0, 1);
     }
 
     @EventHandler
