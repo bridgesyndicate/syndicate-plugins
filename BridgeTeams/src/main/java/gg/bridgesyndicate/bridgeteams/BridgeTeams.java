@@ -57,7 +57,28 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        resetPlayer(player);
         setBoard(player);
+
+    }
+
+    public void resetPlayer(Player player){
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setSaturation(20);
+        player.setNoDamageTicks(50);
+        player.getInventory().clear();
+
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+
+        Vector v = player.getVelocity();
+        v.setX(0);
+        v.setY(0);
+        v.setZ(0);
+
+
     }
 
     public void setBoard(Player player) {
@@ -205,7 +226,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void toteScore(Player player, GoalMeta goal) {
-        player.sendMessage(Team.getTeam(player).toString() + " team entered the " + goal.getGoalName());
 
         GameScore score = GameScore.getInstance();
         if (Team.getTeam(player) != goal.getTeam()) {
@@ -357,7 +377,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     Red.addEntry(redTeamString);
                 }
                 i++;
+
             }
+            buildCages();
+            sendPlayersToCages();
         }
 
         if (label.equalsIgnoreCase("myteam")) {
