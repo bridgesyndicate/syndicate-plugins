@@ -26,7 +26,6 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
     }
 
     private void reload(Player player) {
-        player.sendMessage("It has been 3.5 seconds since you shot your bow, congrats " + player.getName());
         ItemStack arrow = new ItemStack(Material.ARROW);
         ItemMeta itemMetaArrow = arrow.getItemMeta();
         itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
@@ -44,7 +43,6 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
     @EventHandler
     public void onEntityShootBowEvent(final EntityShootBowEvent event) {
         Player player = (Player) event.getEntity();
-        player.sendMessage("You shot your bow, " + player.getName());
 
         new BukkitRunnable() {
             int ticksSinceShootBow = 0;
@@ -53,8 +51,10 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
                 if (ticksSinceShootBow < 70) {
                     ticksSinceShootBow++;
                     player.setExp(1-ticksSinceShootBow / 70F);
+                    player.setLevel(4-(int)Math.floor(ticksSinceShootBow / 20F));
                 } else {
                     reload(player);
+                    player.setLevel(0);
                     this.cancel();
                 }
             }
