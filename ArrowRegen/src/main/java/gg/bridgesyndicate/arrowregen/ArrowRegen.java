@@ -51,7 +51,7 @@ public final class ArrowRegen extends JavaPlugin implements Listener {
                 if (ticksSinceShootBow < 70) {
                     ticksSinceShootBow++;
                     player.setExp(1-ticksSinceShootBow / 70F);
-                    player.setLevel(4-(int)Math.floor(ticksSinceShootBow / 20F));
+                    player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
                 } else {
                     reload(player);
                     player.setLevel(0);
