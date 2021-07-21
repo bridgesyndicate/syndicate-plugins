@@ -43,6 +43,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     static WorldEditPlugin worldEditPlugin;
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    private static final  HashMap<UUID, String> lastdamager = new HashMap<UUID, String>();
     public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
 
@@ -268,17 +269,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
 
-    public void playerInVoid(Player player) {
-        String killed = player.getName();
-        sendDeadPlayerToSpawn(player);
-        String voidMessage = Team.getChatColor(player) + killed +
-                ChatColor.GRAY + " fell into the void.";
-        Bukkit.broadcastMessage(voidMessage);
-    }
-
     public void toteScore(Player player, GoalMeta goal) {
 
         GameScore score = GameScore.getInstance();
+        buildCages();
+        sendPlayersToCages();
         if (Team.getTeam(player) != goal.getTeam()) {
             score.increment(Team.getTeam(player));
 
@@ -295,10 +290,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             board.getTeam("goals").setSuffix("" + newGoals);
         }
 
-        buildCages();
-        sendPlayersToCages();
-
     }
+
+
 
     private Location getOrigin() {
         return (new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
@@ -372,13 +366,43 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void playerMove(PlayerMoveEvent e) {
         Player player = e.getPlayer();
+
         if (player.getLocation().getY() < 83) {
-            playerInVoid(player);
+            if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
+
+                Entity ed = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
+                if (ed instanceof Player) {
+
+                    final Player damager = (Player) ed;
+                    final String killed = player.getName();
+                    final String killer = damager.getName();
+
+                    UUID killerId = damager.getUniqueId();
+                    int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
+
+                    Scoreboard board = damager.getScoreboard();
+                    board.getTeam("kills").setSuffix("" + newKills);
+
+                    Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
+                            + Team.getChatColor(damager) + killer + ChatColor.GRAY + ".");
+
+                    damager.playSound(damager.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
+
+                }
+
+            } else {
+                String killed = player.getName();
+                Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
+            }
+
+            sendDeadPlayerToSpawn(player);
+
         } else {
             checkForGoal(player);
         }
     }
 
+    
 
     public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
 
