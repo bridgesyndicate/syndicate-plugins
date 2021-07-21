@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Arrow;
@@ -19,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -77,7 +79,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         v.setX(0);
         v.setY(0);
         v.setZ(0);
-
 
     }
 
@@ -183,6 +184,28 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         event.setDroppedExp(0);
 
         killer.playSound(killer.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
+    }
+
+    @EventHandler
+    public void cancelBlockPlacement(BlockPlaceEvent event){
+        Player player = event.getPlayer();
+        Block b = event.getBlock();
+        int bX = b.getX();
+        int bY = b.getY();
+        int bZ = b.getZ();
+
+        if(bX > 25 || bX < -25){
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+        }
+        if(bY > 99 || bY < 85){
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+        }
+        if(bZ > 20 || bZ < -20){
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+        }
     }
 
     private void sendDeadPlayerToSpawn(Player player) {
