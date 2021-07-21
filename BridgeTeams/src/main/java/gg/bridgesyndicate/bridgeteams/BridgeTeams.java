@@ -36,31 +36,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public final class BridgeTeams extends JavaPlugin implements Listener{
+public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private static final int MAX_BLOCKS = 10000;
     static WorldEditPlugin worldEditPlugin;
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
-    private static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
+    public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
 
 
     @Override
     public void onEnable() {
-        System.out.println( this.getClass() + " is loading." );
+        System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
         worldEditPlugin = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
         Team.clearTeams();
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event){
+    public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         setBoard(player);
     }
 
-    public void setBoard(Player player){
+    public void setBoard(Player player) {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         Scoreboard board = manager.getNewScoreboard();
         UUID id = player.getUniqueId();
@@ -68,7 +68,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         scoreboards.put(player.getUniqueId(), board);
         player.setScoreboard(scoreboards.get(id));
 
-        Objective title = board.registerNewObjective("title","dummy");
+        Objective title = board.registerNewObjective("title", "dummy");
         title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
         title.setDisplaySlot(DisplaySlot.SIDEBAR);
 
@@ -129,7 +129,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         Score server = title.getScore(ChatColor.YELLOW + "localhost");
         server.setScore(1);
 
-        if (board.getObjective("health") != null){
+        if (board.getObjective("health") != null) {
             board.getObjective("health").unregister();
         }
         Objective o = board.registerNewObjective("health", "health");
@@ -181,7 +181,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         v.setY(0);
         v.setZ(0);
         player.setVelocity(v);
-        new BukkitRunnable(){
+        new BukkitRunnable() {
             @Override
             public void run() {
                 v.setX(0);
@@ -190,7 +190,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
                 player.setVelocity(v);
             }
         }.runTaskLater(this, 1);
-
 
 
         Inventory.setInventory(player);
@@ -205,14 +204,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         Bukkit.broadcastMessage(voidMessage);
     }
 
-    public void toteScore(Player player, GoalMeta goal){
+    public void toteScore(Player player, GoalMeta goal) {
         player.sendMessage(Team.getTeam(player).toString() + " team entered the " + goal.getGoalName());
+
         GameScore score = GameScore.getInstance();
-        if ( Team.getTeam(player) != goal.getTeam() ) {
+        if (Team.getTeam(player) != goal.getTeam()) {
             score.increment(Team.getTeam(player));
 
             UUID ScorerId = player.getUniqueId();
             int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
+
+            if (Team.getTeam(player) == TeamType.RED) {
+                ChatBroadcasts.redScoreMessage(player);
+            } else {
+                ChatBroadcasts.blueScoreMessage(player);
+            }
 
             Scoreboard board = player.getScoreboard();
             board.getTeam("goals").setSuffix("" + newGoals);
@@ -220,11 +226,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
 
         buildCages();
         sendPlayersToCages();
-        score.printScore();
+
     }
 
-    private Location getOrigin(){
-        return(new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
+    private Location getOrigin() {
+        return (new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
     }
 
     private void buildCages() {
@@ -252,17 +258,20 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     }
 
     private void sendPlayersToCages() {
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
             player.teleport(Team.getCagePlayerLocation(player));
             Inventory.setInventory(player);
+
+
         }
 
     }
 
-    public void checkForGoal(Player player){
+    public void checkForGoal(Player player) {
         final List<GoalMeta> goalList = new ArrayList<>();
         goalList.add(Team.getBlueGoalMeta());
         goalList.add(Team.getRedGoalMeta());
@@ -278,11 +287,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
     }
 
     @EventHandler
-    public void onBowHit(EntityDamageByEntityEvent event){
+    public void onBowHit(EntityDamageByEntityEvent event) {
 
         Entity entityHitter = event.getDamager();
 
-        if(entityHitter instanceof Arrow) {
+        if (entityHitter instanceof Arrow) {
             Player shoota = (Player) entityHitter;
             shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
         }
@@ -298,7 +307,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
             checkForGoal(player);
         }
     }
-
 
 
     public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
@@ -358,7 +366,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener{
         return true;
 
     }
-
 
     public static String formatTime(int sc) {
         if (sc <= 0) return "0:00";

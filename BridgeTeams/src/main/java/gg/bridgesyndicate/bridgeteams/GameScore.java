@@ -7,11 +7,13 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 
+import java.util.UUID;
+
 class GameScore {
     private static GameScore single_instance = null;
 
-    public int red;
-    public int blue;
+    public static int red;
+    public static int blue;
 
     private GameScore() {
         red = 0;
@@ -24,11 +26,11 @@ class GameScore {
         return single_instance;
     }
 
-    public int getRed() {
+    public static int getRed() {
         return red;
     }
 
-    public int getBlue() {
+    public static int getBlue() {
         return blue;
     }
 
