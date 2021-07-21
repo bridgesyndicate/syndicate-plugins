@@ -8,10 +8,7 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -20,11 +17,13 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -188,6 +187,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void cancelBlockPlacement(BlockPlaceEvent event){
+
         Player player = event.getPlayer();
         Block b = event.getBlock();
         int bX = b.getX();
@@ -207,6 +207,31 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if(bZ > 20 || bZ < -20){
             event.setCancelled(true);
             player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+            return;
+        }
+    }
+
+    @EventHandler
+    public void cancelBlockBreak(BlockBreakEvent event){
+        Player player = event.getPlayer();
+        Block b = event.getBlock();
+        int bX = b.getX();
+        int bY = b.getY();
+        int bZ = b.getZ();
+
+        if (event.getBlock().getType() != Material.STAINED_CLAY) {
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't break that block!");
+            return;
+        }
+        if (bY > 99 || bY < 84 || bX > 25 || bX < -25 || bZ > 20 || bZ < -20){
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't break that block!");
+            return;
+        }
+        if(bY == 99 && (bX == 25 || bX == -25) && (bZ == 4 || bZ == -4)){
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You can't break that block!");
             return;
         }
     }
