@@ -292,8 +292,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     }
 
-
-
     private Location getOrigin() {
         return (new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
     }
@@ -331,25 +329,32 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             player.teleport(Team.getCagePlayerLocation(player));
             Inventory.setInventory(player);
 
-
         }
 
     }
 
     public void checkForGoal(Player player) {
+
         final List<GoalMeta> goalList = new ArrayList<>();
         goalList.add(Team.getBlueGoalMeta());
         goalList.add(Team.getRedGoalMeta());
-        for (GoalMeta goal : goalList) {
-            if (goal.getBoundingBox().contains(
-                    player.getLocation().getX(),
-                    player.getLocation().getY(),
-                    player.getLocation().getZ())
-            ) {
-                toteScore(player, goal);
+
+
+
+            for (GoalMeta goal : goalList) {
+                if (Team.getTeam(player) != goal.getTeam()) {
+
+                    if (goal.getBoundingBox().contains(
+                        player.getLocation().getX(),
+                        player.getLocation().getY(),
+                        player.getLocation().getZ()))
+                    {
+                        toteScore(player, goal);
+                    }
+                }
             }
         }
-    }
+
 
     @EventHandler
     public void onBowHit(EntityDamageByEntityEvent event) {
