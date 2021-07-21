@@ -8,6 +8,7 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 
+import java.text.DecimalFormat;
 import java.util.UUID;
 
 public class ChatBroadcasts {
@@ -47,14 +48,14 @@ public class ChatBroadcasts {
 
     public static void redScoreMessage(Player player){
 
-        ScoreboardManager manager = Bukkit.getScoreboardManager();
-        Scoreboard board = manager.getMainScoreboard();
-        Objective hearts = board.getObjective("health");
+        double health = player.getHealth();
+        DecimalFormat format = new DecimalFormat("##.#");
+        String heartValue = format.format(health);
 
         Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "                   "+ player.getName() + ChatColor.GRAY + " (" +
-                ChatColor.GREEN + "temp" + ChatColor.RED + "❤" + ChatColor.GRAY + ") " + ChatColor.YELLOW + "scored! " +
+                ChatColor.GREEN + heartValue + ChatColor.RED + "❤" + ChatColor.GRAY + ") " + ChatColor.YELLOW + "scored! " +
                 ChatColor.GRAY + "(" + ChatColor.GOLD + nthGoal(player) + ChatColor.GRAY + ")");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "                                     "+ GameScore.getRed() +
@@ -67,14 +68,14 @@ public class ChatBroadcasts {
 
     public static void blueScoreMessage(Player player){
 
-        ScoreboardManager manager = Bukkit.getScoreboardManager();
-        Scoreboard board = manager.getMainScoreboard();
-        Objective hearts = board.getObjective("health");
+        double health = player.getHealth();
+        DecimalFormat format = new DecimalFormat("##.#");
+        String heartValue = format.format(health);
 
         Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "                   " + player.getName() + ChatColor.GRAY + " (" +
-                ChatColor.GREEN + "temp" + ChatColor.RED + "❤" + ChatColor.GRAY + ") " + ChatColor.YELLOW + "scored! " +
+                ChatColor.GREEN + heartValue + ChatColor.RED + "❤" + ChatColor.GRAY + ") " + ChatColor.YELLOW + "scored! " +
                 ChatColor.GRAY + "(" + ChatColor.GOLD + nthGoal(player) + ChatColor.GRAY + ")");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(ChatColor.BLUE + "" + ChatColor.BOLD + "                                     " + GameScore.getBlue() +
