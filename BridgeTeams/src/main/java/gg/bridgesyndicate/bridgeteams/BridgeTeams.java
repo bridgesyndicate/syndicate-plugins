@@ -325,6 +325,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 Bukkit.broadcastMessage("FIGHT!");
+                for(Player player : Bukkit.getOnlinePlayers()){
+                    player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
+                }
                 editSession.undo(editSession);
             }
         }, 100);
