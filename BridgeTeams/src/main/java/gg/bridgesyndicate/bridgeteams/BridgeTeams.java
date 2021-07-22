@@ -21,6 +21,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -157,6 +159,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Objective o = board.registerNewObjective("health", "health");
         o.setDisplayName(ChatColor.RED + "❤");
         o.setDisplaySlot(DisplaySlot.BELOW_NAME);
+    }
+
+    @EventHandler
+    public static void onPlayerChat(AsyncPlayerChatEvent event){
+        Player player = event.getPlayer();
+        String msg = event.getMessage();
+        event.setCancelled(true);
+        Bukkit.broadcastMessage(ChatColor.GREEN + "[GAME] " + ChatColor.RED + "[ADMIN] " + player.getName() + ChatColor.WHITE + ": " + msg);
     }
 
     @EventHandler
@@ -461,6 +471,19 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             }
             buildCages();
             sendPlayersToCages();
+            for(Player player : Bukkit.getOnlinePlayers()){
+                String opponent;
+                if(Team.getTeam(player) == TeamType.RED){
+                    List<String> blueTeam = Team.getBlueTeam();
+                    opponent = blueTeam.toString().replace("[", "").replace("]", "");
+                    ChatBroadcasts.gameStartMessage(player, opponent);
+                }else{
+                    List<String> redTeam = Team.getRedTeam();
+                    opponent = redTeam.toString().replace("[", "").replace("]", "");
+                    ChatBroadcasts.gameStartMessage(player, opponent);
+                }
+
+            }
         }
 
         if (label.equalsIgnoreCase("myteam")) {
