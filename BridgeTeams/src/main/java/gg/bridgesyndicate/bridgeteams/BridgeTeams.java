@@ -23,7 +23,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -301,7 +300,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         editSession.enableQueue();
         for (TeamType team : Team.getTeams()) {
             Location cageLocation = Team.getCageLocation(team);
-            final File schematic = new File("C:/Users/benal/Desktop/spigot/plugins/schematics/mushroomcage.schematic");
+            final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
             try {
                 SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
                 CuboidClipboard clipboard = schematicFormat.load(schematic);
@@ -316,13 +315,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             public void run() {
                 Bukkit.broadcastMessage("FIGHT!");
                 editSession.undo(editSession);
-            }
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    player.setGameMode(GameMode.SURVIVAL);
+                }
+                }
         }, 100);
     }
 
     private void sendPlayersToCages() {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setGameMode(GameMode.ADVENTURE);
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
