@@ -55,6 +55,11 @@ public class Team
         return Team.redTeam.contains(player.getName()) ? ChatColor.RED : ChatColor.BLUE;
     }
 
+    public static ChatColor getOpponentChatColor(final Player player) {
+        return Team.redTeam.contains(player.getName()) ? ChatColor.BLUE : ChatColor.RED;
+    }
+
+
     public static String getTeamName(final Player player) {
         return Team.redTeam.contains(player.getName()) ? "Red Team" : "Blue Team";
     }
@@ -120,6 +125,22 @@ public class Team
 
     public static short getBlockColor(Player player) {
         return Team.redTeam.contains(player.getName()) ? (short) 14 : (short) 11;
+    }
+
+    public static String getScoreboardName(Player player) {
+        return Team.redTeam.contains(player.getName()) ? "Red" : "Blue";
+    }
+
+    public static List<String> getPlayers(TeamType team) {
+        if (team == TeamType.RED) {
+            return (redTeam);
+        } else {
+            return (blueTeam);
+        }
+    }
+
+    public static TeamType getOpposingTeam(TeamType team) {
+        return (team == TeamType.RED) ? TeamType.BLUE : TeamType.RED;
     }
 }
 

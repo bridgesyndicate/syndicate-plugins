@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class Inventory {
 
-    public static void setInventory(Player player) {
+    public static void setDefaultInventory(Player player) {
         // HOTBAR
         player.getInventory().clear();
         ItemStack ironSword = new ItemStack(Material.IRON_SWORD);

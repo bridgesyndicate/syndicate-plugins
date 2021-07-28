@@ -43,5 +43,7 @@
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.4" level="project" />
     <orderEntry type="library" name="Maven: com.sk89q.lib:jlibnoise:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.sk89q:jchronic:0.2.4a" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.juneau:juneau-marshall:8.2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.13" level="project" />
   </component>
 </module>

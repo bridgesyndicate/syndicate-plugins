@@ -81,22 +81,16 @@ public class ChatBroadcasts {
         Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
     }
 
-    public static void gameStartMessage(Player player, String opponent){
+    public static void gameStartMessage(Player player, String opponentNames){
 
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                             The Bridge Duel");
-        player.sendMessage(" ");
-        player.sendMessage(" ");
         player.sendMessage(ChatColor.YELLOW + "                    Cross the bridge to score goals.");
         player.sendMessage(ChatColor.YELLOW + "           Knock off your opponent to gain a clear path.");
         player.sendMessage(" ");
         player.sendMessage(" ");
         player.sendMessage(ChatColor.YELLOW + "                  First player to score 5 goals wins!");
-        player.sendMessage(" ");
-        player.sendMessage(" ");
-        player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + ChatColor.RESET + "" + ChatColor.RED + "[ADMIN] " + opponent);
-        player.sendMessage(" ");
-        player.sendMessage(" ");
+        player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + Team.getOpponentChatColor(player) + opponentNames);
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
     }

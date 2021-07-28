@@ -28,6 +28,18 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Class-Path>lib/juneau-marshall-8.2.0.jar lib/httpcore-4.4.13.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -77,6 +89,11 @@
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-core</artifactId>
             <version>6.1.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.juneau</groupId>
+            <artifactId>juneau-marshall</artifactId>
+            <version>8.2.0</version>
         </dependency>
     </dependencies>
 </project>
