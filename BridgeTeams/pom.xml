@@ -78,5 +78,10 @@
             <artifactId>worldedit-core</artifactId>
             <version>6.1.4-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.azbh111</groupId>
+            <artifactId>craftbukkit-1.8.8</artifactId>
+            <version>R</version>
+        </dependency>
     </dependencies>
 </project>

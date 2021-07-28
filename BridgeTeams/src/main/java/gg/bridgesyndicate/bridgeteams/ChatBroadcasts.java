@@ -2,6 +2,7 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
@@ -44,9 +45,21 @@ public class ChatBroadcasts {
 
     public static void redScoreMessage(Player player){
 
-        double health = player.getHealth();
-        DecimalFormat format = new DecimalFormat("##.#");
-        String heartValue = format.format(health);
+        CraftPlayer craft = (CraftPlayer) player;
+        float absFloat = craft.getHandle().getAbsorptionHearts();
+        int absInt = (int) absFloat;
+
+        String heartValue;
+
+        if(absInt == 0){
+            double health = player.getHealth();
+            DecimalFormat format = new DecimalFormat("##.#");
+            heartValue = format.format(health);
+        }
+        else{
+            int heartInt = (20 + absInt);
+            heartValue = String.valueOf(heartInt);
+        }
 
         Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         Bukkit.broadcastMessage(" ");
@@ -64,9 +77,21 @@ public class ChatBroadcasts {
 
     public static void blueScoreMessage(Player player){
 
-        double health = player.getHealth();
-        DecimalFormat format = new DecimalFormat("##.#");
-        String heartValue = format.format(health);
+        CraftPlayer craft = (CraftPlayer) player;
+        float absFloat = craft.getHandle().getAbsorptionHearts();
+        int absInt = (int) absFloat;
+
+        String heartValue;
+
+        if(absInt == 0){
+            double health = player.getHealth();
+            DecimalFormat format = new DecimalFormat("##.#");
+            heartValue = format.format(health);
+        }
+        else{
+            int heartInt = (20 + absInt);
+            heartValue = String.valueOf(heartInt);
+        }
 
         Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
         Bukkit.broadcastMessage(" ");

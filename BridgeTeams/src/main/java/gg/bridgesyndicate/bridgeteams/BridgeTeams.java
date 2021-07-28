@@ -8,23 +8,26 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.IChatBaseComponent;
+import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -34,6 +37,7 @@ import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +52,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final  HashMap<UUID, String> lastdamager = new HashMap<UUID, String>();
     public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
+    private static String scorer = null;
 
 
     @Override
@@ -64,6 +69,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         resetPlayer(player);
         setBoard(player);
 
+
     }
 
     public void resetPlayer(Player player){
@@ -72,6 +78,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setSaturation(20);
         player.setNoDamageTicks(50);
         player.getInventory().clear();
+        player.getInventory().setHelmet(null);
+        player.getInventory().setChestplate(null);
+        player.getInventory().setLeggings(null);
+        player.getInventory().setBoots(null);
 
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
@@ -247,6 +257,19 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void placeBlocksInCage(PlayerInteractEvent event){
+        Player player = event.getPlayer();
+        if(player.getGameMode() == GameMode.ADVENTURE){
+            if(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() ==  Action.RIGHT_CLICK_BLOCK){
+                if(player.getItemInHand().getType() == Material.STAINED_CLAY){
+                    player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+                    player.playSound(player.getLocation(), Sound.DIG_STONE, 1.0f, 0.8f);
+                }
+            }
+        }
+    }
+
     private void sendDeadPlayerToSpawn(Player player) {
         player.setHealth(20.0);
         player.setFoodLevel(20);
@@ -282,10 +305,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void toteScore(Player player, GoalMeta goal) {
 
         GameScore score = GameScore.getInstance();
-        buildCages();
-        sendPlayersToCages();
         if (Team.getTeam(player) != goal.getTeam()) {
             score.increment(Team.getTeam(player));
+            scorer = "" + Team.getChatColor(player) + "" + player.getName() + " scored!";
 
             UUID ScorerId = player.getUniqueId();
             int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
@@ -299,6 +321,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Scoreboard board = player.getScoreboard();
             board.getTeam("goals").setSuffix("" + newGoals);
         }
+        buildCages();
+        sendPlayersToCages();
 
     }
 
@@ -324,23 +348,87 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             @Override
             public void run() {
-                Bukkit.broadcastMessage("FIGHT!");
+                Bukkit.broadcastMessage("");
                 for(Player player : Bukkit.getOnlinePlayers()){
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
+                    player.setGameMode(GameMode.SURVIVAL);
                 }
                 editSession.undo(editSession);
             }
         }, 100);
+
+    }
+
+    public void sendTitles(Player player){
+
+        String scorerName;
+
+        if(scorer != null){
+            scorerName = scorer;
+        }
+        else{
+            scorerName = "";
+        }
+
+        Title five = new Title("" + scorerName,"&7Cages open in: &a5s&7...",0,3,0);
+        five.send(player);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Title four = new Title("" + scorerName,"&7Cages open in: &a4s&7...",0,3,0);
+                four.send(player);
+                player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
+            }
+        }.runTaskLater(this, 20);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Title three = new Title("" + scorerName,"&7Cages open in: &a3s&7...",0,3,0);
+                three.send(player);
+                player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
+            }
+        }.runTaskLater(this, 40);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Title two = new Title("" + scorerName,"&7Cages open in: &a2s&7...",0,3,0);
+                two.send(player);
+                player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
+            }
+        }.runTaskLater(this, 60);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Title one = new Title("" + scorerName,"&7Cages open in: &a1s&7...",0,3,0);
+                one.send(player);
+                player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
+            }
+        }.runTaskLater(this, 80);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Title fight = new Title("","&aFight!",0,1,1);
+                fight.send(player);
+            }
+        }.runTaskLater(this, 100);
+
     }
 
     private void sendPlayersToCages() {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setGameMode(GameMode.ADVENTURE);
+            player.teleport(Team.getCagePlayerLocation(player));
+            player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
+            sendTitles(player);
             player.setHealth(20.0);
             player.setFoodLevel(20);
             player.setSaturation(20);
-            player.teleport(Team.getCagePlayerLocation(player));
             Inventory.setInventory(player);
+            for (PotionEffect effect : player.getActivePotionEffects()) {
+                player.removePotionEffect(effect.getType());
+            }
 
         }
 
@@ -372,17 +460,104 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onBowHit(EntityDamageByEntityEvent event) {
 
+        Entity entityVictim = event.getEntity();
         Entity entityHitter = event.getDamager();
 
-        if (entityHitter instanceof Arrow) {
-            Player shoota = (Player) entityHitter;
-            shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
-        }
+        if (entityHitter instanceof Arrow && entityVictim instanceof Player) {
 
+            Arrow arrow = (Arrow) entityHitter;
+            if(arrow.getShooter() instanceof Player) {
+                Player shoota = (Player) arrow.getShooter();
+                Player shot = (Player) entityVictim;
+
+                double shotHealth = shot.getHealth();
+                DecimalFormat format = new DecimalFormat("##.#");
+                String heartValue = format.format(shotHealth);
+
+                String shotName = shot.getName();
+                shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + heartValue + ChatColor.GRAY + " HP!");
+                shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
+
+                CraftPlayer craft = (CraftPlayer) shot;
+                float absFloat = craft.getHandle().getAbsorptionHearts();
+                int absInt = (int) absFloat;
+
+                int health = (int)(shot.getHealth() - event.getFinalDamage())/2;
+                double dmgD = event.getFinalDamage()/2;
+                int dmg = (int) Math.round(dmgD);
+                int goneHealth = 10 - (health + dmg);
+
+                String damage = ActionBarHealth.formatDamage(dmg);
+                String hearts = ActionBarHealth.formatHealth(health);
+                String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
+                String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
+
+                if(health >= 0){
+                    if(absInt > 0){
+
+                        ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(shot) + "" + shotName + " "
+                                + hearts + goldHearts);
+                        showHearts.sendToPlayer(shoota);
+
+                    }else{
+
+                        ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(shot) + "" + shotName + " "
+                                + hearts + damage + blackHearts);
+                        showHearts.sendToPlayer(shoota);
+
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDamage(EntityDamageByEntityEvent event) {
+
+        Entity entityVictim = event.getEntity();
+        Entity entityHitter = event.getDamager();
+
+        if (entityHitter instanceof Player && entityVictim instanceof Player) {
+
+            Player hitter = (Player) entityHitter;
+            Player hit = (Player) entityVictim;
+
+            CraftPlayer craft = (CraftPlayer) hit;
+            float absFloat = craft.getHandle().getAbsorptionHearts();
+            int absInt = (int) absFloat;
+
+            String hitName = hit.getName();
+            int health = (int)(hit.getHealth() - event.getFinalDamage())/2;
+            double dmgD = event.getFinalDamage()/2;
+            int dmg = (int) Math.round(dmgD);
+            int goneHealth = 10 - (health + dmg);
+
+            String damage = ActionBarHealth.formatDamage(dmg);
+            String hearts = ActionBarHealth.formatHealth(health);
+            String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
+            String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
+
+            if(health >= 0){
+                if(absInt > 0){
+
+                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
+                            + hearts + goldHearts);
+                    showHearts.sendToPlayer(hitter);
+
+                }else{
+
+                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
+                            + hearts + damage + blackHearts);
+                    showHearts.sendToPlayer(hitter);
+
+                }
+            }
+        }
     }
 
     @EventHandler
     public void playerMove(PlayerMoveEvent e) {
+
         Player player = e.getPlayer();
 
         if (player.getLocation().getY() < 83) {
@@ -419,8 +594,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             checkForGoal(player);
         }
     }
-
-    
 
     public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
 
@@ -492,6 +665,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (label.equalsIgnoreCase("myteam")) {
             commandSender.sendMessage(Team.getTeamName((Player) commandSender));
         }
+
         return true;
 
     }
