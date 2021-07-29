@@ -16,10 +16,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -28,6 +25,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -38,10 +36,8 @@ import org.bukkit.util.Vector;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
@@ -169,6 +165,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Objective o = board.registerNewObjective("health", "health");
         o.setDisplayName(ChatColor.RED + "❤");
         o.setDisplaySlot(DisplaySlot.BELOW_NAME);
+
+        Objective j = board.registerNewObjective("health2","health");
+        j.setDisplaySlot(DisplaySlot.PLAYER_LIST);
     }
 
     @EventHandler
@@ -271,6 +270,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void sendDeadPlayerToSpawn(Player player) {
+
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
@@ -323,6 +323,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         buildCages();
         sendPlayersToCages();
+        spawnFireworks(player);
 
     }
 
@@ -412,6 +413,76 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 fight.send(player);
             }
         }.runTaskLater(this, 100);
+
+    }
+
+    private void spawnFireworks(Player player){
+
+
+        sendFirework(player);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                sendFirework(player);
+            }
+        }.runTaskLater(this, 20);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                sendFirework(player);
+            }
+        }.runTaskLater(this, 40);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                sendFirework(player);
+            }
+        }.runTaskLater(this, 60);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                sendFirework(player);
+            }
+        }.runTaskLater(this, 80);
+
+    }
+
+    private void sendFirework(Player player) {
+
+        Location l = new Location(Bukkit.getWorld("world"), 0.5, 97, 0.5);
+
+        int randomX = ThreadLocalRandom.current().nextInt(-10, 10 + 1);
+        int randomY = ThreadLocalRandom.current().nextInt(95, 104 + 1);
+        int randomZ = ThreadLocalRandom.current().nextInt(-10, 10 + 1);
+        l.setX(randomX);
+        l.setY(randomY);
+        l.setZ(randomZ);
+
+        Random r = new Random();
+
+        int rt = r.nextInt(5) + 1;
+        FireworkEffect.Type type = FireworkEffect.Type.BALL;
+        if (rt == 2) type = FireworkEffect.Type.BALL_LARGE;
+        if (rt == 3) type = FireworkEffect.Type.BURST;
+        if (rt == 4) type = FireworkEffect.Type.CREEPER;
+        if (rt == 5) type = FireworkEffect.Type.STAR;
+
+        Firework fw = (Firework) Bukkit.getWorld("world").spawnEntity(l, EntityType.FIREWORK);
+        FireworkMeta fwm = fw.getFireworkMeta();
+        fwm.setPower(0);
+        if (Team.getTeam(player) == TeamType.RED) {
+            fwm.addEffect(FireworkEffect.builder().flicker(true).withColor(Color.RED).withFade(Color.WHITE).with(type).build());
+        } else {
+            fwm.addEffect(FireworkEffect.builder().flicker(true).withColor(Color.BLUE).withFade(Color.WHITE).with(type).build());
+        }
+        fw.setFireworkMeta(fwm);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                fw.detonate();
+            }
+        }.runTaskLater(this, 2);
 
     }
 
