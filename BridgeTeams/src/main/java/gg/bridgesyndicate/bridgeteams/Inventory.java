@@ -55,7 +55,7 @@ public class Inventory {
 
         ItemStack blocks1 = new ItemStack(Material.STAINED_CLAY, 64);
 
-        blocks1.setDurability(Team.getBlockColor(player));
+        blocks1.setDurability(MatchTeam.getBlockColor(player));
 
         player.getInventory().setItem(3, blocks1);
         player.getInventory().setItem(4, blocks1);
@@ -84,8 +84,8 @@ public class Inventory {
         ItemStack chest = new ItemStack(Material.LEATHER_CHESTPLATE);
 
         LeatherArmorMeta leatherArmorMeta = (LeatherArmorMeta) chest.getItemMeta();
-        leatherArmorMeta.setColor(Team.getArmorColor(player));
-        leatherArmorMeta.setDisplayName(Team.getChatColor(player) + Team.getTeamName(player));
+        leatherArmorMeta.setColor(MatchTeam.getArmorColor(player));
+        leatherArmorMeta.setDisplayName(MatchTeam.getChatColor(player) + MatchTeam.getTeamName(player));
         leatherArmorMeta.spigot().setUnbreakable(true);
 
         chest.setItemMeta(leatherArmorMeta);

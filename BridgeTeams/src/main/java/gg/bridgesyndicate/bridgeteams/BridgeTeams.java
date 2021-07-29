@@ -5,7 +5,6 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
 import org.apache.juneau.json.JsonParser;
@@ -39,27 +38,33 @@ import java.util.*;
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private static final int MAX_BLOCKS = 10000;
-    static WorldEditPlugin worldEditPlugin;
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
     private static final  HashMap<UUID, String> lastdamager = new HashMap<UUID, String>();
     public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
     private static Game game = null;
+    public enum scoreboardSections { TIMER }
 
+    private void printWorldRules(){
+        for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
+            System.out.println(gameRule + " : " + Bukkit.getWorld("world").getGameRuleValue(gameRule));
+        }
+    }
 
     @Override
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
-        worldEditPlugin = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
+        Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
+        Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         String jsonFromAwsSqs = "{\n" +
                 "  \"blueTeam\": [\n" +
                 "    \"vice9\"\n" +
                 "  ],\n" +
                 "  \"requiredPlayers\": 2,\n" +
                 "  \"redTeam\": [\n" +
-                "    \"KIIER\"\n" +
+                "    \"NitroholicPls\"\n" +
                 "  ]\n" +
                 "}\n";
         JsonParser jsonParser = JsonParser.DEFAULT;
@@ -105,20 +110,20 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
         title.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        org.bukkit.scoreboard.Team Red = board.registerNewTeam("Red");
+        Team Red = board.registerNewTeam("Red");
         Red.setPrefix(ChatColor.RED + "");
         Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
 
-        org.bukkit.scoreboard.Team Blue = board.registerNewTeam("Blue");
+        Team Blue = board.registerNewTeam("Blue");
         Blue.setPrefix(ChatColor.BLUE + "");
         Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
 
-        org.bukkit.scoreboard.Team kill = board.registerNewTeam("kills");
+        Team kill = board.registerNewTeam("kills");
         kill.setSuffix("0");
         kill.addEntry("Kills: §a");
         title.getScore("Kills: §a").setScore(8);
 
-        org.bukkit.scoreboard.Team timer = board.registerNewTeam("timer");
+        Team timer = board.registerNewTeam("timer");
         timer.addEntry("Time Left: §a");
         timer.setSuffix("15:00");
         timer.setPrefix("");
@@ -195,10 +200,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         killerboard.getTeam("kills").setSuffix("" + newKills);
 
-        String deathMessage = Team.getChatColor(player).toString() +
+        String deathMessage = MatchTeam.getChatColor(player).toString() +
                 killedString +
                 ChatColor.GRAY + " was killed by " +
-                Team.getChatColor(killer) + killerString +
+                MatchTeam.getChatColor(killer) + killerString +
                 ChatColor.GRAY + ".";
         event.setDeathMessage(deathMessage);
         event.setDroppedExp(0);
@@ -207,7 +212,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void sendDeadPlayerToSpawn(Player player) {
         resetPlayerHealthAndInventory(player);
-        player.teleport(Team.getSpawnLocation(player));
+        player.teleport(MatchTeam.getSpawnLocation(player));
         zeroPlayerVelocity(player);
         player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
@@ -283,13 +288,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void toteScore(Player player, GoalMeta goal) {
         GameScore score = GameScore.getInstance();
         cagePlayers();
-        if (Team.getTeam(player) != goal.getTeam()) {
-            score.increment(Team.getTeam(player));
+        if (MatchTeam.getTeam(player) != goal.getTeam()) {
+            score.increment(MatchTeam.getTeam(player));
 
             UUID ScorerId = player.getUniqueId();
             int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
 
-            if (Team.getTeam(player) == TeamType.RED) {
+            if (MatchTeam.getTeam(player) == TeamType.RED) {
                 ChatBroadcasts.redScoreMessage(player);
             } else {
                 ChatBroadcasts.blueScoreMessage(player);
@@ -308,8 +313,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void buildCages() {
         EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
         editSession.enableQueue();
-        for (TeamType team : Team.getTeams()) {
-            Location cageLocation = Team.getCageLocation(team);
+        for (TeamType team : MatchTeam.getTeams()) {
+            Location cageLocation = MatchTeam.getCageLocation(team);
             final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
             try {
                 SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
@@ -342,18 +347,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             resetPlayerHealthAndInventory(player);
             setGameModeForPlayer(player);
-            player.teleport(Team.getCagePlayerLocation(player));
+            player.teleport(MatchTeam.getCagePlayerLocation(player));
         }
     }
 
     public void checkForGoal(Player player) {
         if ( game.getState() != Game.GameState.DURING_GAME ) return;
         final List<GoalMeta> goalList = new ArrayList<>();
-        goalList.add(Team.getBlueGoalMeta());
-        goalList.add(Team.getRedGoalMeta());
+        goalList.add(MatchTeam.getBlueGoalMeta());
+        goalList.add(MatchTeam.getRedGoalMeta());
 
         for (GoalMeta goal : goalList) {
-            if (Team.getTeam(player) != goal.getTeam()) {
+            if (MatchTeam.getTeam(player) != goal.getTeam()) {
                 if (goal.getBoundingBox().contains(
                         player.getLocation().getX(),
                         player.getLocation().getY(),
@@ -398,8 +403,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     Scoreboard board = damager.getScoreboard();
                     board.getTeam("kills").setSuffix("" + newKills);
 
-                    Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
-                            + Team.getChatColor(damager) + killer + ChatColor.GRAY + ".");
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
+                            + MatchTeam.getChatColor(damager) + killer + ChatColor.GRAY + ".");
 
                     damager.playSound(damager.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
 
@@ -408,7 +413,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             } else {
                 if (game.getState() == Game.GameState.DURING_GAME) {
                     String killed = player.getName();
-                    Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
                 }
             }
 
@@ -430,7 +435,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             System.err.println("Game not initialized!");
             return;
         }
-        // resetPlayer(player);
         // set waiting board
         // cancel death inventory reset, death messages, pvp, and scoring
         if (game.hasPlayer(player)) {
@@ -451,7 +455,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 sendDeadPlayerToSpawn(player);
                 break;
             case CAGED:
-                player.teleport(Team.getCagePlayerLocation(player));
+                player.teleport(MatchTeam.getCagePlayerLocation(player));
                 break;
             default:
                 // do nothing
@@ -465,6 +469,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 player.getInventory().clear();
                 break;
             case DURING_GAME:
+            case CAGED:
                 Inventory.setDefaultInventory(player);
                 break;
             default:
@@ -489,15 +494,59 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    private void startGame() {
-        System.out.println("startGame()");
-        game.setState(Game.GameState.DURING_GAME);
+    private void buildScoreboards() {
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+            String playerName = it.next();
+            createScoreboardForPlayer(manager, Bukkit.getPlayer(playerName));
+        }
+    }
 
-        for (TeamType team : Team.getTeams()) {
-            for (String playerName : Team.getPlayers(team)) {
+    public void createScoreboardForPlayer(ScoreboardManager manager, Player player) {
+        Scoreboard board = manager.getNewScoreboard();
+        player.setScoreboard(board);
+
+        Objective title = board.registerNewObjective("title", "dummy");
+        title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
+        title.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        org.bukkit.scoreboard.Team timer = board.registerNewTeam(String.valueOf(scoreboardSections.TIMER));
+        timer.addEntry("Time Left: §a");
+        timer.setSuffix("15:00");
+        timer.setPrefix("");
+        title.getScore("Time Left: §a").setScore(13);
+    }
+
+    private void startGame() {
+        cagePlayers();
+        buildScoreboards();
+        broadcastStartMessages();
+        buildScoreboards();
+        startClock();
+    }
+
+    private void startClock() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                String timeRemaining = game.getRemainingTime();
+                for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+                    String playerName = it.next();
+                    Player player = Bukkit.getPlayer(playerName);
+                    Scoreboard board = player.getScoreboard();
+                    Team timer = board.getTeam(String.valueOf(scoreboardSections.TIMER));
+                    timer.setSuffix(timeRemaining);
+                }
+            }
+        }.runTaskTimer(this, 0, 20);
+    }
+
+    private void broadcastStartMessages() {
+        for (TeamType team : MatchTeam.getTeams()) {
+            for (String playerName : MatchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = Team.getOpposingTeam(team);
-                String opponentNames = String.join(", ", Team.getPlayers(opposingTeam));
+                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
                 ChatBroadcasts.gameStartMessage(player, opponentNames);
             }
         }
@@ -528,7 +577,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void assignToTeam(Player player) {
         TeamType teamColor = game.getTeam(player);
-        Team.addToTeam(teamColor, player);
+        MatchTeam.addToTeam(teamColor, player);
 //        Scoreboard board = player.getScoreboard();
 //        System.out.println("Scoreboard board: " + board);
 //        System.out.println("Your scoreboard team is :" + Team.getScoreboardName(player));
@@ -562,25 +611,25 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             int i = 0;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (i < Bukkit.getOnlinePlayers().toArray().length / 2) {
-                    Team.addToTeam(TeamType.RED, player);
+                    MatchTeam.addToTeam(TeamType.RED, player);
                     Scoreboard board = player.getScoreboard();
                     org.bukkit.scoreboard.Team Red = board.getTeam("Red");
                     Red.addEntry(player.getName());
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            List<String> blueTeam = Team.getBlueTeam();
+                            List<String> blueTeam = MatchTeam.getBlueTeam();
                             String blueTeamString = blueTeam.toString().replace("[", "").replace("]", "");
                             org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
                             Blue.addEntry(blueTeamString);
                         }
                     }.runTaskLater(this, 1);
                 } else {
-                    Team.addToTeam(TeamType.BLUE, player);
+                    MatchTeam.addToTeam(TeamType.BLUE, player);
                     Scoreboard board = player.getScoreboard();
                     org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
                     Blue.addEntry(player.getName());
-                    List<String> redTeam = Team.getRedTeam();
+                    List<String> redTeam = MatchTeam.getRedTeam();
                     String redTeamString = redTeam.toString().replace("[", "").replace("]", "");
                     org.bukkit.scoreboard.Team Red = board.getTeam("Red");
                     Red.addEntry(redTeamString);
@@ -592,12 +641,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             cagePlayers();
             for(Player player : Bukkit.getOnlinePlayers()){
                 String opponent;
-                if(Team.getTeam(player) == TeamType.RED){
-                    List<String> blueTeam = Team.getBlueTeam();
+                if(MatchTeam.getTeam(player) == TeamType.RED){
+                    List<String> blueTeam = MatchTeam.getBlueTeam();
                     opponent = blueTeam.toString().replace("[", "").replace("]", "");
                     ChatBroadcasts.gameStartMessage(player, opponent);
                 }else{
-                    List<String> redTeam = Team.getRedTeam();
+                    List<String> redTeam = MatchTeam.getRedTeam();
                     opponent = redTeam.toString().replace("[", "").replace("]", "");
                     ChatBroadcasts.gameStartMessage(player, opponent);
                 }
@@ -606,7 +655,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
 
         if (label.equalsIgnoreCase("myteam")) {
-            commandSender.sendMessage(Team.getTeamName((Player) commandSender));
+            commandSender.sendMessage(MatchTeam.getTeamName((Player) commandSender));
         }
         return true;
 
@@ -624,7 +673,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void onDisable(){
-        Team.clearTeams();
+        MatchTeam.clearTeams();
     }
 }
 

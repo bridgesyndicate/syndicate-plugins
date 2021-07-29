@@ -90,7 +90,7 @@ public class ChatBroadcasts {
         player.sendMessage(" ");
         player.sendMessage(" ");
         player.sendMessage(ChatColor.YELLOW + "                  First player to score 5 goals wins!");
-        player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + Team.getOpponentChatColor(player) + opponentNames);
+        player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + MatchTeam.getOpponentChatColor(player) + opponentNames);
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬");
 
     }

@@ -10,15 +10,21 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Game {
     private final int requiredPlayers;
     private GameState state;
     private List redTeam;
     private List blueTeam;
+    private HashSet<String> joinedPlayers = new HashSet();
+    private GameTimer gameTimer;
 
-    private HashSet joinedPlayers = new HashSet();
+    public Iterator<String> getJoinedPlayers() {
+        return joinedPlayers.iterator();
+    }
 
     public List getRedTeam() {
         return redTeam;
@@ -34,6 +40,10 @@ public class Game {
 
     public void setBlueTeam(List blueTeam) {
         this.blueTeam = blueTeam;
+    }
+
+    public String getRemainingTime() {
+        return gameTimer.getRemainingTime();
     }
 
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
@@ -55,6 +65,9 @@ public class Game {
     }
 
     public void setState(GameState state) {
+        if (this.state == GameState.BEFORE_GAME && state == GameState.CAGED) { //only happens once
+            gameTimer = new GameTimer();
+        }
         this.state = state;
     }
 
@@ -62,16 +75,20 @@ public class Game {
         return requiredPlayers;
     }
 
-    public static void main(String[] args) throws SerializeException, ParseException {
-        Game myGame = new Game(2,
-                Arrays.asList(new String[]{"KIIER"}),
-                Arrays.asList(new String[]{"vice9"}));
-        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-        String foo = jsonSerializer.serialize(myGame);
-        JsonParser jsonParser = JsonParser.DEFAULT;
-        Game dgame = jsonParser.parse(foo, Game.class);
-        String foo2 = jsonSerializer.serialize(dgame);
-        System.out.println(foo2);
+    public static void main(String[] args) throws SerializeException, ParseException, InterruptedException {
+        long gameStartedUnixTime = System.currentTimeMillis();
+        long endTime = gameStartedUnixTime + 900_000;
+        while (true) {
+            long currentTime = System.currentTimeMillis();
+            long remainingTimeInMillis = endTime - currentTime;
+            int remainingTimeInSeconds = (int) Math.ceil( (float) remainingTimeInMillis / 1000 );
+            int remainingMinutes = remainingTimeInSeconds % 3600 / 60;
+            System.out.println(
+                        String.format("%02d", remainingMinutes) +
+                                ":" +
+                                String.format("%02d", remainingTimeInSeconds % 60));
+            java.lang.Thread.sleep(1000);
+        }
     }
 
     public boolean hasPlayer(Player player) {
