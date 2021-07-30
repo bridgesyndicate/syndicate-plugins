@@ -15,16 +15,20 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -45,6 +49,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public static int timeLeft = 900;
     private static Game game = null;
     public enum scoreboardSections { TIMER }
+    private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
 
     private void printWorldRules(){
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -58,6 +63,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
+        Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
+        Bukkit.getWorld("world").setTime(1000);
         String jsonFromAwsSqs = "{\n" +
                 "  \"blueTeam\": [\n" +
                 "    \"vice9\"\n" +
@@ -87,7 +94,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    public void resetPlayerHealthAndInventory(Player player){
+
+            public void resetPlayerHealthAndInventory(Player player){
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
@@ -292,7 +300,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             score.increment(MatchTeam.getTeam(player));
 
             UUID ScorerId = player.getUniqueId();
-            int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
+            goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
 
             if (MatchTeam.getTeam(player) == TeamType.RED) {
                 ChatBroadcasts.redScoreMessage(player);
@@ -300,8 +308,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 ChatBroadcasts.blueScoreMessage(player);
             }
 
-            Scoreboard board = player.getScoreboard();
-            board.getTeam("goals").setSuffix("" + newGoals);
+            // Scoreboard board = player.getScoreboard();
+            // board.getTeam("goals").setSuffix("" + newGoals);
         }
 
     }
@@ -427,6 +435,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        event.setJoinMessage("");
         Bukkit.broadcastMessage("Welcome to the server " + player.getName() + "!");
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
@@ -506,15 +515,30 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Scoreboard board = manager.getNewScoreboard();
         player.setScoreboard(board);
 
-        Objective title = board.registerNewObjective("title", "dummy");
-        title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
-        title.setDisplaySlot(DisplaySlot.SIDEBAR);
+        Objective objective = board.registerNewObjective("title", "dummy");
+        objective.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        org.bukkit.scoreboard.Team timer = board.registerNewTeam(String.valueOf(scoreboardSections.TIMER));
-        timer.addEntry("Time Left: §a");
+        Team timer = board.registerNewTeam(String.valueOf(scoreboardSections.TIMER));
+        timer.addEntry(TIMER_STRING);
         timer.setSuffix("15:00");
         timer.setPrefix("");
-        title.getScore("Time Left: §a").setScore(13);
+        objective.getScore(TIMER_STRING).setScore(0);
+
+        GameScore.initialize(board, objective);
+
+        // getScore() sets a line with that string. Go figure.
+//        Score redGoals = objective.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
+//        Score blueGoals = objective.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
+//        blueGoals.setScore(0);
+//        redGoals.setScore(0);
+
+//        redgoals.setScore(10);
+
+//        Team red = board.registerNewTeam(String.valueOf(scoreboardSections.RED));
+//        red.setPrefix(ChatColor.RED + "");
+//        Team blue = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE));
+//        blue.setPrefix(ChatColor.BLUE + "");
     }
 
     private void startGame() {
@@ -533,9 +557,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
                     String playerName = it.next();
                     Player player = Bukkit.getPlayer(playerName);
-                    Scoreboard board = player.getScoreboard();
-                    Team timer = board.getTeam(String.valueOf(scoreboardSections.TIMER));
-                    timer.setSuffix(timeRemaining);
+                    if (player != null) {
+                        Scoreboard board = player.getScoreboard();
+                        Team timer = board.getTeam(String.valueOf(scoreboardSections.TIMER));
+                        timer.setSuffix(timeRemaining);
+                    }
                 }
             }
         }.runTaskTimer(this, 0, 20);
@@ -672,8 +698,31 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onQuit(final PlayerQuitEvent e) {
+        e.setQuitMessage("");
+    }
+
     public void onDisable(){
         MatchTeam.clearTeams();
+    }
+
+    @EventHandler
+    public void entityDamageEvent(final EntityDamageEvent event) {
+        if (event.getEntityType() == EntityType.PLAYER) {
+            if (event.getCause() == EntityDamageEvent.DamageCause.FALL){
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void foodChangeEvent(final FoodLevelChangeEvent event) {
+        if (event.getEntityType() == EntityType.PLAYER) {
+            final Player player = (Player)event.getEntity();
+            event.setCancelled(true);
+            player.setFoodLevel(20);
+        }
     }
 }
 

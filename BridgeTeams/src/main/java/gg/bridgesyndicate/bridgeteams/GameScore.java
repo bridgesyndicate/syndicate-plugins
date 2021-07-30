@@ -6,14 +6,20 @@ import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
-
-import java.util.UUID;
+import org.bukkit.scoreboard.Team;
 
 class GameScore {
     private static GameScore single_instance = null;
 
     public static int red;
     public static int blue;
+
+    public enum scoreboardSections { RED_SCORE, BLUE_SCORE }
+
+    private static final String BUBBLE = "⬤";
+
+    private static final String RED_SCORE_LINE = ChatColor.RED + "[R] " + ChatColor.GRAY;
+    private static final String BLUE_SCORE_LINE = ChatColor.BLUE + "[B] " + ChatColor.GRAY;
 
     private GameScore() {
         red = 0;
@@ -34,112 +40,51 @@ class GameScore {
         return blue;
     }
 
+    public static void initialize(Scoreboard board, Objective objective) {
+        Team redScore = board.registerNewTeam(String.valueOf(scoreboardSections.RED_SCORE));
+        redScore.addEntry(RED_SCORE_LINE);
+        redScore.setSuffix(new String(new char[5]).replace("\0", BUBBLE));
+        redScore.setPrefix("");
+        objective.getScore(RED_SCORE_LINE).setScore(0);
+
+        Team blueScore = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE_SCORE));
+        blueScore.addEntry(BLUE_SCORE_LINE);
+        blueScore.setSuffix(new String(new char[5]).replace("\0", BUBBLE));
+        blueScore.setPrefix("");
+        objective.getScore(BLUE_SCORE_LINE).setScore(0);
+    }
+
     public void increment(TeamType playerTeam) {
         if (playerTeam == TeamType.BLUE) {
             blue++;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                updateBlueGoals(blue, player);
-            }
         } else {
             red++;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                updateRedGoals(red, player);
-            }
+        }
+        updateScoreboardScore();
+    }
+
+    private void updateScoreboardScore() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Scoreboard board = player.getScoreboard();
+            Team redScore = board.getTeam(String.valueOf(scoreboardSections.RED_SCORE));
+            redScore.setSuffix(getBubbles(red, ChatColor.RED));
+            Team blueScore = board.getTeam(String.valueOf(scoreboardSections.BLUE_SCORE));
+            blueScore.setSuffix(getBubbles(blue, ChatColor.BLUE));
         }
     }
 
-    public static void updateRedGoals(int red, Player player){
-        Scoreboard board = player.getScoreboard();
-        Objective title = board.getObjective("title");
-        switch (red) {
-            case 0: {
-                Score redgoals = title.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-                redgoals.setScore(10);
-                break;
+    private String getBubbles(int n, ChatColor teamColor) {
+        String bubbles = new String();
+        int idx = 0;
+        while (idx < 5) {
+            if (n > idx) { // team-colored bubble
+                bubbles = bubbles.concat(teamColor + BUBBLE);
+            } else { //grey bubble
+                bubbles = bubbles.concat(ChatColor.GRAY + BUBBLE);
             }
-            case 1: {
-                Score redgoals = title.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-                redgoals.setScore(0);
-                Score redgoals1 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
-                redgoals1.setScore(10);
-                break;
-            }
-            case 2: {
-                Score redgoals1 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
-                redgoals1.setScore(0);
-                Score redgoals2 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤" + ChatColor.GRAY + "⬤⬤⬤");
-                redgoals2.setScore(10);
-                break;
-            }
-            case 3: {
-                Score redgoals2 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤" + ChatColor.GRAY + "⬤⬤⬤");
-                redgoals2.setScore(0);
-                Score redgoals3 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤⬤" + ChatColor.GRAY + "⬤⬤");
-                redgoals3.setScore(10);
-                break;
-            }
-            case 4: {
-                Score redgoals3 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤⬤" + ChatColor.GRAY + "⬤⬤");
-                redgoals3.setScore(0);
-                Score redgoals4 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
-                redgoals4.setScore(10);
-                break;
-            }
-            case 5: {
-                Score redgoals4 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
-                redgoals4.setScore(0);
-                Score redgoals5 = title.getScore(ChatColor.RED + "[R] " + ChatColor.RED + "⬤⬤⬤⬤⬤" + ChatColor.GRAY + "");
-                redgoals5.setScore(10);
-                break;
-            }
+            idx++;
         }
-    }
-
-    public static void updateBlueGoals(int blue, Player player){
-        Scoreboard board = player.getScoreboard();
-        Objective title = board.getObjective("title");
-        switch (blue) {
-            case 0: {
-                Score bluegoals = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-                bluegoals.setScore(10);
-                break;
-            }
-            case 1: {
-                Score bluegoals = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-                bluegoals.setScore(0);
-                Score bluegoals1 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
-                bluegoals1.setScore(10);
-                break;
-            }
-            case 2: {
-                Score bluegoals1 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤" + ChatColor.GRAY + "⬤⬤⬤⬤");
-                bluegoals1.setScore(0);
-                Score bluegoals2 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤" + ChatColor.GRAY + "⬤⬤⬤");
-                bluegoals2.setScore(10);
-                break;
-            }
-            case 3: {
-                Score bluegoals2 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤" + ChatColor.GRAY + "⬤⬤⬤");
-                bluegoals2.setScore(0);
-                Score bluegoals3 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤⬤" + ChatColor.GRAY + "⬤⬤");
-                bluegoals3.setScore(10);
-                break;
-            }
-            case 4: {
-                Score bluegoals3 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤⬤" + ChatColor.GRAY + "⬤⬤");
-                bluegoals3.setScore(0);
-                Score bluegoals4 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
-                bluegoals4.setScore(10);
-                break;
-            }
-            case 5: {
-                Score bluegoals4 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤⬤⬤" + ChatColor.GRAY + "⬤");
-                bluegoals4.setScore(0);
-                Score bluegoals5 = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.BLUE + "⬤⬤⬤⬤⬤" + ChatColor.GRAY + "");
-                bluegoals5.setScore(10);
-                break;
-            }
-        }
+        return(bubbles);
     }
 
     public void printScore() {
