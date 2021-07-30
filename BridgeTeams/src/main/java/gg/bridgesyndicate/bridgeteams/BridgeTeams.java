@@ -5,24 +5,26 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.IChatBaseComponent;
-import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
+import org.apache.juneau.json.JsonParser;
+import org.apache.juneau.parser.ParseException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -42,52 +44,105 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private static final int MAX_BLOCKS = 10000;
-    static WorldEditPlugin worldEditPlugin;
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
     private static final  HashMap<UUID, String> lastdamager = new HashMap<UUID, String>();
     public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
-    private static String scorer = null;
+    private static Game game = null;
+    public enum scoreboardSections { TIMER }
+    private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
 
+    private void printWorldRules(){
+        for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
+            System.out.println(gameRule + " : " + Bukkit.getWorld("world").getGameRuleValue(gameRule));
+        }
+    }
 
     @Override
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
-        worldEditPlugin = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
-        Team.clearTeams();
+        Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
+        Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
+        Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
+        Bukkit.getWorld("world").setTime(1000);
+        String jsonFromAwsSqs = "{\n" +
+                "  \"blueTeam\": [\n" +
+                "    \"vice9\"\n" +
+                "  ],\n" +
+                "  \"requiredPlayers\": 2,\n" +
+                "  \"redTeam\": [\n" +
+                "    \"bdamja\"\n" +
+                "  ]\n" +
+                "}\n";
+        JsonParser jsonParser = JsonParser.DEFAULT;
+        try {
+            game = jsonParser.parse(jsonFromAwsSqs, Game.class);
+        } catch (ParseException e) {
+            System.err.println("Cannot parse game json.");
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        resetPlayer(player);
-        setBoard(player);
+    public void onDamage(EntityDamageByEntityEvent event) {
+        if ( game.getState() != Game.GameState.DURING_GAME &&
+                game.getState() != Game.GameState.CAGED
+        ) {
+            event.setCancelled(true);
+        } else {
+        Entity entityVictim = event.getEntity();
+        Entity entityHitter = event.getDamager();
 
+        if (entityHitter instanceof Player && entityVictim instanceof Player) {
 
+            Player hitter = (Player) entityHitter;
+            Player hit = (Player) entityVictim;
+
+            CraftPlayer craft = (CraftPlayer) hit;
+            float absFloat = craft.getHandle().getAbsorptionHearts();
+            int absInt = (int) absFloat;
+
+            String hitName = hit.getName();
+            int health = (int)(hit.getHealth() - event.getFinalDamage())/2;
+            double dmgD = event.getFinalDamage()/2;
+            int dmg = (int) Math.round(dmgD);
+            int goneHealth = 10 - (health + dmg);
+
+            String damage = ActionBarHealth.formatDamage(dmg);
+            String hearts = ActionBarHealth.formatHealth(health);
+            String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
+            String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
+
+            if(health >= 0){
+                if(absInt > 0){
+
+                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
+                            + hearts + goldHearts);
+                    showHearts.sendToPlayer(hitter);
+
+                }else{
+
+                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
+                            + hearts + damage + blackHearts);
+                    showHearts.sendToPlayer(hitter);
+
+                }
+            }
+        }
     }
 
-    public void resetPlayer(Player player){
+
+    public void resetPlayerHealthAndInventory(Player player){
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
-        player.setNoDamageTicks(50);
-        player.getInventory().clear();
-        player.getInventory().setHelmet(null);
-        player.getInventory().setChestplate(null);
-        player.getInventory().setLeggings(null);
-        player.getInventory().setBoots(null);
-
+        setInventoryForPlayer(player);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
-
-        Vector v = player.getVelocity();
-        v.setX(0);
-        v.setY(0);
-        v.setZ(0);
-
+        zeroPlayerVelocity(player);
     }
 
     public void setBoard(Player player) {
@@ -102,20 +157,20 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
         title.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        org.bukkit.scoreboard.Team Red = board.registerNewTeam("Red");
+        Team Red = board.registerNewTeam("Red");
         Red.setPrefix(ChatColor.RED + "");
         Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
 
-        org.bukkit.scoreboard.Team Blue = board.registerNewTeam("Blue");
+        Team Blue = board.registerNewTeam("Blue");
         Blue.setPrefix(ChatColor.BLUE + "");
         Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
 
-        org.bukkit.scoreboard.Team kill = board.registerNewTeam("kills");
+        Team kill = board.registerNewTeam("kills");
         kill.setSuffix("0");
         kill.addEntry("Kills: §a");
         title.getScore("Kills: §a").setScore(8);
 
-        org.bukkit.scoreboard.Team timer = board.registerNewTeam("timer");
+        Team timer = board.registerNewTeam("timer");
         timer.addEntry("Time Left: §a");
         timer.setSuffix("15:00");
         timer.setPrefix("");
@@ -182,6 +237,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onDeathOfPlayer(PlayerDeathEvent event) {
         Player player = event.getEntity();
         sendDeadPlayerToSpawn(player);
+        player.setNoDamageTicks(50);
         Player killer = player.getKiller();
         Scoreboard killerboard = killer.getScoreboard();
         killerboard.getTeam("kills").setSuffix("");
@@ -194,15 +250,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         killerboard.getTeam("kills").setSuffix("" + newKills);
 
-        String deathMessage = Team.getChatColor(player).toString() +
+        String deathMessage = MatchTeam.getChatColor(player).toString() +
                 killedString +
                 ChatColor.GRAY + " was killed by " +
-                Team.getChatColor(killer) + killerString +
+                MatchTeam.getChatColor(killer) + killerString +
                 ChatColor.GRAY + ".";
         event.setDeathMessage(deathMessage);
         event.setDroppedExp(0);
-
         killer.playSound(killer.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
+    }
+
+    private void sendDeadPlayerToSpawn(Player player) {
+        resetPlayerHealthAndInventory(player);
+        player.teleport(MatchTeam.getSpawnLocation(player));
+        zeroPlayerVelocity(player);
+        player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
 
     @EventHandler
@@ -256,32 +318,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
-    public void placeBlocksInCage(PlayerInteractEvent event){
-        Player player = event.getPlayer();
-        if(player.getGameMode() == GameMode.ADVENTURE){
-            if(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() ==  Action.RIGHT_CLICK_BLOCK){
-                if(player.getItemInHand().getType() == Material.STAINED_CLAY){
-                    player.sendMessage(ChatColor.RED + "You can't place blocks there!");
-                    player.playSound(player.getLocation(), Sound.DIG_STONE, 1.0f, 0.8f);
-                }
-            }
-        }
-    }
-
-    private void sendDeadPlayerToSpawn(Player player) {
-
-        player.setHealth(20.0);
-        player.setFoodLevel(20);
-        player.setSaturation(20);
-        player.setNoDamageTicks(50);
-
-        for (PotionEffect effect : player.getActivePotionEffects()) {
-            player.removePotionEffect(effect.getType());
-        }
-
-        player.teleport(Team.getSpawnLocation(player));
-
+    private void zeroPlayerVelocity(Player player) {
         Vector v = player.getVelocity();
         v.setX(0);
         v.setY(0);
@@ -296,35 +333,37 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 player.setVelocity(v);
             }
         }.runTaskLater(this, 1);
-
-
-        Inventory.setInventory(player);
-        player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
 
-    public void toteScore(Player player, GoalMeta goal) {
+    public void UNUSEDplaceBlocksInCage(PlayerInteractEvent event){
+        Player player = event.getPlayer();
+        if(player.getGameMode() == GameMode.ADVENTURE){
+            if(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() ==  Action.RIGHT_CLICK_BLOCK){
+                if(player.getItemInHand().getType() == Material.STAINED_CLAY){
+                    player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+                    player.playSound(player.getLocation(), Sound.DIG_STONE, 1.0f, 0.8f);
+                }
+            }        }
+}    
 
+    public void toteScore(Player player, GoalMeta goal) {
         GameScore score = GameScore.getInstance();
-        if (Team.getTeam(player) != goal.getTeam()) {
-            score.increment(Team.getTeam(player));
-            scorer = "" + Team.getChatColor(player) + "" + player.getName() + " scored!";
+        cagePlayers();
+        if (MatchTeam.getTeam(player) != goal.getTeam()) {
+            score.increment(MatchTeam.getTeam(player));
 
             UUID ScorerId = player.getUniqueId();
-            int newGoals = goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
+            goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
 
-            if (Team.getTeam(player) == TeamType.RED) {
+            if (MatchTeam.getTeam(player) == TeamType.RED) {
                 ChatBroadcasts.redScoreMessage(player);
             } else {
                 ChatBroadcasts.blueScoreMessage(player);
             }
-
-            Scoreboard board = player.getScoreboard();
-            board.getTeam("goals").setSuffix("" + newGoals);
+            spawnFireworks(player);
+            // Scoreboard board = player.getScoreboard();
+            // board.getTeam("goals").setSuffix("" + newGoals);
         }
-        buildCages();
-        sendPlayersToCages();
-        spawnFireworks(player);
-
     }
 
     private Location getOrigin() {
@@ -334,9 +373,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void buildCages() {
         EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
         editSession.enableQueue();
-        for (TeamType team : Team.getTeams()) {
-            Location cageLocation = Team.getCageLocation(team);
-            final File schematic = new File("C:/Users/benal/Desktop/spigot/plugins/schematics/mushroomcage.schematic");
+        for (TeamType team : MatchTeam.getTeams()) {
+            Location cageLocation = MatchTeam.getCageLocation(team);
+            final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
             try {
                 SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
                 CuboidClipboard clipboard = schematicFormat.load(schematic);
@@ -349,17 +388,383 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             @Override
             public void run() {
-                Bukkit.broadcastMessage("");
+                game.setState(Game.GameState.DURING_GAME);
                 for(Player player : Bukkit.getOnlinePlayers()){
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
-                    player.setGameMode(GameMode.SURVIVAL);
                 }
+                Bukkit.broadcastMessage("FIGHT!");
                 editSession.undo(editSession);
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    setGameModeForPlayer(player);
+                }
             }
         }, 100);
+    }
+
+    private void cagePlayers() {
+        game.setState(Game.GameState.CAGED);
+        buildCages();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            resetPlayerHealthAndInventory(player);
+            setGameModeForPlayer(player);
+            player.teleport(MatchTeam.getCagePlayerLocation(player));
+        }
+    }
+
+    public void checkForGoal(Player player) {
+        if ( game.getState() != Game.GameState.DURING_GAME ) return;
+        final List<GoalMeta> goalList = new ArrayList<>();
+        goalList.add(MatchTeam.getBlueGoalMeta());
+        goalList.add(MatchTeam.getRedGoalMeta());
+
+        for (GoalMeta goal : goalList) {
+            if (MatchTeam.getTeam(player) != goal.getTeam()) {
+                if (goal.getBoundingBox().contains(
+                        player.getLocation().getX(),
+                        player.getLocation().getY(),
+                        player.getLocation().getZ()))
+                {
+                    toteScore(player, goal);
+                }
+            }
+        }
+    }
+
+
+
+    @EventHandler
+    public void playerMove(PlayerMoveEvent e) {
+        Player player = e.getPlayer();
+
+        if (player.getLocation().getY() < 83) {
+            if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
+
+                Entity ed = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
+                if (ed instanceof Player) {
+
+                    final Player damager = (Player) ed;
+                    final String killed = player.getName();
+                    final String killer = damager.getName();
+
+                    UUID killerId = damager.getUniqueId();
+                    int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
+
+                    Scoreboard board = damager.getScoreboard();
+                    board.getTeam("kills").setSuffix("" + newKills);
+
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
+                            + MatchTeam.getChatColor(damager) + killer + ChatColor.GRAY + ".");
+
+                    damager.playSound(damager.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
+
+                }
+
+            } else {
+                if (game.getState() == Game.GameState.DURING_GAME) {
+                    String killed = player.getName();
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
+                }
+            }
+
+            sendDeadPlayerToSpawn(player);
+
+        } else {
+            checkForGoal(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        event.setJoinMessage("");
+        Bukkit.broadcastMessage("Welcome to the server " + player.getName() + "!");
+        setGameModeForPlayer(player);
+        resetPlayerHealthAndInventory(player);
+
+        if (game == null) {
+            System.err.println("Game not initialized!");
+            return;
+        }
+        // set waiting board
+        // cancel death inventory reset, death messages, pvp, and scoring
+        if (game.hasPlayer(player)) {
+            assignToTeam(player);
+            System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + "required players:" + game.getRequiredPlayers());
+            if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
+                startGame();
+        } else {
+            makeSpectator(player);
+        }
+        teleportRejoinedPlayer(player);
+    }
+
+    private void teleportRejoinedPlayer(Player player) {
+        //teleport to the right place, depending upon game mode
+        switch( game.getState() ) {
+            case DURING_GAME:
+                sendDeadPlayerToSpawn(player);
+                break;
+            case CAGED:
+                player.teleport(MatchTeam.getCagePlayerLocation(player));
+                break;
+            default:
+                // do nothing
+        }
+    }
+
+    private void setInventoryForPlayer(Player player) {
+        switch( game.getState() ) {
+            case BEFORE_GAME:
+            case AFTER_GAME:
+                player.getInventory().clear();
+                break;
+            case DURING_GAME:
+            case CAGED:
+                Inventory.setDefaultInventory(player);
+                break;
+            default:
+                // do nothing
+        }
+    }
+
+    private void setGameModeForPlayer(Player player) {
+        switch( game.getState() ) {
+            case BEFORE_GAME:
+            case CAGED:
+                player.setGameMode(GameMode.ADVENTURE);
+                break;
+            case DURING_GAME:
+                player.setGameMode(GameMode.SURVIVAL);
+                break;
+            case AFTER_GAME:
+                player.setGameMode(GameMode.SPECTATOR);
+                break;
+            default:
+                // do nothing
+        }
+    }
+
+    private void buildScoreboards() {
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+            String playerName = it.next();
+            createScoreboardForPlayer(manager, Bukkit.getPlayer(playerName));
+        }
+    }
+
+    public void createScoreboardForPlayer(ScoreboardManager manager, Player player) {
+        Scoreboard board = manager.getNewScoreboard();
+        player.setScoreboard(board);
+
+        Objective objective = board.registerNewObjective("title", "dummy");
+        objective.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        Team timer = board.registerNewTeam(String.valueOf(scoreboardSections.TIMER));
+        timer.addEntry(TIMER_STRING);
+        timer.setSuffix("15:00");
+        timer.setPrefix("");
+        objective.getScore(TIMER_STRING).setScore(0);
+
+        GameScore.initialize(board, objective);
+
+        // getScore() sets a line with that string. Go figure.
+//        Score redGoals = objective.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
+//        Score blueGoals = objective.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
+//        blueGoals.setScore(0);
+//        redGoals.setScore(0);
+
+//        redgoals.setScore(10);
+
+//        Team red = board.registerNewTeam(String.valueOf(scoreboardSections.RED));
+//        red.setPrefix(ChatColor.RED + "");
+//        Team blue = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE));
+//        blue.setPrefix(ChatColor.BLUE + "");
+    }
+
+    private void startGame() {
+        cagePlayers();
+        buildScoreboards();
+        broadcastStartMessages();
+        buildScoreboards();
+        startClock();
+    }
+
+    private void startClock() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                String timeRemaining = game.getRemainingTime();
+                for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+                    String playerName = it.next();
+                    Player player = Bukkit.getPlayer(playerName);
+                    if (player != null) {
+                        Scoreboard board = player.getScoreboard();
+                        Team timer = board.getTeam(String.valueOf(scoreboardSections.TIMER));
+                        timer.setSuffix(timeRemaining);
+                    }
+                }
+            }
+        }.runTaskTimer(this, 0, 20);
+    }
+
+    private void broadcastStartMessages() {
+        for (TeamType team : MatchTeam.getTeams()) {
+            for (String playerName : MatchTeam.getPlayers(team)) {
+                Player player = Bukkit.getPlayer(playerName);
+                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
+                ChatBroadcasts.gameStartMessage(player, opponentNames);
+            }
+        }
+    }
+
+
+    //display opponent and start message in chat
+        // for each player
+        //   send chat message with list of other teams players
+    //set all player scoreboards
+        // for each player
+        //   set universal and personal scoreboard values
+    //set all player inventories
+    //set holograms at each goal location
+        //for each player
+        //  set armor color and block color respective to their team
+    //reset all player healths, saturation, etc
+    //build team cages and send teams to respective cages
+    //start cage countdown and title countdown
+        //for each player
+        //  start the cage title countdown sequence
+        //  on zero cage is undone
+    //start game countdown
+        //for each player
+        // update scoreboard to start counting the 15 minutes down
+    private void makeSpectator(Player player) {
+    }
+
+    private void assignToTeam(Player player) {
+        TeamType teamColor = game.getTeam(player);
+        MatchTeam.addToTeam(teamColor, player);
+//        Scoreboard board = player.getScoreboard();
+//        System.out.println("Scoreboard board: " + board);
+//        System.out.println("Your scoreboard team is :" + Team.getScoreboardName(player));
+//        org.bukkit.scoreboard.Team scoreboardTeamName = board.getTeam(Team.getScoreboardName(player));
+//        System.out.println("org.bukkit.scoreboard.Team scoreboardTeamName: " + scoreboardTeamName);
+//        scoreboardTeamName.addEntry(player.getName());
+        game.playerJoined(player.getName());
+    }
+
+    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
+
+        if (label.equalsIgnoreCase("assign")) {
+            if (commandSender instanceof Player) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (timeLeft > 0) {
+                            timeLeft--;
+                            String formattedTime = formatTime(timeLeft);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                org.bukkit.scoreboard.Team timer = player.getScoreboard().getTeam("timer");
+                                timer.setSuffix("" + formattedTime);
+                            }
+                        } else {
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(this, 0, 20);
+            }
+
+            int i = 0;
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (i < Bukkit.getOnlinePlayers().toArray().length / 2) {
+                    MatchTeam.addToTeam(TeamType.RED, player);
+                    Scoreboard board = player.getScoreboard();
+                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
+                    Red.addEntry(player.getName());
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            List<String> blueTeam = MatchTeam.getBlueTeam();
+                            String blueTeamString = blueTeam.toString().replace("[", "").replace("]", "");
+                            org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
+                            Blue.addEntry(blueTeamString);
+                        }
+                    }.runTaskLater(this, 1);
+                } else {
+                    MatchTeam.addToTeam(TeamType.BLUE, player);
+                    Scoreboard board = player.getScoreboard();
+                    org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
+                    Blue.addEntry(player.getName());
+                    List<String> redTeam = MatchTeam.getRedTeam();
+                    String redTeamString = redTeam.toString().replace("[", "").replace("]", "");
+                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
+                    Red.addEntry(redTeamString);
+                }
+                i++;
+
+            }
+            buildCages();
+            cagePlayers();
+            for(Player player : Bukkit.getOnlinePlayers()){
+                String opponent;
+                if(MatchTeam.getTeam(player) == TeamType.RED){
+                    List<String> blueTeam = MatchTeam.getBlueTeam();
+                    opponent = blueTeam.toString().replace("[", "").replace("]", "");
+                    ChatBroadcasts.gameStartMessage(player, opponent);
+                }else{
+                    List<String> redTeam = MatchTeam.getRedTeam();
+                    opponent = redTeam.toString().replace("[", "").replace("]", "");
+                    ChatBroadcasts.gameStartMessage(player, opponent);
+                }
+
+            }
+        }
+
+        if (label.equalsIgnoreCase("myteam")) {
+            commandSender.sendMessage(MatchTeam.getTeamName((Player) commandSender));
+        }
+        return true;
 
     }
 
+    public static String formatTime(int sc) {
+        if (sc <= 0) return "0:00";
+        int m = sc % 3600 / 60;
+        int s = sc % 60;
+        if (s < 10) {
+            return m + ":0" + s;
+        } else {
+            return m + ":" + s;
+        }
+    }
+
+    @EventHandler
+    public void onQuit(final PlayerQuitEvent e) {
+        e.setQuitMessage("");
+    }
+
+    public void onDisable(){
+        MatchTeam.clearTeams();
+    }
+
+    @EventHandler
+    public void entityDamageEvent(final EntityDamageEvent event) {
+        if (event.getEntityType() == EntityType.PLAYER) {
+            if (event.getCause() == EntityDamageEvent.DamageCause.FALL){
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void foodChangeEvent(final FoodLevelChangeEvent event) {
+        if (event.getEntityType() == EntityType.PLAYER) {
+            final Player player = (Player)event.getEntity();
+            event.setCancelled(true);
+            player.setFoodLevel(20);
+        }
+    }
     public void sendTitles(Player player){
 
         String scorerName;
@@ -486,48 +891,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     }
 
-    private void sendPlayersToCages() {
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.setGameMode(GameMode.ADVENTURE);
-            player.teleport(Team.getCagePlayerLocation(player));
-            player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
-            sendTitles(player);
-            player.setHealth(20.0);
-            player.setFoodLevel(20);
-            player.setSaturation(20);
-            Inventory.setInventory(player);
-            for (PotionEffect effect : player.getActivePotionEffects()) {
-                player.removePotionEffect(effect.getType());
-            }
-
-        }
-
-    }
-
-    public void checkForGoal(Player player) {
-
-        final List<GoalMeta> goalList = new ArrayList<>();
-        goalList.add(Team.getBlueGoalMeta());
-        goalList.add(Team.getRedGoalMeta());
-
-
-
-            for (GoalMeta goal : goalList) {
-                if (Team.getTeam(player) != goal.getTeam()) {
-
-                    if (goal.getBoundingBox().contains(
-                        player.getLocation().getX(),
-                        player.getLocation().getY(),
-                        player.getLocation().getZ()))
-                    {
-                        toteScore(player, goal);
-                    }
-                }
-            }
-        }
-
-
     @EventHandler
     public void onBowHit(EntityDamageByEntityEvent event) {
 
@@ -582,179 +945,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
-    public void onDamage(EntityDamageByEntityEvent event) {
 
-        Entity entityVictim = event.getEntity();
-        Entity entityHitter = event.getDamager();
-
-        if (entityHitter instanceof Player && entityVictim instanceof Player) {
-
-            Player hitter = (Player) entityHitter;
-            Player hit = (Player) entityVictim;
-
-            CraftPlayer craft = (CraftPlayer) hit;
-            float absFloat = craft.getHandle().getAbsorptionHearts();
-            int absInt = (int) absFloat;
-
-            String hitName = hit.getName();
-            int health = (int)(hit.getHealth() - event.getFinalDamage())/2;
-            double dmgD = event.getFinalDamage()/2;
-            int dmg = (int) Math.round(dmgD);
-            int goneHealth = 10 - (health + dmg);
-
-            String damage = ActionBarHealth.formatDamage(dmg);
-            String hearts = ActionBarHealth.formatHealth(health);
-            String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
-            String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
-
-            if(health >= 0){
-                if(absInt > 0){
-
-                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
-                            + hearts + goldHearts);
-                    showHearts.sendToPlayer(hitter);
-
-                }else{
-
-                    ActionBarHealth showHearts = new ActionBarHealth(Team.getChatColor(hit) + "" + hitName + " "
-                            + hearts + damage + blackHearts);
-                    showHearts.sendToPlayer(hitter);
-
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void playerMove(PlayerMoveEvent e) {
-
-        Player player = e.getPlayer();
-
-        if (player.getLocation().getY() < 83) {
-            if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
-
-                Entity ed = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
-                if (ed instanceof Player) {
-
-                    final Player damager = (Player) ed;
-                    final String killed = player.getName();
-                    final String killer = damager.getName();
-
-                    UUID killerId = damager.getUniqueId();
-                    int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
-
-                    Scoreboard board = damager.getScoreboard();
-                    board.getTeam("kills").setSuffix("" + newKills);
-
-                    Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
-                            + Team.getChatColor(damager) + killer + ChatColor.GRAY + ".");
-
-                    damager.playSound(damager.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
-
-                }
-
-            } else {
-                String killed = player.getName();
-                Bukkit.broadcastMessage(Team.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
-            }
-
-            sendDeadPlayerToSpawn(player);
-
-        } else {
-            checkForGoal(player);
-        }
-    }
-
-    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
-
-        if (label.equalsIgnoreCase("assign")) {
-            if (commandSender instanceof Player) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (timeLeft > 0) {
-                            timeLeft--;
-                            String formattedTime = formatTime(timeLeft);
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                org.bukkit.scoreboard.Team timer = player.getScoreboard().getTeam("timer");
-                                timer.setSuffix("" + formattedTime);
-                            }
-                        } else {
-                            cancel();
-                        }
-                    }
-                }.runTaskTimer(this, 0, 20);
-            }
-
-            int i = 0;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                if (i < Bukkit.getOnlinePlayers().toArray().length / 2) {
-                    Team.addToTeam(TeamType.RED, player);
-                    Scoreboard board = player.getScoreboard();
-                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
-                    Red.addEntry(player.getName());
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            List<String> blueTeam = Team.getBlueTeam();
-                            String blueTeamString = blueTeam.toString().replace("[", "").replace("]", "");
-                            org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
-                            Blue.addEntry(blueTeamString);
-                        }
-                    }.runTaskLater(this, 1);
-                } else {
-                    Team.addToTeam(TeamType.BLUE, player);
-                    Scoreboard board = player.getScoreboard();
-                    org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
-                    Blue.addEntry(player.getName());
-                    List<String> redTeam = Team.getRedTeam();
-                    String redTeamString = redTeam.toString().replace("[", "").replace("]", "");
-                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
-                    Red.addEntry(redTeamString);
-                }
-                i++;
-
-            }
-            buildCages();
-            sendPlayersToCages();
-            for(Player player : Bukkit.getOnlinePlayers()){
-                String opponent;
-                if(Team.getTeam(player) == TeamType.RED){
-                    List<String> blueTeam = Team.getBlueTeam();
-                    opponent = blueTeam.toString().replace("[", "").replace("]", "");
-                    ChatBroadcasts.gameStartMessage(player, opponent);
-                }else{
-                    List<String> redTeam = Team.getRedTeam();
-                    opponent = redTeam.toString().replace("[", "").replace("]", "");
-                    ChatBroadcasts.gameStartMessage(player, opponent);
-                }
-
-            }
-        }
-
-        if (label.equalsIgnoreCase("myteam")) {
-            commandSender.sendMessage(Team.getTeamName((Player) commandSender));
-        }
-
-        return true;
-
-    }
-
-    public static String formatTime(int sc) {
-        if (sc <= 0) return "0:00";
-        int m = sc % 3600 / 60;
-        int s = sc % 60;
-        if (s < 10) {
-            return m + ":0" + s;
-        } else {
-            return m + ":" + s;
-        }
-    }
-
-    public void onDisable(){
-        Team.clearTeams();
-    }
 }
 
 
