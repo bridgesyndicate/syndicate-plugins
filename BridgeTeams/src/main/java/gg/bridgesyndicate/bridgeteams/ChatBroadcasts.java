@@ -2,7 +2,6 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
@@ -45,9 +44,10 @@ public class ChatBroadcasts {
 
     public static void redScoreMessage(Player player){
 
-        CraftPlayer craft = (CraftPlayer) player;
-        float absFloat = craft.getHandle().getAbsorptionHearts();
-        int absInt = (int) absFloat;
+        // CraftPlayer craft = (CraftPlayer) player;
+        // float absFloat = craft.getHandle().getAbsorptionHearts();
+        // int absInt = (int) absFloat;
+        int absInt = 0;
 
         String heartValue;
 
@@ -77,9 +77,10 @@ public class ChatBroadcasts {
 
     public static void blueScoreMessage(Player player){
 
-        CraftPlayer craft = (CraftPlayer) player;
-        float absFloat = craft.getHandle().getAbsorptionHearts();
-        int absInt = (int) absFloat;
+        // CraftPlayer craft = (CraftPlayer) player;
+        // float absFloat = craft.getHandle().getAbsorptionHearts();
+        // int absInt = (int) absFloat;
+        int absInt = 0;
 
         String heartValue;
 
