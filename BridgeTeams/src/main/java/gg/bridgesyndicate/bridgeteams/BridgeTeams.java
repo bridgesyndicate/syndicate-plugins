@@ -71,7 +71,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 "  ],\n" +
                 "  \"requiredPlayers\": 2,\n" +
                 "  \"redTeam\": [\n" +
-                "    \"NitroholicPls\"\n" +
+                "    \"bdamja\"\n" +
                 "  ]\n" +
                 "}\n";
         JsonParser jsonParser = JsonParser.DEFAULT;
