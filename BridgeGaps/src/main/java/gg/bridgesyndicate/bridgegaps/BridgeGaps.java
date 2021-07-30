@@ -16,7 +16,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Objects;
 
-public final class BridgeGaps extends JavaPlugin implements Listener{
+public final class BridgeGaps extends JavaPlugin implements Listener {
     private Object PlayerInteractEvent;
 
     @Override
@@ -25,40 +25,37 @@ public final class BridgeGaps extends JavaPlugin implements Listener{
     }
 
     @EventHandler
-    public void onPlayerClick(PlayerItemConsumeEvent event)
-    {
+    public void onPlayerClick(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
         if (event.getItem() == null)
             return;
 
-        if(Objects.requireNonNull(player.getItemInHand()).getType() == Material.GOLDEN_APPLE)
-        {
+        if (Objects.requireNonNull(player.getItemInHand()).getType() == Material.GOLDEN_APPLE) {
+
             event.setCancelled(true);
             player.setHealth(20);
 
-            if(player.hasPotionEffect(PotionEffectType.REGENERATION) || player.hasPotionEffect(PotionEffectType.ABSORPTION)) {
-                event.setCancelled(true);
-            }
-            else player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION,1200,0,false,false));
+            if (!player.hasPotionEffect(PotionEffectType.ABSORPTION)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 1200, 0, false, false));
             }
 
-        for (ItemStack item : player.getInventory()) {
-            if (item.getType().equals(Material.GOLDEN_APPLE)) {
-                int itemAmount = item.getAmount();
-                if (item.getAmount() == 1) {
-                    player.getInventory().remove(Material.GOLDEN_APPLE);
-                } else {
+            for (ItemStack item : player.getInventory()) {
 
-                    item.setAmount(itemAmount - 1);
+                if (item.getType().equals(Material.GOLDEN_APPLE)) {
+
+                    int itemAmount = item.getAmount();
+
+                    if (item.getAmount() == 1) {
+                        player.getInventory().remove(Material.GOLDEN_APPLE);
+                    } else {
+                        int currentAmount = itemAmount - 1;
+                        item.setAmount(currentAmount);
+                        ItemStack stack = new ItemStack(Material.GOLDEN_APPLE, currentAmount);
+                        player.setItemInHand(stack);
+                    }
+
                 }
             }
         }
-
-        }
-
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
     }
 }
