@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class Team
+public class MatchTeam
 {
     private static List<String> redTeam;
     private static List<String> blueTeam;
@@ -23,11 +23,11 @@ public class Team
         }
         switch (type) {
             case RED: {
-                Team.redTeam.add(player.getName());
+                MatchTeam.redTeam.add(player.getName());
                 break;
             }
             case BLUE: {
-                Team.blueTeam.add(player.getName());
+                MatchTeam.blueTeam.add(player.getName());
                 break;
             }
         }
@@ -35,35 +35,40 @@ public class Team
     }
 
     public static boolean isInTeam(final Player player) {
-        return Team.redTeam.contains(player.getName()) || Team.blueTeam.contains(player.getName());
+        return MatchTeam.redTeam.contains(player.getName()) || MatchTeam.blueTeam.contains(player.getName());
     }
 
     public static void clearTeams() {
-        Team.redTeam.clear();
-        Team.blueTeam.clear();
+        MatchTeam.redTeam.clear();
+        MatchTeam.blueTeam.clear();
     }
 
     public static TeamType getTeam(final Player player) {
-        return Team.redTeam.contains(player.getName()) ? TeamType.RED : TeamType.BLUE;
+        return MatchTeam.redTeam.contains(player.getName()) ? TeamType.RED : TeamType.BLUE;
     }
 
     public static Color getArmorColor(final Player player) {
-        return Team.redTeam.contains(player.getName()) ? Color.RED : Color.BLUE;
+        return MatchTeam.redTeam.contains(player.getName()) ? Color.RED : Color.BLUE;
     }
 
     public static ChatColor getChatColor(final Player player) {
-        return Team.redTeam.contains(player.getName()) ? ChatColor.RED : ChatColor.BLUE;
+        return MatchTeam.redTeam.contains(player.getName()) ? ChatColor.RED : ChatColor.BLUE;
     }
 
+    public static ChatColor getOpponentChatColor(final Player player) {
+        return MatchTeam.redTeam.contains(player.getName()) ? ChatColor.BLUE : ChatColor.RED;
+    }
+
+
     public static String getTeamName(final Player player) {
-        return Team.redTeam.contains(player.getName()) ? "Red Team" : "Blue Team";
+        return MatchTeam.redTeam.contains(player.getName()) ? "Red Team" : "Blue Team";
     }
 
     public static Location getSpawnLocation(final Player player) {
         final Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
         final Location blueLoc = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
 
-        return Team.redTeam.contains(player.getName()) ? redLoc : blueLoc;
+        return MatchTeam.redTeam.contains(player.getName()) ? redLoc : blueLoc;
     }
 
     public static Location getRedCageLocation() {
@@ -87,7 +92,7 @@ public class Team
     }
 
     public static Location getCagePlayerLocation(final Player player) {
-        return Team.redTeam.contains(player.getName()) ? getRedPlayerCageLocation() : getBluePlayerCageLocation();
+        return MatchTeam.redTeam.contains(player.getName()) ? getRedPlayerCageLocation() : getBluePlayerCageLocation();
     }
 
     public static GoalMeta getRedGoalMeta() {
@@ -114,12 +119,28 @@ public class Team
     }
 
     static {
-        Team.redTeam = new ArrayList<>();
-        Team.blueTeam = new ArrayList<>();
+        MatchTeam.redTeam = new ArrayList<>();
+        MatchTeam.blueTeam = new ArrayList<>();
     }
 
     public static short getBlockColor(Player player) {
-        return Team.redTeam.contains(player.getName()) ? (short) 14 : (short) 11;
+        return MatchTeam.redTeam.contains(player.getName()) ? (short) 14 : (short) 11;
+    }
+
+    public static String getScoreboardName(Player player) {
+        return MatchTeam.redTeam.contains(player.getName()) ? "Red" : "Blue";
+    }
+
+    public static List<String> getPlayers(TeamType team) {
+        if (team == TeamType.RED) {
+            return (redTeam);
+        } else {
+            return (blueTeam);
+        }
+    }
+
+    public static TeamType getOpposingTeam(TeamType team) {
+        return (team == TeamType.RED) ? TeamType.BLUE : TeamType.RED;
     }
 }
 
