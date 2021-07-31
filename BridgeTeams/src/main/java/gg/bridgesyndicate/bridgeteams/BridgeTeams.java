@@ -74,24 +74,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
         Bukkit.getWorld("world").setTime(1000);
-
         pollForGameData();
-        String jsonFromAwsSqs = "{\n" +
-                "  \"blueTeam\": [\n" +
-                "    \"vice9\"\n" +
-                "  ],\n" +
-                "  \"requiredPlayers\": 2,\n" +
-                "  \"redTeam\": [\n" +
-                "    \"NitroholicPls\"\n" +
-                "  ]\n" +
-                "}\n";
-        JsonParser jsonParser = JsonParser.DEFAULT;
-        try {
-            game = jsonParser.parse(jsonFromAwsSqs, Game.class);
-        } catch (ParseException e) {
-            System.err.println("Cannot parse game json.");
-            e.printStackTrace();
-        }
     }
 
     private void pollForGameData() {
@@ -107,17 +90,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             public void run() {
                 final String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
                 List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
-                Message message = messages.get(0);
-                System.out.println("found message:" + message.getBody());
-                game = Game.juneauGameFactory(message.getBody());
-                try {
-                    game.addContainerMetaData();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.out.println("EXIT: Could not add container metadata.");
-                    System.exit(-1);
+                if ( messages.size() > 0 ) {
+                    Message message = messages.get(0);
+                    System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
+                    game = Game.juneauGameFactory(message.getBody());
+                    try {
+                        game.addContainerMetaData();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        System.out.println("EXIT: Could not add container metadata.");
+                        System.exit(-1);
+                    }
+                    sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+                } else {
+                    System.out.println("Polling for game data. No games. Trying again in 10s.");
                 }
-                sqs.deleteMessage(queueUrl, message.getReceiptHandle());
             }
         }.runTaskTimer(this, 0, 200);
     }
