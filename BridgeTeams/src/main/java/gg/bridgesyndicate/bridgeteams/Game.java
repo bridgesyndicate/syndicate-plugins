@@ -10,17 +10,35 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class Game {
     private final int requiredPlayers;
+    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
     private GameState state;
+    private ContainerMetadata containerMetadata;
     private List redTeam;
     private List blueTeam;
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
     private List<GoalMeta> goalsScored = new ArrayList<>();
+
+
+    @Beanc(properties = "requiredPlayers,blueTeam,redTeam")
+    public Game(int requiredPlayers, List blueTeam, List redTeam) {
+        this.requiredPlayers = requiredPlayers;
+        this.blueTeam = blueTeam;
+        this.redTeam = redTeam;
+        this.state = state.BEFORE_GAME;
+    }
+
+    /* METHODS */
+
+    public void addContainerMetaData() throws URISyntaxException, IOException {
+        containerMetadata = new ContainerMetadata();
+    }
 
     public Iterator<String> getJoinedPlayers() {
         return joinedPlayers.iterator();
@@ -32,14 +50,6 @@ public class Game {
 
     public List getBlueTeam() {
         return blueTeam;
-    }
-
-    public void setRedTeam(List redTeam) {
-        this.redTeam = redTeam;
-    }
-
-    public void setBlueTeam(List blueTeam) {
-        this.blueTeam = blueTeam;
     }
 
     public String getRemainingTime() {
@@ -73,14 +83,16 @@ public class Game {
         return(totalGoals);
     }
 
-    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
-
-    @Beanc(properties = "requiredPlayers,blueTeam,redTeam")
-    public Game(int requiredPlayers, List blueTeam, List redTeam) {
-        this.requiredPlayers = requiredPlayers;
-        this.blueTeam = blueTeam;
-        this.redTeam = redTeam;
-        this.state = state.BEFORE_GAME;
+    static Game juneauGameFactory(String json) {
+        JsonParser jsonParser = JsonParser.DEFAULT;
+        Game game = null;
+        try {
+            game = jsonParser.parse(json, Game.class);
+        } catch (ParseException e) {
+            System.err.println("Cannot parse game json.");
+            e.printStackTrace();
+        }
+        return(game);
     }
 
     public int getNumberOfJoinedPlayers() {
@@ -102,7 +114,7 @@ public class Game {
         return requiredPlayers;
     }
 
-    public static void main(String[] args) throws SerializeException, ParseException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
         long gameStartedUnixTime = System.currentTimeMillis();
         long endTime = gameStartedUnixTime + 900_000;
         while (true) {
