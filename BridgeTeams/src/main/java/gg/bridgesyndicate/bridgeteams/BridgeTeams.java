@@ -9,6 +9,10 @@ import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
 import org.apache.juneau.json.JsonParser;
 import org.apache.juneau.parser.ParseException;
+import org.apache.juneau.rest.client.RestCallException;
+import org.apache.juneau.rest.client.RestClient;
+import org.apache.juneau.rest.client.RestClientBuilder;
+import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -30,9 +34,12 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
+import sun.net.www.http.HttpClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -43,7 +50,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
     private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
     private static final  HashMap<UUID, String> lastdamager = new HashMap<UUID, String>();
-    public static final HashMap<UUID, Integer> goals = new HashMap<UUID, Integer>();
     public static int timeLeft = 900;
     private static Game game = null;
     public enum scoreboardSections { TIMER }
@@ -63,6 +69,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
         Bukkit.getWorld("world").setTime(1000);
+        try {
+            printContainerMetaData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
         String jsonFromAwsSqs = "{\n" +
                 "  \"blueTeam\": [\n" +
                 "    \"vice9\"\n" +
@@ -354,11 +367,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             score.increment(MatchTeam.getTeam(player));
             UUID scorerId = player.getUniqueId();
             game.addGoalInfo(scorerId);
-            if (MatchTeam.getTeam(player) == TeamType.RED) {
-                ChatBroadcasts.redScoreMessage(player);
-            } else {
-                ChatBroadcasts.blueScoreMessage(player);
-            }
+            ChatBroadcasts.scoreMessage(game, player);
             spawnFireworks(player);
             // Scoreboard board = player.getScoreboard();
             // board.getTeam("goals").setSuffix("" + newGoals);
@@ -391,7 +400,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 for(Player player : Bukkit.getOnlinePlayers()){
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
                 }
-                Bukkit.broadcastMessage("FIGHT!");
                 editSession.undo(editSession);
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     setGameModeForPlayer(player);
@@ -912,7 +920,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-
+    public void printContainerMetaData() throws IOException, URISyntaxException {
+        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+        URI uri = new URI(url);
+        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
+        System.out.println(foo);
+    }
 }
 
 

@@ -62,6 +62,17 @@ public class Game {
         return (goalsScored.size() > 0);
     }
 
+    public int getNumberOfGoalsForPlayer(Player player) {
+        int totalGoals = 0;
+        for (Iterator<GoalMeta> it = goalsScored.iterator(); it.hasNext(); ) {
+            GoalMeta goalMeta = it.next();
+            if (goalMeta.getPlayerUUID() == player.getUniqueId()){
+                totalGoals++;
+            }
+        }
+        return(totalGoals);
+    }
+
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
 
     @Beanc(properties = "requiredPlayers,blueTeam,redTeam")

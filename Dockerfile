@@ -3,15 +3,13 @@ WORKDIR /app/minecraft-home/plugins
 ADD ./plugins.tar .
 RUN mkdir lib
 WORKDIR /app/minecraft-home/plugins/lib
-ADD ./juneau-marshall-8.2.0.jar .
+ADD ./juneau-marshall-8.1.3.jar .
+ADD ./juneau-rest-client-8.1.3.jar .
 ADD ./httpcore-4.4.13.jar .
 WORKDIR /app/minecraft-home/plugins
 RUN mkdir -p WorldEdit/schematics
 WORKDIR /app/minecraft-home/plugins/WorldEdit/schematics
 ADD ./mushroomcage.schematic .
 WORKDIR /app/minecraft-home
-
-RUN apt-get update
-RUN apt-get install -y curl
 
 CMD ["java", "-jar", "spigot-1.8.8.jar", "nogui"]
