@@ -1,7 +1,7 @@
 package gg.bridgesyndicate.bridgeteams;
 import gg.bridgesyndicate.util.BoundingBox;
 
-public class GoalMeta {
+public class GoalLocationInfo {
     private final BoundingBox boundingBox;
     private final String goalName;
 
@@ -19,7 +19,7 @@ public class GoalMeta {
         return team;
     }
 
-    public GoalMeta(BoundingBox boundingBox, TeamType team, String goalName) {
+    public GoalLocationInfo(BoundingBox boundingBox, TeamType team, String goalName) {
         this.boundingBox = boundingBox;
         this.goalName = goalName;
         this.team = team;

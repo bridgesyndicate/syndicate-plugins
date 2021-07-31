@@ -95,12 +95,12 @@ public class MatchTeam
         return MatchTeam.redTeam.contains(player.getName()) ? getRedPlayerCageLocation() : getBluePlayerCageLocation();
     }
 
-    public static GoalMeta getRedGoalMeta() {
-        return (new GoalMeta(new BoundingBox(-30, 83, 3, -36, 88, -3), TeamType.BLUE, "Blue Goal"));
+    public static GoalLocationInfo getRedGoalMeta() {
+        return (new GoalLocationInfo(new BoundingBox(-30, 83, 3, -36, 88, -3), TeamType.BLUE, "Blue Goal"));
     }
 
-    public static GoalMeta getBlueGoalMeta() {
-        return (new GoalMeta( new BoundingBox(30,83,-3,36,88,3), TeamType.RED, "Red Goal"));
+    public static GoalLocationInfo getBlueGoalMeta() {
+        return (new GoalLocationInfo( new BoundingBox(30,83,-3,36,88,3), TeamType.RED, "Red Goal"));
     }
 
     public static Collection<TeamType> getTeams(){

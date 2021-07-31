@@ -7,7 +7,6 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
-import net.md_5.bungee.api.chat.ClickEvent;
 import org.apache.juneau.json.JsonParser;
 import org.apache.juneau.parser.ParseException;
 import org.bukkit.*;
@@ -49,7 +48,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Game game = null;
     public enum scoreboardSections { TIMER }
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
-    private static String scorer = null;
 
     private void printWorldRules(){
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -349,15 +347,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }.runTaskLater(this, 1);
     }
 
-    public void toteScore(Player player, GoalMeta goal) {
+    public void toteScore(Player player, GoalLocationInfo goal) {
         GameScore score = GameScore.getInstance();
         cagePlayers();
         if (MatchTeam.getTeam(player) != goal.getTeam()) {
             score.increment(MatchTeam.getTeam(player));
-
-            UUID ScorerId = player.getUniqueId();
-            goals.merge(ScorerId, 1, (oldGoals, ignore) -> oldGoals + 1);
-
+            UUID scorerId = player.getUniqueId();
+            game.addGoalInfo(scorerId);
             if (MatchTeam.getTeam(player) == TeamType.RED) {
                 ChatBroadcasts.redScoreMessage(player);
             } else {
@@ -417,11 +413,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void checkForGoal(Player player) {
         if ( game.getState() != Game.GameState.DURING_GAME ) return;
-        final List<GoalMeta> goalList = new ArrayList<>();
+        final List<GoalLocationInfo> goalList = new ArrayList<>();
         goalList.add(MatchTeam.getBlueGoalMeta());
         goalList.add(MatchTeam.getRedGoalMeta());
 
-        for (GoalMeta goal : goalList) {
+        for (GoalLocationInfo goal : goalList) {
             if (MatchTeam.getTeam(player) != goal.getTeam()) {
                 if (goal.getBoundingBox().contains(
                         player.getLocation().getX(),
@@ -772,18 +768,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void sendTitles(Player player) {
         String scorerName;
 
-        if (scorer != null) {
-            scorerName = scorer;
-        } else {
-            scorerName = "";
-        }
-
         new BukkitRunnable() {
             int secondsUntilCagesOpen = 5;
 
             public void run() {
                 if (secondsUntilCagesOpen > 0) {
-                    Title title = new Title("" + scorerName,"&7Cages open in: &a" + secondsUntilCagesOpen + "s&7...",0,3,0);
+                    String titleText = ( game.hasScore() ) ? game.getMostRecentScorerName() + " scored!" : "";
+                    Title title = new Title(titleText,"&7Cages open in: &a" + secondsUntilCagesOpen + "s&7...",0,3,0);
                     title.send(player);
                     player.playSound(player.getLocation(), Sound.NOTE_STICKS, 1.0f, 1.0f);
                     secondsUntilCagesOpen--;

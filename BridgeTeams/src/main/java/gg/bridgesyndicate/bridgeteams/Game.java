@@ -6,12 +6,11 @@ import org.apache.juneau.json.JsonParser;
 import org.apache.juneau.json.JsonSerializer;
 import org.apache.juneau.parser.ParseException;
 import org.apache.juneau.serializer.SerializeException;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class Game {
@@ -21,6 +20,7 @@ public class Game {
     private List blueTeam;
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
+    private List<GoalMeta> goalsScored = new ArrayList<>();
 
     public Iterator<String> getJoinedPlayers() {
         return joinedPlayers.iterator();
@@ -44,6 +44,22 @@ public class Game {
 
     public String getRemainingTime() {
         return gameTimer.getRemainingTime();
+    }
+
+    public void addGoalInfo(UUID scorerId) {
+        GoalMeta newGoal = new GoalMeta(scorerId, System.currentTimeMillis());
+        goalsScored.add(newGoal);
+    }
+
+    public String getMostRecentScorerName() {
+        GoalMeta lastGoal = goalsScored.get(goalsScored.size() - 1);
+        Player player = Bukkit.getPlayer(lastGoal.getPlayerUUID());
+        ChatColor chatColor = MatchTeam.getChatColor(player);
+        return(chatColor + player.getName());
+    }
+
+    public boolean hasScore() {
+        return (goalsScored.size() > 0);
     }
 
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
@@ -106,5 +122,20 @@ public class Game {
 
     public void playerJoined(String name) {
         joinedPlayers.add(name);
+    }
+
+    class GoalMeta {
+        private final UUID playerUUID;
+        private final long goalTime;
+
+        GoalMeta(UUID playerUUID, long goalTime){
+            this.playerUUID = playerUUID;
+            this.goalTime = goalTime;
+        }
+
+        public UUID getPlayerUUID() {
+            return playerUUID;
+        }
+
     }
 }
