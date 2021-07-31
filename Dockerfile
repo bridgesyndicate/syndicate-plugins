@@ -11,4 +11,7 @@ WORKDIR /app/minecraft-home/plugins/WorldEdit/schematics
 ADD ./mushroomcage.schematic .
 WORKDIR /app/minecraft-home
 
+RUN apt-get update
+RUN apt-get install -y curl
+
 CMD ["java", "-jar", "spigot-1.8.8.jar", "nogui"]
