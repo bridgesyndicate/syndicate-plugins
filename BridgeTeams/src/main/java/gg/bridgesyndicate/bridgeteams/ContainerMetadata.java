@@ -15,6 +15,7 @@ public class ContainerMetadata {
         if (!url.equals("development")) {
             URI uri = new URI(url);
             containerMetadata = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
+            System.out.println("containerMetaData: " + containerMetadata);
         }
     }
 }
