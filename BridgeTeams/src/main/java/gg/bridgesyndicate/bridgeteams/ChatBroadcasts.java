@@ -90,7 +90,7 @@ public class ChatBroadcasts {
         return result;
     }
 
-    public static void gameStartMessage(Player player, String opponentNames){
+    public static void gameStartMessage(Player player, String opponentNames, Game game){
 
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
         player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                             The Bridge Duel");
@@ -98,7 +98,7 @@ public class ChatBroadcasts {
         player.sendMessage(ChatColor.YELLOW + "           Knock off your opponent to gain a clear path.");
         player.sendMessage(" ");
         player.sendMessage(" ");
-        player.sendMessage(ChatColor.YELLOW + "                  First player to score 5 goals wins!");
+        player.sendMessage(ChatColor.YELLOW + "                  First player to score " + game.goalsToWin + " goals wins!");
         player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + MatchTeam.getOpponentChatColor(player) + opponentNames);
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
 

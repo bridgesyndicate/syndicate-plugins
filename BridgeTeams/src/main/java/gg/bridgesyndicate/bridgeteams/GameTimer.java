@@ -1,22 +1,16 @@
 package gg.bridgesyndicate.bridgeteams;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-
-import java.util.concurrent.TimeUnit;
-
 public class GameTimer {
 
     private static GameTimer single_instance = null;
-    private long gameStartedUnixTime;
-    private final long GAME_LENGTH_IN_MILLIS = 900_000;
+    private long gameStartedUnixTime = 0;
 
     GameTimer() {
         gameStartedUnixTime = System.currentTimeMillis();
+    }
+
+    public long getGameStartedUnixTime() {
+        return gameStartedUnixTime;
     }
 
     public static GameTimer getInstance() {
@@ -25,19 +19,22 @@ public class GameTimer {
         return single_instance;
     }
 
-    public String getRemainingTime(){
-        long endTime = gameStartedUnixTime + GAME_LENGTH_IN_MILLIS;
+    private long getRemainingTimeInMillis() {
+        long GAME_LENGTH_IN_MILLIS = 900_000;
+        final long endTime = gameStartedUnixTime + GAME_LENGTH_IN_MILLIS;
         long currentTime = System.currentTimeMillis();
-        long remainingTimeInMillis = endTime - currentTime;
+        return(endTime - currentTime);
+    }
+
+    public long getRemainingTimeInSeconds(){
+        return(getRemainingTimeInMillis()/1000);
+    }
+
+    public String getRemainingTimeFormatted(){
+        long remainingTimeInMillis = getRemainingTimeInMillis();
         int remainingTimeInSeconds = (int) Math.ceil( (float) remainingTimeInMillis / 1000 );
         int remainingMinutes = remainingTimeInSeconds % 3600 / 60;
-        return(
-                String.format("%02d", remainingMinutes) +
-                        ":" +
-                        String.format("%02d", remainingTimeInSeconds % 60));
+        return(String.format("%02d", remainingMinutes)
+                + ":" + String.format("%02d", remainingTimeInSeconds % 60));
     }
 }
-
-
-
-

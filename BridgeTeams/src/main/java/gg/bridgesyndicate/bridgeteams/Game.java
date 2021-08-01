@@ -14,10 +14,15 @@ import java.util.*;
 
 public class Game {
     private final int requiredPlayers;
-
+    private final long createdAt;
+    public final int GOALS_TO_WIN = 3;
+    public final int goalsToWin;
+    private final GameScore gameScore;
+    public long gameStartedAt = 0;
+    public long gameEndedAt = 0;
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED }
     private GameState state;
-    private ContainerMetadata containerMetadata;
+    private String taskArn;
     private List redTeam;
     private List blueTeam;
     private HashSet<String> joinedPlayers = new HashSet();
@@ -32,12 +37,20 @@ public class Game {
         this.blueTeam = blueTeam;
         this.redTeam = redTeam;
         this.state = state.BEFORE_GAME;
+        this.createdAt = System.currentTimeMillis();
+        this.goalsToWin = GOALS_TO_WIN;
+        this.gameScore = GameScore.getInstance();
     }
 
     /* METHODS */
 
+    public void setEndTime() {
+        gameEndedAt = System.currentTimeMillis();
+    }
+
     public void addContainerMetaData() throws URISyntaxException, IOException {
-        containerMetadata = new ContainerMetadata();
+        ContainerMetadata containerMetaData = new ContainerMetadata();
+        this.taskArn = containerMetaData.getTaskArn();
     }
 
     public Iterator<String> getJoinedPlayers() {
@@ -52,8 +65,12 @@ public class Game {
         return blueTeam;
     }
 
-    public String getRemainingTime() {
-        return gameTimer.getRemainingTime();
+    public String getRemainingTimeFormatted() {
+        return gameTimer.getRemainingTimeFormatted();
+    }
+
+    public long getRemainingTimeInSeconds() {
+        return gameTimer.getRemainingTimeInSeconds();
     }
 
     public void addGoalInfo(UUID scorerId) {
@@ -122,6 +139,7 @@ public class Game {
     public void setState(GameState state) {
         if (this.state == GameState.BEFORE_GAME && state == GameState.CAGED) { //only happens once
             gameTimer = new GameTimer();
+            gameStartedAt = gameTimer.getGameStartedUnixTime();
         }
         this.state = state;
     }
@@ -131,19 +149,8 @@ public class Game {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        long gameStartedUnixTime = System.currentTimeMillis();
-        long endTime = gameStartedUnixTime + 900_000;
-        while (true) {
-            long currentTime = System.currentTimeMillis();
-            long remainingTimeInMillis = endTime - currentTime;
-            int remainingTimeInSeconds = (int) Math.ceil( (float) remainingTimeInMillis / 1000 );
-            int remainingMinutes = remainingTimeInSeconds % 3600 / 60;
-            System.out.println(
-                        String.format("%02d", remainingMinutes) +
-                                ":" +
-                                String.format("%02d", remainingTimeInSeconds % 60));
-            java.lang.Thread.sleep(1000);
-        }
+        String foo = "";
+        System.out.println(foo.concat(" bar"));
     }
 
     public boolean hasPlayer(Player player) {
@@ -161,6 +168,10 @@ public class Game {
 
     public void playerJoined(String name) {
         joinedPlayers.add(name);
+    }
+
+    public boolean over() {
+        return(GameScore.getBlue() == goalsToWin || GameScore.getRed() == goalsToWin);
     }
 
     class GoalMeta {

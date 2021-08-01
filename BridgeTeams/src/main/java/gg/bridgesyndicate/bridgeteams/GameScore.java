@@ -7,7 +7,9 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-class GameScore {
+import java.util.Iterator;
+
+class GameScore { // Singleton
     private static GameScore single_instance = null;
     public static int red;
     public static int blue;
@@ -17,8 +19,7 @@ class GameScore {
     private static final String BLUE_SCORE_LINE = ChatColor.BLUE + "[B] " + ChatColor.GRAY;
     private static final String KILLS_LINE = ChatColor.WHITE + "Kills: ";
     private static final String GOALS_LINE = ChatColor.WHITE + "Goals: ";
-
-
+    private static int goalsToWin = 0;
 
     private GameScore() {
         red = 0;
@@ -41,16 +42,17 @@ class GameScore {
         return blue;
     }
 
-    public static void initialize(Scoreboard board, Objective objective) {
+    public static void initialize(Scoreboard board, Objective objective, Game game) {
+        goalsToWin = game.goalsToWin;
         Team redScore = board.registerNewTeam(String.valueOf(scoreboardSections.RED_SCORE));
         redScore.addEntry(RED_SCORE_LINE);
-        redScore.setSuffix(new String(new char[5]).replace("\0", BUBBLE));
+        redScore.setSuffix(new String(new char[goalsToWin]).replace("\0", BUBBLE));
         redScore.setPrefix("");
         objective.getScore(RED_SCORE_LINE).setScore(0);
 
         Team blueScore = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE_SCORE));
         blueScore.addEntry(BLUE_SCORE_LINE);
-        blueScore.setSuffix(new String(new char[5]).replace("\0", BUBBLE));
+        blueScore.setSuffix(new String(new char[goalsToWin]).replace("\0", BUBBLE));
         blueScore.setPrefix("");
         objective.getScore(BLUE_SCORE_LINE).setScore(0);
 
@@ -65,8 +67,6 @@ class GameScore {
         goals.setSuffix(ChatColor.GREEN + "0");
         goals.setPrefix("");
         objective.getScore(GOALS_LINE).setScore(0);
-
-
     }
 
     public void increment(TeamType playerTeam) {
@@ -104,12 +104,11 @@ class GameScore {
         goals.setSuffix(ChatColor.GREEN + "" + game.getNumberOfGoalsForPlayer(player) );
     }
 
-
-    private String getBubbles(int n, ChatColor teamColor) {
-        String bubbles = null;
+    private String getBubbles(int coloredBubbles, ChatColor teamColor) {
+        String bubbles = "";
         int idx = 0;
-        while (idx < 5) {
-            if (n > idx) { // team-colored bubble
+        while (idx < goalsToWin) {
+            if (coloredBubbles > idx) { // team-colored bubble
                 bubbles = bubbles.concat(teamColor + BUBBLE);
             } else { //grey bubble
                 bubbles = bubbles.concat(ChatColor.GRAY + BUBBLE);
@@ -121,6 +120,19 @@ class GameScore {
 
     public void printScore() {
         Bukkit.broadcastMessage("The score is red:" + this.getRed() + ", blue:" + this.getBlue());
+    }
+
+    public void updateGameClock(Game game) {
+        String timeRemaining = game.getRemainingTimeFormatted();
+        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+            String playerName = it.next();
+            Player player = Bukkit.getPlayer(playerName);
+            if (player != null) {
+                Scoreboard board = player.getScoreboard();
+                Team timer = board.getTeam(String.valueOf(BridgeTeams.scoreboardSections.TIMER));
+                timer.setSuffix(timeRemaining);
+            }
+        }
     }
 }
 

@@ -90,6 +90,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     game = Game.juneauGameFactory(message.getBody());
                     try {
                         game.addContainerMetaData();
+                        // post game to syndicat-web-service
                     } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println("EXIT: Could not add container metadata.");
@@ -256,15 +257,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void toteScore(Player player, GoalLocationInfo goal) {
         GameScore score = GameScore.getInstance();
-        cagePlayers();
-        if (MatchTeam.getTeam(player) != goal.getTeam()) {
-            score.increment(MatchTeam.getTeam(player));
-            UUID scorerId = player.getUniqueId();
-            game.addGoalInfo(scorerId);
-            ChatBroadcasts.scoreMessage(game, player);
-            BridgeFireworks fireworks = new BridgeFireworks(this);
-            fireworks.spawnFireworks(player);
-            score.updatePlayersGoals(player, game);
+        score.increment(MatchTeam.getTeam(player));
+        score.updatePlayersGoals(player, game);
+        game.addGoalInfo(player.getUniqueId());
+
+        ChatBroadcasts.scoreMessage(game, player);
+        BridgeFireworks fireworks = new BridgeFireworks(this);
+        fireworks.spawnFireworks(player);
+        if (!game.over()) {
+            cagePlayers();
+        } else {
+            endGame();
         }
     }
 
@@ -315,11 +318,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void checkForGoal(Player player) {
         if (game.getState() != Game.GameState.DURING_GAME) return;
-        final List<GoalLocationInfo> goalList = new ArrayList<>();
-        goalList.add(MatchTeam.getBlueGoalMeta());
-        goalList.add(MatchTeam.getRedGoalMeta());
 
-        for (GoalLocationInfo goal : goalList) {
+        for (GoalLocationInfo goal : BridgeGoals.getGoalList()) {
             if (MatchTeam.getTeam(player) != goal.getTeam()) {
                 if (goal.getBoundingBox().contains(
                         player.getLocation().getX(),
@@ -414,13 +414,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         switch (game.getState()) {
             case BEFORE_GAME:
             case CAGED:
+            case AFTER_GAME:
                 player.setGameMode(GameMode.ADVENTURE);
                 break;
             case DURING_GAME:
                 player.setGameMode(GameMode.SURVIVAL);
-                break;
-            case AFTER_GAME:
-                player.setGameMode(GameMode.SPECTATOR);
                 break;
             default:
                 // do nothing
@@ -449,7 +447,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         timer.setPrefix("");
         objective.getScore(TIMER_STRING).setScore(0);
 
-        GameScore.initialize(board, objective);
+        GameScore.initialize(board, objective, game);
     }
 
     private void startGame() {
@@ -464,15 +462,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                String timeRemaining = game.getRemainingTime();
-                for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
-                    String playerName = it.next();
-                    Player player = Bukkit.getPlayer(playerName);
-                    if (player != null) {
-                        Scoreboard board = player.getScoreboard();
-                        Team timer = board.getTeam(String.valueOf(scoreboardSections.TIMER));
-                        timer.setSuffix(timeRemaining);
-                    }
+                if ( game.getState() == Game.GameState.AFTER_GAME) {
+                    this.cancel();
+                    return;
+                }
+                if (game.getRemainingTimeInSeconds() < 0 ) {
+                    this.cancel();
+                    endGame();
+                } else {
+                    GameScore score = GameScore.getInstance();
+                    score.updateGameClock(game);
                 }
             }
         }.runTaskTimer(this, 0, 20);
@@ -484,7 +483,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 Player player = Bukkit.getPlayer(playerName);
                 TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
                 String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
-                ChatBroadcasts.gameStartMessage(player, opponentNames);
+                ChatBroadcasts.gameStartMessage(player, opponentNames, game);
             }
         }
     }
@@ -498,6 +497,24 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         TeamType teamColor = game.getTeam(player);
         MatchTeam.addToTeam(teamColor, player);
         game.playerJoined(player.getName());
+    }
+
+    private void endGame(){
+        game.setState(Game.GameState.AFTER_GAME);
+        game.setEndTime();
+        Bukkit.broadcastMessage("Game Over");
+        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
+            String playerName = it.next();
+            Player player = Bukkit.getPlayer(playerName);
+            setGameModeForPlayer(player);
+            sendDeadPlayerToSpawn(player);
+        }
+        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
+        try {
+            System.out.println(jsonSerializer.serialize(game));
+        } catch (SerializeException e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
