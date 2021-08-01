@@ -86,8 +86,7 @@ public class Game {
     public String getMostRecentScorerName() {
         GoalMeta lastGoal = goalsScored.get(goalsScored.size() - 1);
         Player player = Bukkit.getPlayer(lastGoal.getPlayerUUID());
-        ChatColor chatColor = MatchTeam.getChatColor(player);
-        return(chatColor + player.getName());
+        return(player.getName());
     }
 
     public boolean hasScore() {
