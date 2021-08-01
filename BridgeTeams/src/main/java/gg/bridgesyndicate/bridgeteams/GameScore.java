@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -107,7 +106,7 @@ class GameScore {
 
 
     private String getBubbles(int n, ChatColor teamColor) {
-        String bubbles = new String();
+        String bubbles = null;
         int idx = 0;
         while (idx < 5) {
             if (n > idx) { // team-colored bubble

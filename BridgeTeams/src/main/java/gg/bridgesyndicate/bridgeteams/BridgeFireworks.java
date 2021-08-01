@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BridgeFireworks {
-    Plugin parentPlugin = null;
+    Plugin parentPlugin;
 
     public BridgeFireworks(Plugin parentPlugin) {
         this.parentPlugin = parentPlugin;

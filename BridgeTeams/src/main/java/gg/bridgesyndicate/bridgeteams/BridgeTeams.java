@@ -46,9 +46,6 @@ import java.util.*;
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private static final int MAX_BLOCKS = 10000;
-    private static final HashMap<UUID, Scoreboard> scoreboards = new HashMap<UUID, Scoreboard>();
-    private static final HashMap<UUID, Integer> kills = new HashMap<UUID, Integer>();
-    public static int timeLeft = 900;
     private static Game game = null;
 
     public enum scoreboardSections {TIMER}
@@ -113,8 +110,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 game.getState() != Game.GameState.CAGED
         ) {
             event.setCancelled(true);
-        } else {
-            return;
         }
     }
 
@@ -214,7 +209,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (bZ > 20 || bZ < -20) {
             event.setCancelled(true);
             player.sendMessage(NO_BLOCKS_THERE);
-            return;
         }
     }
 
@@ -240,7 +234,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (bY == 99 && (bX == 25 || bX == -25) && (bZ == 4 || bZ == -4)) {
             event.setCancelled(true);
             player.sendMessage(NO_BREAK_THERE);
-            return;
         }
     }
 
@@ -535,8 +528,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void sendTitles(Player player) {
-        String scorerName;
-
         new BukkitRunnable() {
             int secondsUntilCagesOpen = 5;
 
@@ -617,7 +608,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         URI uri = new URI("https://www.google.com");
         String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
-//        System.out.println(foo);
+        System.out.println(foo);
 
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
         String QUEUE_NAME = System.getenv("SYNDICATE_MATCH_QUEUE_NAME");

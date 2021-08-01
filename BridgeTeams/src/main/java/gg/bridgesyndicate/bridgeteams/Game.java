@@ -3,9 +3,7 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.apache.juneau.annotation.Beanc;
 import org.apache.juneau.json.JsonParser;
-import org.apache.juneau.json.JsonSerializer;
 import org.apache.juneau.parser.ParseException;
-import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -17,7 +15,7 @@ import java.util.*;
 public class Game {
     private final int requiredPlayers;
 
-    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
+    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED }
     private GameState state;
     private ContainerMetadata containerMetadata;
     private List redTeam;

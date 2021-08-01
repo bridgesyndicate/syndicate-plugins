@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import java.text.DecimalFormat;
-import java.util.UUID;
 
 public class ChatBroadcasts {
 
@@ -24,7 +23,6 @@ public class ChatBroadcasts {
     }
 
     public static String ordinalStringForPlayerGoal(Game game, Player player) {
-        UUID ScorerId = player.getUniqueId();
         int score = game.getNumberOfGoalsForPlayer(player);
         return (ordinal(score) + " Goal");
     }
