@@ -42,18 +42,24 @@ public class ChatBroadcasts {
             heartValue = String.valueOf(heartInt);
         }
 
-        Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + getDashes(64) );
-        String goalLineString = MatchTeam.getChatColor(player) + "" + ChatColor.BOLD + player.getName() + ChatColor.GRAY + " (" +
+        Bukkit.broadcastMessage(ChatColor.GOLD.toString() + ChatColor.BOLD + getDashes(64) );
+        broadcastNewLine();
+        String goalLineString = MatchTeam.getChatColor(player).toString() + ChatColor.BOLD + player.getName() + ChatColor.GRAY + " (" +
                 ChatColor.GREEN + heartValue + ChatColor.RED + "❤" + ChatColor.GRAY + ") " + ChatColor.YELLOW + "scored! " +
                 ChatColor.GRAY + "(" + ChatColor.GOLD + ordinalStringForPlayerGoal(game, player) + ChatColor.GRAY + ")";
         int lengthOfGoalLineString = picaSize(goalLineString);
         int spaces = (64 - (lengthOfGoalLineString/1000))/2;
         Bukkit.broadcastMessage(getSpaces(spaces) + goalLineString);
-        Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + "" + ChatColor.BOLD +
+        Bukkit.broadcastMessage(MatchTeam.getChatColor(player).toString() + ChatColor.BOLD +
                 getSpaces(29)+ getScoreForPlayersTeam(player) + ChatColor.RESET +
-                "" + ChatColor.GRAY + " - " + MatchTeam.getOpponentChatColor(player) +
-                "" + ChatColor.BOLD + getScoreForOpponentsTeam(player));
-        Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + getDashes(64));
+                ChatColor.GRAY + " - " + MatchTeam.getOpponentChatColor(player) +
+                ChatColor.BOLD + getScoreForOpponentsTeam(player));
+        broadcastNewLine();
+        Bukkit.broadcastMessage(ChatColor.GOLD.toString() + ChatColor.BOLD + getDashes(64));
+    }
+
+    private static void broadcastNewLine() {
+        Bukkit.broadcastMessage("");
     }
 
     private static int getScoreForOpponentsTeam(Player player) {

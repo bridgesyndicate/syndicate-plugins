@@ -17,6 +17,8 @@ class GameScore {
     private static final String RED_SCORE_LINE = ChatColor.RED + "[R] " + ChatColor.GRAY;
     private static final String BLUE_SCORE_LINE = ChatColor.BLUE + "[B] " + ChatColor.GRAY;
     private static final String KILLS_LINE = ChatColor.WHITE + "Kills: ";
+    private static final String GOALS_LINE = ChatColor.WHITE + "Goals: ";
+
 
 
     private GameScore() {
@@ -59,6 +61,13 @@ class GameScore {
         kills.setPrefix("");
         objective.getScore(KILLS_LINE).setScore(0);
 
+        Team goals = board.registerNewTeam(String.valueOf(scoreboardSections.GOALS));
+        goals.addEntry(GOALS_LINE);
+        goals.setSuffix(ChatColor.GREEN + "0");
+        goals.setPrefix("");
+        objective.getScore(GOALS_LINE).setScore(0);
+
+
     }
 
     public void increment(TeamType playerTeam) {
@@ -89,6 +98,13 @@ class GameScore {
         Team kills = board.getTeam(String.valueOf(scoreboardSections.KILLS));
         kills.setSuffix(ChatColor.GREEN + "" + game.getNumberOfKillsForPlayer(killer) );
     }
+
+    public void updatePlayersGoals(Player player, Game game) {
+        Scoreboard board = player.getScoreboard();
+        Team goals = board.getTeam(String.valueOf(scoreboardSections.GOALS));
+        goals.setSuffix(ChatColor.GREEN + "" + game.getNumberOfGoalsForPlayer(player) );
+    }
+
 
     private String getBubbles(int n, ChatColor teamColor) {
         String bubbles = new String();

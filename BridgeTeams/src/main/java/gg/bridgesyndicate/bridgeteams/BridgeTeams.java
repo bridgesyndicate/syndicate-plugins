@@ -19,6 +19,7 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -53,6 +54,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public enum scoreboardSections {TIMER}
 
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
+    private static final String WAS_KILLED_BY = " was killed by ";
+    private static final String WAS_VOIDED_BY = " was hit into the void by ";
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -178,25 +181,34 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onDeathOfPlayer(PlayerDeathEvent event) {
         Player player = event.getEntity();
+        Player killer = player.getKiller();
+        onDeathOfPlayerImpl(player, killer, event);
+    }
+
+    private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
         sendDeadPlayerToSpawn(player);
         player.setNoDamageTicks(50);
-        Player killer = player.getKiller();
         game.addKillInfo(killer.getUniqueId());
         GameScore score = GameScore.getInstance();
         score.updateKillersKills(killer, game);
-        sendDeathMessages(player, event, killer);
+        sendDeathMessages(player, killer, event);
     }
 
-    private void sendDeathMessages(Player player, PlayerDeathEvent event, Player killer) {
-        String killerString = killer.getName();
-        String killedString = player.getName();
-        String deathMessage = MatchTeam.getChatColor(player).toString() +
-                killedString +
-                ChatColor.GRAY + " was killed by " +
-                MatchTeam.getChatColor(killer) + killerString +
-                ChatColor.GRAY + ".";
-        event.setDeathMessage(deathMessage);
-        event.setDroppedExp(0);
+    private void sendDeathMessages(Player player, Player killer, Event event) {
+        String deathMessage = MatchTeam.getChatColor(player).toString()
+                + player.getName() + ChatColor.GRAY;
+        deathMessage = deathMessage.concat(((event instanceof PlayerDeathEvent) ?
+                WAS_KILLED_BY : WAS_VOIDED_BY ));
+        deathMessage = deathMessage.concat(MatchTeam.getChatColor(killer) + killer.getName());
+        deathMessage = deathMessage.concat(ChatColor.GRAY + ".");
+
+        if (event instanceof PlayerDeathEvent) {
+            PlayerDeathEvent playerDeathEvent = (PlayerDeathEvent) event;
+            playerDeathEvent.setDeathMessage(deathMessage);
+            playerDeathEvent.setDroppedExp(0);
+        } else {
+            Bukkit.broadcastMessage(deathMessage);
+        }
         killer.playSound(killer.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
     }
 
@@ -296,12 +308,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             UUID scorerId = player.getUniqueId();
             game.addGoalInfo(scorerId);
             ChatBroadcasts.scoreMessage(game, player);
-
             BridgeFireworks fireworks = new BridgeFireworks(this);
             fireworks.spawnFireworks(player);
-
-            // Scoreboard board = player.getScoreboard();
-            // board.getTeam("goals").setSuffix("" + newGoals);
+            score.updatePlayersGoals(player, game);
         }
     }
 
@@ -368,43 +377,23 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-
     @EventHandler
-    public void playerMove(PlayerMoveEvent e) {
-        Player player = e.getPlayer();
-
+    public void playerMove(PlayerMoveEvent event) {
+        final Player player = event.getPlayer();
         if (player.getLocation().getY() < 83) {
             if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
-
-                Entity ed = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
-                if (ed instanceof Player) {
-
-                    final Player damager = (Player) ed;
-                    final String killed = player.getName();
-                    final String killer = damager.getName();
-
-                    UUID killerId = damager.getUniqueId();
-                    int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
-
-                    Scoreboard board = damager.getScoreboard();
-                    board.getTeam("kills").setSuffix("" + newKills);
-
-                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " was hit into the void by "
-                            + MatchTeam.getChatColor(damager) + killer + ChatColor.GRAY + ".");
-
-                    damager.playSound(damager.getLocation(), Sound.ORB_PICKUP, 1.0f, 1.0f);
-
+                Entity entity = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
+                if (entity instanceof Player) {
+                    final Player killer = (Player) entity;
+                    onDeathOfPlayerImpl(player, killer, event);
                 }
-
             } else {
                 if (game.getState() == Game.GameState.DURING_GAME) {
                     String killed = player.getName();
                     Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
                 }
             }
-
             sendDeadPlayerToSpawn(player);
-
         } else {
             checkForGoal(player);
         }

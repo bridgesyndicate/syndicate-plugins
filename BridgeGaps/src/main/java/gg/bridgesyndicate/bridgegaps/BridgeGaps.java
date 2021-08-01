@@ -40,20 +40,21 @@ public final class BridgeGaps extends JavaPlugin implements Listener {
             }
 
             for (ItemStack item : player.getInventory()) {
+                if (item != null) { // HOW is a null getting into the inventory?
+                    if (item.getType().equals(Material.GOLDEN_APPLE)) {
 
-                if (item.getType().equals(Material.GOLDEN_APPLE)) {
+                        int itemAmount = item.getAmount();
 
-                    int itemAmount = item.getAmount();
+                        if (item.getAmount() == 1) {
+                            player.getInventory().remove(Material.GOLDEN_APPLE);
+                        } else {
+                            int currentAmount = itemAmount - 1;
+                            item.setAmount(currentAmount);
+                            ItemStack stack = new ItemStack(Material.GOLDEN_APPLE, currentAmount);
+                            player.setItemInHand(stack);
+                        }
 
-                    if (item.getAmount() == 1) {
-                        player.getInventory().remove(Material.GOLDEN_APPLE);
-                    } else {
-                        int currentAmount = itemAmount - 1;
-                        item.setAmount(currentAmount);
-                        ItemStack stack = new ItemStack(Material.GOLDEN_APPLE, currentAmount);
-                        player.setItemInHand(stack);
                     }
-
                 }
             }
         }
