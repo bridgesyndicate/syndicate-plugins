@@ -116,47 +116,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         } else {
             return;
         }
-//            Entity entityVictim = event.getEntity();
-//            Entity entityHitter = event.getDamager();
-//
-//            if (entityHitter instanceof Player && entityVictim instanceof Player) {
-//
-//                Player hitter = (Player) entityHitter;
-//                Player hit = (Player) entityVictim;
-//
-//                // CraftPlayer craft = (CraftPlayer) hit;
-//                // float absFloat = craft.getHandle().getAbsorptionHearts();
-//                // int absInt = (int) absFloat;
-//                int absInt = 0;
-//
-//                String hitName = hit.getName();
-//                int health = (int) (hit.getHealth() - event.getFinalDamage()) / 2;
-//                double dmgD = event.getFinalDamage() / 2;
-//                int dmg = (int) Math.round(dmgD);
-//                int goneHealth = 10 - (health + dmg);
-//
-//                String damage = ActionBarHealth.formatDamage(dmg);
-//                String hearts = ActionBarHealth.formatHealth(health);
-//                String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
-//                String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
-//
-//                if (health >= 0) {
-//                    if (absInt > 0) {
-//
-//                        ActionBarHealth showHearts = new ActionBarHealth(MatchTeam.getChatColor(hit) + "" + hitName + " "
-//                                + hearts + goldHearts);
-//                        showHearts.sendToPlayer(hitter);
-//
-//                    } else {
-//
-//                        ActionBarHealth showHearts = new ActionBarHealth(MatchTeam.getChatColor(hit) + "" + hitName + " "
-//                                + hearts + damage + blackHearts);
-//                        showHearts.sendToPlayer(hitter);
-//
-//                    }
-//                }
-//            }
-//        }
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
@@ -235,6 +194,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void cancelBlockPlacement(BlockPlaceEvent event) {
         Player player = event.getPlayer();
+        final String NO_BLOCKS_THERE = ChatColor.RED + "You can't place blocks there!";
 
         Block b = event.getBlock();
         int bX = b.getX();
@@ -243,17 +203,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         if (bX > 25 || bX < -25) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+            player.sendMessage(NO_BLOCKS_THERE);
             return;
         }
         if (bY > 99 || bY < 84) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+            player.sendMessage(NO_BLOCKS_THERE);
             return;
         }
         if (bZ > 20 || bZ < -20) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't place blocks there!");
+            player.sendMessage(NO_BLOCKS_THERE);
             return;
         }
     }
@@ -261,6 +221,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void cancelBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
+        final String NO_BREAK_THERE = ChatColor.RED + "You can't break that block!";
         Block b = event.getBlock();
         int bX = b.getX();
         int bY = b.getY();
@@ -268,17 +229,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         if (event.getBlock().getType() != Material.STAINED_CLAY) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't break that block!");
+            player.sendMessage(NO_BREAK_THERE);
             return;
         }
         if (bY > 99 || bY < 84 || bX > 25 || bX < -25 || bZ > 20 || bZ < -20) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't break that block!");
+            player.sendMessage(NO_BREAK_THERE);
             return;
         }
         if (bY == 99 && (bX == 25 || bX == -25) && (bZ == 4 || bZ == -4)) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You can't break that block!");
+            player.sendMessage(NO_BREAK_THERE);
             return;
         }
     }
@@ -416,7 +377,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         resetPlayerHealthAndInventory(player);
 
         // set waiting board
-        // cancel death inventory reset, death messages, pvp, and scoring
         if (game.hasPlayer(player)) {
             assignToTeam(player);
             System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + "required players:" + game.getRequiredPlayers());
@@ -497,19 +457,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         objective.getScore(TIMER_STRING).setScore(0);
 
         GameScore.initialize(board, objective);
-
-        // getScore() sets a line with that string. Go figure.
-//        Score redGoals = objective.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-//        Score blueGoals = objective.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-//        blueGoals.setScore(0);
-//        redGoals.setScore(0);
-
-//        redgoals.setScore(10);
-
-//        Team red = board.registerNewTeam(String.valueOf(scoreboardSections.RED));
-//        red.setPrefix(ChatColor.RED + "");
-//        Team blue = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE));
-//        blue.setPrefix(ChatColor.BLUE + "");
     }
 
     private void startGame() {
@@ -549,38 +496,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-
-    //display opponent and start message in chat
-    // for each player
-    //   send chat message with list of other teams players
-    //set all player scoreboards
-    // for each player
-    //   set universal and personal scoreboard values
-    //set all player inventories
     //set holograms at each goal location
-    //for each player
-    //  set armor color and block color respective to their team
-    //reset all player healths, saturation, etc
-    //build team cages and send teams to respective cages
-    //start cage countdown and title countdown
-    //for each player
-    //  start the cage title countdown sequence
-    //  on zero cage is undone
-    //start game countdown
-    //for each player
-    // update scoreboard to start counting the 15 minutes down
+
     private void makeSpectator(Player player) {
     }
 
     private void assignToTeam(Player player) {
         TeamType teamColor = game.getTeam(player);
         MatchTeam.addToTeam(teamColor, player);
-//        Scoreboard board = player.getScoreboard();
-//        System.out.println("Scoreboard board: " + board);
-//        System.out.println("Your scoreboard team is :" + Team.getScoreboardName(player));
-//        org.bukkit.scoreboard.Team scoreboardTeamName = board.getTeam(Team.getScoreboardName(player));
-//        System.out.println("org.bukkit.scoreboard.Team scoreboardTeamName: " + scoreboardTeamName);
-//        scoreboardTeamName.addEntry(player.getName());
         game.playerJoined(player.getName());
     }
 
