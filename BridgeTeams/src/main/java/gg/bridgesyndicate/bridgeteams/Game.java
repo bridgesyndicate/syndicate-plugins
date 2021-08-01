@@ -16,6 +16,7 @@ import java.util.*;
 
 public class Game {
     private final int requiredPlayers;
+
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED };
     private GameState state;
     private ContainerMetadata containerMetadata;
@@ -24,6 +25,7 @@ public class Game {
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
     private List<GoalMeta> goalsScored = new ArrayList<>();
+    private List<KillMeta> killsRegistered = new ArrayList<>();
 
 
     @Beanc(properties = "requiredPlayers,blueTeam,redTeam")
@@ -61,6 +63,11 @@ public class Game {
         goalsScored.add(newGoal);
     }
 
+    public void addKillInfo(UUID killer) {
+        KillMeta newKill = new KillMeta(killer, System.currentTimeMillis());
+        killsRegistered.add(newKill);
+    }
+
     public String getMostRecentScorerName() {
         GoalMeta lastGoal = goalsScored.get(goalsScored.size() - 1);
         Player player = Bukkit.getPlayer(lastGoal.getPlayerUUID());
@@ -81,6 +88,17 @@ public class Game {
             }
         }
         return(totalGoals);
+    }
+
+    public int getNumberOfKillsForPlayer(Player player) {
+        int totalKills = 0;
+        for (Iterator<KillMeta> it = killsRegistered.iterator(); it.hasNext(); ) {
+            KillMeta killMeta = it.next();
+            if (killMeta.getPlayerUUID() == player.getUniqueId()){
+                totalKills++;
+            }
+        }
+        return(totalKills);
     }
 
     static Game juneauGameFactory(String json) {
@@ -161,4 +179,20 @@ public class Game {
         }
 
     }
+
+    class KillMeta {
+        private final UUID playerUUID;
+        private final long killTime;
+
+        KillMeta(UUID playerUUID, long goalTime){
+            this.playerUUID = playerUUID;
+            this.killTime = goalTime;
+        }
+
+        public UUID getPlayerUUID() {
+            return playerUUID;
+        }
+
+    }
+
 }

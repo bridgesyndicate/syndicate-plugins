@@ -12,7 +12,9 @@ public class ContainerMetadata {
 
     public ContainerMetadata() throws URISyntaxException, IOException {
         String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
-        URI uri = new URI(url);
-        containerMetadata = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
+        if (!url.equals("development")) {
+            URI uri = new URI(url);
+            containerMetadata = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
+        }
     }
 }

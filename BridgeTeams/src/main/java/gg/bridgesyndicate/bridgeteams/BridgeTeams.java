@@ -10,18 +10,15 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
-import org.apache.juneau.json.JsonParser;
 import org.apache.juneau.json.JsonSerializer;
-import org.apache.juneau.parser.ParseException;
-import org.apache.juneau.rest.client.RestCallException;
 import org.apache.juneau.rest.client.RestClient;
-import org.apache.juneau.rest.client.RestClientBuilder;
 import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -32,13 +29,11 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
-import sun.net.www.http.HttpClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +41,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
@@ -102,6 +96,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                         System.exit(-1);
                     }
                     sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+                    this.cancel();
                 } else {
                     System.out.println("Polling for game data. No games. Trying again in 10s.");
                 }
@@ -172,92 +167,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         zeroPlayerVelocity(player);
     }
 
-    public void setBoard(Player player) {
-        ScoreboardManager manager = Bukkit.getScoreboardManager();
-        Scoreboard board = manager.getNewScoreboard();
-        UUID id = player.getUniqueId();
-
-        scoreboards.put(player.getUniqueId(), board);
-        player.setScoreboard(scoreboards.get(id));
-
-        Objective title = board.registerNewObjective("title", "dummy");
-        title.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
-        title.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-        Team Red = board.registerNewTeam("Red");
-        Red.setPrefix(ChatColor.RED + "");
-        Red.setNameTagVisibility(NameTagVisibility.ALWAYS);
-
-        Team Blue = board.registerNewTeam("Blue");
-        Blue.setPrefix(ChatColor.BLUE + "");
-        Blue.setNameTagVisibility(NameTagVisibility.ALWAYS);
-
-        Team kill = board.registerNewTeam("kills");
-        kill.setSuffix("0");
-        kill.addEntry("Kills: §a");
-        title.getScore("Kills: §a").setScore(8);
-
-        Team timer = board.registerNewTeam("timer");
-        timer.addEntry("Time Left: §a");
-        timer.setSuffix("15:00");
-        timer.setPrefix("");
-        title.getScore("Time Left: §a").setScore(13);
-
-        Score date = title.getScore(ChatColor.GRAY + "--/--/--   " + ChatColor.DARK_GRAY + "" + player.getName());
-        date.setScore(15);
-
-        Score blank1 = title.getScore("§1");
-        blank1.setScore(14);
-
-        Score blank2 = title.getScore("§2");
-        blank2.setScore(12);
-
-        Score bluegoals = title.getScore(ChatColor.BLUE + "[B] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-        bluegoals.setScore(11);
-        Score redgoals = title.getScore(ChatColor.RED + "[R] " + ChatColor.GRAY + "⬤⬤⬤⬤⬤");
-        redgoals.setScore(10);
-
-        Score blank3 = title.getScore("§3");
-        blank3.setScore(9);
-
-        org.bukkit.scoreboard.Team goal = board.registerNewTeam("goals");
-        goal.setSuffix("0");
-        goal.addEntry("Goals: §a");
-        title.getScore("Goals: §a").setScore(7);
-
-        Score blank4 = title.getScore("§4");
-        blank4.setScore(6);
-
-        Score mode = title.getScore(ChatColor.WHITE + "Mode: " + ChatColor.GREEN + "The Bridge Duel");
-        mode.setScore(5);
-        Score dailyStreak = title.getScore(ChatColor.WHITE + "Daily Streak: " + ChatColor.GREEN + "999");
-        dailyStreak.setScore(4);
-        Score bestDailyStreak = title.getScore(ChatColor.WHITE + "Best Daily Streak: " + ChatColor.GREEN + "999");
-        bestDailyStreak.setScore(3);
-
-        Score blank5 = title.getScore("§5");
-        blank5.setScore(2);
-
-        Score server = title.getScore(ChatColor.YELLOW + "localhost");
-        server.setScore(1);
-
-        if (board.getObjective("health") != null) {
-            board.getObjective("health").unregister();
-        }
-        Objective o = board.registerNewObjective("health", "health");
-        o.setDisplayName(ChatColor.RED + "❤");
-        o.setDisplaySlot(DisplaySlot.BELOW_NAME);
-
-        Objective j = board.registerNewObjective("health2", "health");
-        j.setDisplaySlot(DisplaySlot.PLAYER_LIST);
-    }
-
     @EventHandler
     public static void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         String msg = event.getMessage();
         event.setCancelled(true);
-        Bukkit.broadcastMessage(ChatColor.GREEN + "[GAME] " + ChatColor.RED + "[ADMIN] " + player.getName() + ChatColor.WHITE + ": " + msg);
+        Bukkit.broadcastMessage(ChatColor.GREEN + "[GAME] " + player.getName() + ChatColor.WHITE + ": " + msg);
     }
 
     @EventHandler
@@ -266,17 +181,15 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         sendDeadPlayerToSpawn(player);
         player.setNoDamageTicks(50);
         Player killer = player.getKiller();
-        Scoreboard killerboard = killer.getScoreboard();
-        killerboard.getTeam("kills").setSuffix("");
+        game.addKillInfo(killer.getUniqueId());
+        GameScore score = GameScore.getInstance();
+        score.updateKillersKills(killer, game);
+        sendDeathMessages(player, event, killer);
+    }
 
+    private void sendDeathMessages(Player player, PlayerDeathEvent event, Player killer) {
         String killerString = killer.getName();
         String killedString = player.getName();
-
-        UUID killerId = killer.getUniqueId();
-        int newKills = kills.merge(killerId, 1, (oldKills, ignore) -> oldKills + 1);
-
-        killerboard.getTeam("kills").setSuffix("" + newKills);
-
         String deathMessage = MatchTeam.getChatColor(player).toString() +
                 killedString +
                 ChatColor.GRAY + " was killed by " +
@@ -383,7 +296,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             UUID scorerId = player.getUniqueId();
             game.addGoalInfo(scorerId);
             ChatBroadcasts.scoreMessage(game, player);
-            spawnFireworks(player);
+
+            BridgeFireworks fireworks = new BridgeFireworks(this);
+            fireworks.spawnFireworks(player);
+
             // Scoreboard board = player.getScoreboard();
             // board.getTeam("goals").setSuffix("" + newGoals);
         }
@@ -496,18 +412,20 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        final String UNINITIALIZED_MESSAGE = ChatColor.RED + "Game not initialized";
         Player player = event.getPlayer();
         event.setJoinMessage("");
-        Bukkit.broadcastMessage("Welcome to the server " + player.getName() + "!");
-        setGameModeForPlayer(player);
-        resetPlayerHealthAndInventory(player);
-        final String UNINITIALIZED_MESSAGE = "Game not initialized";
 
         if (game == null) {
             System.err.println(UNINITIALIZED_MESSAGE);
             player.kickPlayer(UNINITIALIZED_MESSAGE);
             return;
         }
+
+        Bukkit.broadcastMessage("Welcome to the server " + player.getName() + "!");
+        setGameModeForPlayer(player);
+        resetPlayerHealthAndInventory(player);
+
         // set waiting board
         // cancel death inventory reset, death messages, pvp, and scoring
         if (game.hasPlayer(player)) {
@@ -677,91 +595,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.playerJoined(player.getName());
     }
 
-    public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
-
-        if (label.equalsIgnoreCase("assign")) {
-            if (commandSender instanceof Player) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (timeLeft > 0) {
-                            timeLeft--;
-                            String formattedTime = formatTime(timeLeft);
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                org.bukkit.scoreboard.Team timer = player.getScoreboard().getTeam("timer");
-                                timer.setSuffix("" + formattedTime);
-                            }
-                        } else {
-                            cancel();
-                        }
-                    }
-                }.runTaskTimer(this, 0, 20);
-            }
-
-            int i = 0;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                if (i < Bukkit.getOnlinePlayers().toArray().length / 2) {
-                    MatchTeam.addToTeam(TeamType.RED, player);
-                    Scoreboard board = player.getScoreboard();
-                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
-                    Red.addEntry(player.getName());
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            List<String> blueTeam = MatchTeam.getBlueTeam();
-                            String blueTeamString = blueTeam.toString().replace("[", "").replace("]", "");
-                            org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
-                            Blue.addEntry(blueTeamString);
-                        }
-                    }.runTaskLater(this, 1);
-                } else {
-                    MatchTeam.addToTeam(TeamType.BLUE, player);
-                    Scoreboard board = player.getScoreboard();
-                    org.bukkit.scoreboard.Team Blue = board.getTeam("Blue");
-                    Blue.addEntry(player.getName());
-                    List<String> redTeam = MatchTeam.getRedTeam();
-                    String redTeamString = redTeam.toString().replace("[", "").replace("]", "");
-                    org.bukkit.scoreboard.Team Red = board.getTeam("Red");
-                    Red.addEntry(redTeamString);
-                }
-                i++;
-
-            }
-            buildCages();
-            cagePlayers();
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                String opponent;
-                if (MatchTeam.getTeam(player) == TeamType.RED) {
-                    List<String> blueTeam = MatchTeam.getBlueTeam();
-                    opponent = blueTeam.toString().replace("[", "").replace("]", "");
-                    ChatBroadcasts.gameStartMessage(player, opponent);
-                } else {
-                    List<String> redTeam = MatchTeam.getRedTeam();
-                    opponent = redTeam.toString().replace("[", "").replace("]", "");
-                    ChatBroadcasts.gameStartMessage(player, opponent);
-                }
-
-            }
-        }
-
-        if (label.equalsIgnoreCase("myteam")) {
-            commandSender.sendMessage(MatchTeam.getTeamName((Player) commandSender));
-        }
-        return true;
-
-    }
-
-    public static String formatTime(int sc) {
-        if (sc <= 0) return "0:00";
-        int m = sc % 3600 / 60;
-        int s = sc % 60;
-        if (s < 10) {
-            return m + ":0" + s;
-        } else {
-            return m + ":" + s;
-        }
-    }
-
     @EventHandler
     public void onQuit(final PlayerQuitEvent e) {
         e.setQuitMessage("");
@@ -809,76 +642,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
             }
         }.runTaskTimer(this, 0, 20);
-    }
-
-    private void spawnFireworks(Player player) {
-
-
-        sendFirework(player);
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                sendFirework(player);
-            }
-        }.runTaskLater(this, 20);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                sendFirework(player);
-            }
-        }.runTaskLater(this, 40);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                sendFirework(player);
-            }
-        }.runTaskLater(this, 60);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                sendFirework(player);
-            }
-        }.runTaskLater(this, 80);
-
-    }
-
-    private void sendFirework(Player player) {
-
-        Location l = new Location(Bukkit.getWorld("world"), 0.5, 97, 0.5);
-
-        int randomX = ThreadLocalRandom.current().nextInt(-10, 10 + 1);
-        int randomY = ThreadLocalRandom.current().nextInt(95, 104 + 1);
-        int randomZ = ThreadLocalRandom.current().nextInt(-10, 10 + 1);
-        l.setX(randomX);
-        l.setY(randomY);
-        l.setZ(randomZ);
-
-        Random r = new Random();
-
-        int rt = r.nextInt(5) + 1;
-        FireworkEffect.Type type = FireworkEffect.Type.BALL;
-        if (rt == 2) type = FireworkEffect.Type.BALL_LARGE;
-        if (rt == 3) type = FireworkEffect.Type.BURST;
-        if (rt == 4) type = FireworkEffect.Type.CREEPER;
-        if (rt == 5) type = FireworkEffect.Type.STAR;
-
-        Firework fw = (Firework) Bukkit.getWorld("world").spawnEntity(l, EntityType.FIREWORK);
-        FireworkMeta fwm = fw.getFireworkMeta();
-        fwm.setPower(0);
-        if (MatchTeam.getTeam(player) == TeamType.RED) {
-            fwm.addEffect(FireworkEffect.builder().flicker(true).withColor(Color.RED).withFade(Color.WHITE).with(type).build());
-        } else {
-            fwm.addEffect(FireworkEffect.builder().flicker(true).withColor(Color.BLUE).withFade(Color.WHITE).with(type).build());
-        }
-        fw.setFireworkMeta(fwm);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                fw.detonate();
-            }
-        }.runTaskLater(this, 2);
-
     }
 
     @EventHandler
