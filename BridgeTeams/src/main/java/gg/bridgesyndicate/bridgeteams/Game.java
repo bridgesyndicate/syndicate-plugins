@@ -15,7 +15,7 @@ import java.util.*;
 public class Game {
     private final int requiredPlayers;
     private final long createdAt;
-    public final int GOALS_TO_WIN = 3;
+    public final int GOALS_TO_WIN = 5;
     public final int goalsToWin;
     private final GameScore gameScore;
     public long gameStartedAt = 0;

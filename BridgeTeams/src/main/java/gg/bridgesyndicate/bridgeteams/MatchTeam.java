@@ -142,5 +142,9 @@ public class MatchTeam
     public static TeamType getOpposingTeam(TeamType team) {
         return (team == TeamType.RED) ? TeamType.BLUE : TeamType.RED;
     }
+
+    public static ChatColor getChatColorForTeamType(TeamType teamType) {
+        return (teamType == TeamType.RED) ? ChatColor.RED : ChatColor.BLUE;
+    }
 }
 

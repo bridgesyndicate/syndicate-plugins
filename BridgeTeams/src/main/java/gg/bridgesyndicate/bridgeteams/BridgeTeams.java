@@ -15,10 +15,7 @@ import org.apache.juneau.rest.client.RestClient;
 import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -90,7 +87,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     game = Game.juneauGameFactory(message.getBody());
                     try {
                         game.addContainerMetaData();
-                        // post game to syndicat-web-service
+                        // post game to syndicate-web-service
                     } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println("EXIT: Could not add container metadata.");
@@ -503,11 +500,17 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
         Bukkit.broadcastMessage("Game Over");
+        List<String> titles = BridgeTitles.getFinalTitles();
         for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
             String playerName = it.next();
             Player player = Bukkit.getPlayer(playerName);
             setGameModeForPlayer(player);
             sendDeadPlayerToSpawn(player);
+            BridgeFireworks fireworks = new BridgeFireworks(this);
+            fireworks.spawnFireworks(player);
+            player.getInventory().clear();
+            Title title = new Title(titles.get(0), titles.get(1), 0, 6, 1);
+            title.send(player);
         }
         JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
         try {

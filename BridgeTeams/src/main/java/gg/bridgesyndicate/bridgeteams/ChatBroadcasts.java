@@ -56,7 +56,10 @@ public class ChatBroadcasts {
         Bukkit.broadcastMessage(ChatColor.GOLD.toString() + ChatColor.BOLD + getDashes(64));
     }
 
-    private static void broadcastNewLine() {
+    public static void endMessage(Game game, Player player) {
+    }
+
+        private static void broadcastNewLine() {
         Bukkit.broadcastMessage("");
     }
 
