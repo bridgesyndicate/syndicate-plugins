@@ -20,7 +20,7 @@ public class GameTimer {
     }
 
     private long getRemainingTimeInMillis() {
-        long GAME_LENGTH_IN_MILLIS = 900_000;
+        long GAME_LENGTH_IN_MILLIS = 300_000;
         final long endTime = gameStartedUnixTime + GAME_LENGTH_IN_MILLIS;
         long currentTime = System.currentTimeMillis();
         return(endTime - currentTime);
