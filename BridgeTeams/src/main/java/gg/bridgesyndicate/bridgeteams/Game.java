@@ -5,7 +5,6 @@ import org.apache.juneau.annotation.Beanc;
 import org.apache.juneau.json.JsonParser;
 import org.apache.juneau.parser.ParseException;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.io.IOException;

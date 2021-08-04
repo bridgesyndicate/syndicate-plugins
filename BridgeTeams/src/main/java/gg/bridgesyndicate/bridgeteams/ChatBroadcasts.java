@@ -56,10 +56,7 @@ public class ChatBroadcasts {
         Bukkit.broadcastMessage(ChatColor.GOLD.toString() + ChatColor.BOLD + getDashes(64));
     }
 
-    public static void endMessage(Game game, Player player) {
-    }
-
-        private static void broadcastNewLine() {
+    private static void broadcastNewLine() {
         Bukkit.broadcastMessage("");
     }
 
@@ -105,5 +102,12 @@ public class ChatBroadcasts {
         player.sendMessage(ChatColor.WHITE + "" + ChatColor.BOLD + "                       Opponent:  " + MatchTeam.getOpponentChatColor(player) + opponentNames);
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
 
+    }
+
+    public static void gameEndMessage(Player player, String opponentNames, Game game) {
+        int playersPerTeam = game.getRequiredPlayers()/2;
+        player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
+        player.sendMessage("" + ChatColor.YELLOW  + ChatColor.BOLD + getSpaces(23) + "Bridge " + playersPerTeam + "v" + playersPerTeam);
+        player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
     }
 }

@@ -13,12 +13,16 @@ class GameScore { // Singleton
     private static GameScore single_instance = null;
     public static int red;
     public static int blue;
-    public enum scoreboardSections { RED_SCORE, BLUE_SCORE, KILLS, GOALS }
+    public enum scoreboardSections { RED_SCORE, BLUE_SCORE, KILLS, GOALS, IP, BLANK1, MODE }
     private static final String BUBBLE = "⬤";
     private static final String RED_SCORE_LINE = ChatColor.RED + "[R] " + ChatColor.GRAY;
     private static final String BLUE_SCORE_LINE = ChatColor.BLUE + "[B] " + ChatColor.GRAY;
     private static final String KILLS_LINE = ChatColor.WHITE + "Kills: ";
     private static final String GOALS_LINE = ChatColor.WHITE + "Goals: ";
+    private static final String MODE_LINE = ChatColor.WHITE + "Mode: ";
+    private static final String IP_LINE = ChatColor.YELLOW + "bridgesyndicate.gg";
+    private static final String BLANK1_LINE = "";
+
     private static int goalsToWin = 0;
 
     private GameScore() {
@@ -48,25 +52,45 @@ class GameScore { // Singleton
         redScore.addEntry(RED_SCORE_LINE);
         redScore.setSuffix(new String(new char[goalsToWin]).replace("\0", BUBBLE));
         redScore.setPrefix("");
-        objective.getScore(RED_SCORE_LINE).setScore(0);
+        objective.getScore(RED_SCORE_LINE).setScore(6);
 
         Team blueScore = board.registerNewTeam(String.valueOf(scoreboardSections.BLUE_SCORE));
         blueScore.addEntry(BLUE_SCORE_LINE);
         blueScore.setSuffix(new String(new char[goalsToWin]).replace("\0", BUBBLE));
         blueScore.setPrefix("");
-        objective.getScore(BLUE_SCORE_LINE).setScore(0);
+        objective.getScore(BLUE_SCORE_LINE).setScore(5);
 
         Team kills = board.registerNewTeam(String.valueOf(scoreboardSections.KILLS));
         kills.addEntry(KILLS_LINE);
         kills.setSuffix(ChatColor.GREEN + "0");
         kills.setPrefix("");
-        objective.getScore(KILLS_LINE).setScore(0);
+        objective.getScore(KILLS_LINE).setScore(4);
 
         Team goals = board.registerNewTeam(String.valueOf(scoreboardSections.GOALS));
         goals.addEntry(GOALS_LINE);
         goals.setSuffix(ChatColor.GREEN + "0");
         goals.setPrefix("");
-        objective.getScore(GOALS_LINE).setScore(0);
+        objective.getScore(GOALS_LINE).setScore(3);
+
+        Team mode = board.registerNewTeam(String.valueOf(scoreboardSections.MODE));
+        mode.addEntry(MODE_LINE);
+        int playersPerTeam = game.getRequiredPlayers()/2;
+        mode.setSuffix(ChatColor.GREEN + "Bridge " + playersPerTeam + "v" + playersPerTeam);
+        mode.setPrefix("");
+        objective.getScore(MODE_LINE).setScore(2);
+
+
+        Team blank1 = board.registerNewTeam(String.valueOf(scoreboardSections.BLANK1));
+        blank1.addEntry(BLANK1_LINE);
+        blank1.setSuffix("");
+        blank1.setPrefix("");
+        objective.getScore(BLANK1_LINE).setScore(1);
+
+        Team ip = board.registerNewTeam(String.valueOf(scoreboardSections.IP));
+        ip.addEntry(IP_LINE);
+        ip.setSuffix("");
+        ip.setPrefix("");
+        objective.getScore(IP_LINE).setScore(0);
     }
 
     public void increment(TeamType playerTeam) {
@@ -95,7 +119,7 @@ class GameScore { // Singleton
     public void updateKillersKills(Player killer, Game game) {
         Scoreboard board = killer.getScoreboard();
         Team kills = board.getTeam(String.valueOf(scoreboardSections.KILLS));
-        kills.setSuffix(ChatColor.GREEN + "" + game.getNumberOfKillsForPlayer(killer) );
+        kills.setSuffix(ChatColor.GREEN + "" + game.getNumberOfKillsForPlayer(killer));
     }
 
     public void updatePlayersGoals(Player player, Game game) {

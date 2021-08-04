@@ -11,11 +11,13 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
 import org.apache.juneau.json.JsonSerializer;
-import org.apache.juneau.rest.client.RestClient;
 import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -35,10 +37,11 @@ import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
@@ -50,6 +53,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
     private static final String WAS_KILLED_BY = " was killed by ";
     private static final String WAS_VOIDED_BY = " was hit into the void by ";
+
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -104,11 +108,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
+
         if (game.getState() != Game.GameState.DURING_GAME &&
                 game.getState() != Game.GameState.CAGED
         ) {
             event.setCancelled(true);
         }
+
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
@@ -142,8 +148,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setNoDamageTicks(50);
         game.addKillInfo(killer.getUniqueId());
         GameScore score = GameScore.getInstance();
-        score.updateKillersKills(killer, game);
-        sendDeathMessages(player, killer, event);
+        if(game.getState() != Game.GameState.AFTER_GAME) {
+            score.updateKillersKills(killer, game);
+            sendDeathMessages(player, killer, event);
+        }
     }
 
     private void sendDeathMessages(Player player, Player killer, Event event) {
@@ -255,8 +263,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void toteScore(Player player, GoalLocationInfo goal) {
         GameScore score = GameScore.getInstance();
         score.increment(MatchTeam.getTeam(player));
-        score.updatePlayersGoals(player, game);
         game.addGoalInfo(player.getUniqueId());
+        score.updatePlayersGoals(player, game);
 
         ChatBroadcasts.scoreMessage(game, player);
         BridgeFireworks fireworks = new BridgeFireworks(this);
@@ -362,7 +370,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             return;
         }
 
-        Bukkit.broadcastMessage("Welcome to the server " + player.getName() + "!");
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
 
@@ -370,6 +377,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (game.hasPlayer(player)) {
             assignToTeam(player);
             System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + "required players:" + game.getRequiredPlayers());
+            Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
             if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                 startGame();
         } else {
@@ -397,6 +405,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             case BEFORE_GAME:
             case AFTER_GAME:
                 player.getInventory().clear();
+                player.getInventory().setHelmet(null);
+                player.getInventory().setChestplate(null);
+                player.getInventory().setLeggings(null);
+                player.getInventory().setBoots(null);
                 break;
             case DURING_GAME:
             case CAGED:
@@ -442,7 +454,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         timer.addEntry(TIMER_STRING);
         timer.setSuffix("15:00");
         timer.setPrefix("");
-        objective.getScore(TIMER_STRING).setScore(0);
+        objective.getScore(TIMER_STRING).setScore(7);
 
         GameScore.initialize(board, objective, game);
     }
@@ -500,6 +512,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
         Bukkit.broadcastMessage("Game Over");
+        broadcastEndMessages();
         List<String> titles = BridgeTitles.getFinalTitles();
         for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
             String playerName = it.next();
@@ -519,6 +532,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
     }
+
+    private void broadcastEndMessages() {
+        for (TeamType team : MatchTeam.getTeams()) {
+            for (String playerName : MatchTeam.getPlayers(team)) {
+                Player player = Bukkit.getPlayer(playerName);
+                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
+                ChatBroadcasts.gameEndMessage(player, opponentNames, game);
+            }
+        }
+    }
+
 
     @EventHandler
     public void onQuit(final PlayerQuitEvent e) {
@@ -586,14 +611,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 Player shoota = (Player) arrow.getShooter();
                 Player shot = (Player) entityVictim;
 
-                double shotHealth = shot.getHealth();
-                DecimalFormat format = new DecimalFormat("##.#");
-                String heartValue = format.format(shotHealth);
+                if(!(MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot)))) {
 
-                String shotName = shot.getName();
-                shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + heartValue + ChatColor.GRAY + " HP!");
-                shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
+                    double shotHealth = shot.getHealth();
+                    DecimalFormat format = new DecimalFormat("##.#");
+                    String heartValue = format.format(shotHealth);
 
+                    String shotName = shot.getName();
+                    shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + heartValue + ChatColor.GRAY + " HP!");
+                    shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
+                }
 //                // CraftPlayer craft = (CraftPlayer) shot;
 //                // float absFloat = craft.getHandle().getAbsorptionHearts();
 //                // int absInt = (int) absFloat;
@@ -628,29 +655,54 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    public static void main(String[] args) throws URISyntaxException, IOException, SerializeException {
+    public static void main(String[] args) throws URISyntaxException, IOException, SerializeException, InterruptedException {
 //    public void printContainerMetaData() throws IOException, URISyntaxException {
 //        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+        String gameJson = "{  \"blueTeam\": [\n" +
+                "    \"vice9\"\n" +
+                "  ],\n" +
+                "  \"requiredPlayers\": 2,\n" +
+                "  \"redTeam\": [\n" +
+                "    \"NitroholicPls\"\n" +
+                "  ]\n" +
+                "}}\n";
+        Game myGame = Game.juneauGameFactory(gameJson);
+        myGame.playerJoined("NitroholicPls");
+        myGame.playerJoined("vice9");
+        myGame.setState(Game.GameState.CAGED);
+        myGame.setState(Game.GameState.DURING_GAME);
+        myGame.addGoalInfo(UUID.randomUUID());
+        Thread.sleep(1000);
+        myGame.setState(Game.GameState.AFTER_GAME);
+        myGame.setEndTime();
+        myGame.getMostRecentScorerName();
+        System.exit(0);
 
-        URI uri = new URI("https://www.google.com");
-        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
-        System.out.println(foo);
 
-        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-        String QUEUE_NAME = System.getenv("SYNDICATE_MATCH_QUEUE_NAME");
-        System.out.println(QUEUE_NAME);
-        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-        System.out.println(queueUrl);
-        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
-        System.out.println("Messages: " + messages.size());
-        for (Message message : messages) {
-            System.out.println("found message:" + message.getBody());
-            Game myGame = Game.juneauGameFactory(message.getBody());
-            JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-            String serialzedNewGame = jsonSerializer.serialize(myGame);
-            System.out.println(serialzedNewGame);
-            sqs.deleteMessage(queueUrl, message.getReceiptHandle());
-        }
+
+        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
+        String serialzedNewGame = jsonSerializer.serialize(myGame);
+        System.out.println(serialzedNewGame);
+
+//        URI uri = new URI("https://www.google.com");
+//        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
+//        System.out.println(foo);
+//
+//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+//        String QUEUE_NAME = System.getenv("SYNDICATE_MATCH_QUEUE_NAME");
+//        System.out.println(QUEUE_NAME);
+//        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+//        System.out.println(queueUrl);
+//        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
+//        System.out.println("Messages: " + messages.size());
+//        for (Message message : messages) {
+//            System.out.println("found message:" + message.getBody());
+//            Game myGame = Game.juneauGameFactory(message.getBody());
+//            JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
+//            String serialzedNewGame = jsonSerializer.serialize(myGame);
+//            System.out.println(serialzedNewGame);
+//            sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+//        }
     }
 }
 

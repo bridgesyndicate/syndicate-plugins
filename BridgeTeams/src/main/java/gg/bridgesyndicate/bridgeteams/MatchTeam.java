@@ -31,7 +31,6 @@ public class MatchTeam
                 break;
             }
         }
-        player.sendMessage(ChatColor.GRAY + "You are now on the " + ChatColor.GRAY + type.name() + ChatColor.GRAY + " team!");
     }
 
     public static boolean isInTeam(final Player player) {
