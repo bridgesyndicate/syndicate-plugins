@@ -3,9 +3,12 @@ package gg.bridgesyndicate.bridgeteams;
 public class GameTimer {
 
     private static GameTimer single_instance = null;
+    private static int gameLengthInSeconds = 0;
     private long gameStartedUnixTime = 0;
 
-    GameTimer() {
+
+    GameTimer(int gameLengthInSeconds) {
+        this.gameLengthInSeconds = gameLengthInSeconds;
         gameStartedUnixTime = System.currentTimeMillis();
     }
 
@@ -15,13 +18,13 @@ public class GameTimer {
 
     public static GameTimer getInstance() {
         if (single_instance == null)
-            single_instance = new GameTimer();
+            single_instance = new GameTimer(gameLengthInSeconds);
         return single_instance;
     }
 
     private long getRemainingTimeInMillis() {
-        long GAME_LENGTH_IN_MILLIS = 300_000;
-        final long endTime = gameStartedUnixTime + GAME_LENGTH_IN_MILLIS;
+        long gameLengthInMillis = gameLengthInSeconds * 1_000;
+        final long endTime = gameStartedUnixTime + gameLengthInMillis;
         long currentTime = System.currentTimeMillis();
         return(endTime - currentTime);
     }

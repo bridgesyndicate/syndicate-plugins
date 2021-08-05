@@ -47,7 +47,7 @@ class GameScore { // Singleton
     }
 
     public static void initialize(Scoreboard board, Objective objective, Game game) {
-        goalsToWin = game.goalsToWin;
+        goalsToWin = game.getGoalsToWin();
         Team redScore = board.registerNewTeam(String.valueOf(scoreboardSections.RED_SCORE));
         redScore.addEntry(RED_SCORE_LINE);
         redScore.setSuffix(new String(new char[goalsToWin]).replace("\0", BUBBLE));

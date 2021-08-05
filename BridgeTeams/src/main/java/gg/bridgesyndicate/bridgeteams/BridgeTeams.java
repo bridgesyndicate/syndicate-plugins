@@ -3,6 +3,7 @@ package gg.bridgesyndicate.bridgeteams;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
@@ -10,8 +11,6 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import com.sk89q.worldedit.world.DataException;
-import org.apache.juneau.json.JsonSerializer;
-import org.apache.juneau.serializer.SerializeException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
@@ -88,10 +87,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if ( messages.size() > 0 ) {
                     Message message = messages.get(0);
                     System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
-                    game = Game.juneauGameFactory(message.getBody());
+                    game = Game.deserialize(message.getBody());
                     try {
                         game.addContainerMetaData();
-                        // post game to syndicate-web-service
+                        // TODO send task arn to syndicate web service
                     } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println("EXIT: Could not add container metadata.");
@@ -260,7 +259,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }.runTaskLater(this, 1);
     }
 
-    public void toteScore(Player player, GoalLocationInfo goal) {
+    public void toteScore(Player player, GoalLocationInfo goal) throws JsonProcessingException {
         GameScore score = GameScore.getInstance();
         score.increment(MatchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
@@ -295,7 +294,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             }
         }
         editSession.flushQueue();
-        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+
+        new BukkitRunnable() {
             @Override
             public void run() {
                 game.setState(Game.GameState.DURING_GAME);
@@ -307,7 +307,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     setGameModeForPlayer(player);
                 }
             }
-        }, 100);
+        }.runTaskLater(this, 100);
     }
 
     private void cagePlayers() {
@@ -321,7 +321,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    public void checkForGoal(Player player) {
+    public void checkForGoal(Player player) throws JsonProcessingException {
         if (game.getState() != Game.GameState.DURING_GAME) return;
 
         for (GoalLocationInfo goal : BridgeGoals.getGoalList()) {
@@ -337,7 +337,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void playerMove(PlayerMoveEvent event) {
+    public void playerMove(PlayerMoveEvent event) throws JsonProcessingException {
         final Player player = event.getPlayer();
         if (player.getLocation().getY() < 83) {
             if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
@@ -477,7 +477,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 if (game.getRemainingTimeInSeconds() < 0 ) {
                     this.cancel();
-                    endGame();
+                    try {
+                        endGame();
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     GameScore score = GameScore.getInstance();
                     score.updateGameClock(game);
@@ -508,7 +512,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.playerJoined(player.getName());
     }
 
-    private void endGame(){
+    private void endGame() throws JsonProcessingException {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
         Bukkit.broadcastMessage("Game Over");
@@ -525,12 +529,28 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Title title = new Title(titles.get(0), titles.get(1), 0, 6, 1);
             title.send(player);
         }
-        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-        try {
-            System.out.println(jsonSerializer.serialize(game));
-        } catch (SerializeException e) {
-            e.printStackTrace();
-        }
+        // TODO send game results
+
+        new BukkitRunnable() {
+            int attempt = 0;
+
+            public void run() {
+                if (attempt > 5) {
+                    Exception e = new Exception("FAILED TO SEND GAME DATA");
+                    e.printStackTrace();
+                    game.setState(Game.GameState.TERMINATE);
+                    this.cancel();
+                }
+                try {
+                    System.out.println(Game.serialize(game));
+                    game.setState(Game.GameState.TERMINATE);
+                    this.cancel();
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                    attempt++;
+                }
+            }
+        }.runTaskTimer(this, 0, 40);
     }
 
     private void broadcastEndMessages() {
@@ -655,7 +675,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    public static void main(String[] args) throws URISyntaxException, IOException, SerializeException, InterruptedException {
+    public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
 //    public void printContainerMetaData() throws IOException, URISyntaxException {
 //        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
         String gameJson = "{  \"blueTeam\": [\n" +
@@ -666,7 +686,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 "    \"NitroholicPls\"\n" +
                 "  ]\n" +
                 "}}\n";
-        Game myGame = Game.juneauGameFactory(gameJson);
+        Game myGame = Game.deserialize(gameJson);
+        myGame.addContainerMetaData();
         myGame.playerJoined("NitroholicPls");
         myGame.playerJoined("vice9");
         myGame.setState(Game.GameState.CAGED);
@@ -675,14 +696,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Thread.sleep(1000);
         myGame.setState(Game.GameState.AFTER_GAME);
         myGame.setEndTime();
-        myGame.getMostRecentScorerName();
-        System.exit(0);
+        myGame.addKillInfo(UUID.randomUUID());
+        System.out.println(Game.serialize(myGame));
 
 
-
-        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-        String serialzedNewGame = jsonSerializer.serialize(myGame);
-        System.out.println(serialzedNewGame);
+//        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
+//        String serialzedNewGame = jsonSerializer.serialize(myGame);
+//        System.out.println(serialzedNewGame);
 
 //        URI uri = new URI("https://www.google.com");
 //        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();

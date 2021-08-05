@@ -1,9 +1,9 @@
 package gg.bridgesyndicate.bridgeteams;
 
 
-import org.apache.juneau.annotation.Beanc;
-import org.apache.juneau.json.JsonParser;
-import org.apache.juneau.parser.ParseException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -11,15 +11,16 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
+@JsonIgnoreProperties(value = { "mostRecentScorerName" })
 public class Game {
-    private final int requiredPlayers;
+    private int requiredPlayers=0;
     private final long createdAt;
-    public final int GOALS_TO_WIN = 3;
-    public final int goalsToWin;
+    private int goalsToWin = 0;
+    private int gameLengthInSeconds = 0;
     private final GameScore gameScore;
     public long gameStartedAt = 0;
     public long gameEndedAt = 0;
-    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED }
+    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE }
     private GameState state;
     private String taskArn;
     private List redTeam;
@@ -29,26 +30,42 @@ public class Game {
     private List<GoalMeta> goalsScored = new ArrayList<>();
     private List<KillMeta> killsRegistered = new ArrayList<>();
 
-
-    @Beanc(properties = "requiredPlayers,blueTeam,redTeam")
-    public Game(int requiredPlayers, List blueTeam, List redTeam) {
-        this.requiredPlayers = requiredPlayers;
-        this.blueTeam = blueTeam;
-        this.redTeam = redTeam;
+    public Game() {
         this.state = state.BEFORE_GAME;
         this.createdAt = System.currentTimeMillis();
-        this.goalsToWin = GOALS_TO_WIN;
         this.gameScore = GameScore.getInstance();
     }
 
     /* METHODS */
+
+    public int getGameLengthInSeconds() {
+        return gameLengthInSeconds;
+    }
+
+    public int getGoalsToWin() {
+        return goalsToWin;
+    }
+
+    public String getTaskArn() {
+        return taskArn;
+    }
+
+    public HashMap getGameScore() {
+        HashMap<String, Integer> score = new HashMap<>();
+        score.put("red", GameScore.getRed());
+        score.put("blue", GameScore.getBlue());
+        return(score);
+    }
+    public List<GoalMeta> getGoalsScored() { return goalsScored; }
+    public List<KillMeta> getKillsRegistered() { return killsRegistered; }
 
     public void setEndTime() {
         gameEndedAt = System.currentTimeMillis();
     }
 
     public void addContainerMetaData() throws URISyntaxException, IOException {
-        ContainerMetadata containerMetaData = new ContainerMetadata();
+        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+        ContainerMetadata containerMetaData = new ContainerMetadata(url);
         this.taskArn = containerMetaData.getTaskArn();
     }
 
@@ -114,12 +131,17 @@ public class Game {
         return(totalKills);
     }
 
-    static Game juneauGameFactory(String json) {
-        JsonParser jsonParser = JsonParser.DEFAULT;
+    static String serialize(Game game) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return( mapper.writerWithDefaultPrettyPrinter().writeValueAsString(game) );
+    }
+
+    static Game deserialize(String json) {
+        ObjectMapper objectMapper = new ObjectMapper();
         Game game = null;
         try {
-            game = jsonParser.parse(json, Game.class);
-        } catch (ParseException e) {
+            game = objectMapper.readValue(json, Game.class);
+        } catch (JsonProcessingException e) {
             System.err.println("Cannot parse game json.");
             e.printStackTrace();
         }
@@ -136,7 +158,7 @@ public class Game {
 
     public void setState(GameState state) {
         if (this.state == GameState.BEFORE_GAME && state == GameState.CAGED) { //only happens once
-            gameTimer = new GameTimer();
+            gameTimer = new GameTimer(gameLengthInSeconds);
             gameStartedAt = gameTimer.getGameStartedUnixTime();
         }
         this.state = state;
@@ -146,9 +168,11 @@ public class Game {
         return requiredPlayers;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        String foo = "";
-        System.out.println(foo.concat(" bar"));
+    public static void main(String[] args) throws IOException {
+        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+        ContainerMetadata containerMetaData = new ContainerMetadata(url);
+        ObjectMapper mapper = new ObjectMapper();
+        System.out.println( mapper.writeValueAsString(containerMetaData) );
     }
 
     public boolean hasPlayer(Player player) {
@@ -181,6 +205,7 @@ public class Game {
             this.goalTime = goalTime;
         }
 
+        public long getGoalTime() { return goalTime; }
         public UUID getPlayerUUID() {
             return playerUUID;
         }
@@ -199,6 +224,7 @@ public class Game {
         public UUID getPlayerUUID() {
             return playerUUID;
         }
+        public long getKillTime() { return killTime; }
 
     }
 

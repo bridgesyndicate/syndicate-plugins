@@ -5,5 +5,8 @@
   "requiredPlayers": 2,
   "redTeam": [
     "NitroholicPls"
-  ]
+  ],
+  "goalsToWin": 3,
+  "gameLengthInSeconds": 300
+
 }
