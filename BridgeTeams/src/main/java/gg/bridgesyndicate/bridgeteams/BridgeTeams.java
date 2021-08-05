@@ -145,9 +145,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
         sendDeadPlayerToSpawn(player);
         player.setNoDamageTicks(50);
-        game.addKillInfo(killer.getUniqueId());
-        GameScore score = GameScore.getInstance();
-        if(game.getState() != Game.GameState.AFTER_GAME) {
+        if(game.getState() == Game.GameState.DURING_GAME) {
+            game.addKillInfo(killer.getUniqueId());
+            GameScore score = GameScore.getInstance();
             score.updateKillersKills(killer, game);
             sendDeathMessages(player, killer, event);
         }
@@ -529,7 +529,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Title title = new Title(titles.get(0), titles.get(1), 0, 6, 1);
             title.send(player);
         }
-        // TODO send game results
 
         new BukkitRunnable() {
             int attempt = 0;
@@ -543,6 +542,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 try {
                     System.out.println(Game.serialize(game));
+                    // TODO send game results
                     game.setState(Game.GameState.TERMINATE);
                     this.cancel();
                 } catch (JsonProcessingException e) {
@@ -632,13 +632,22 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 Player shot = (Player) entityVictim;
 
                 if(!(MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot)))) {
-
                     double shotHealth = shot.getHealth();
                     DecimalFormat format = new DecimalFormat("##.#");
                     String heartValue = format.format(shotHealth);
+                    double damage = event.getFinalDamage();
+                    double absorptionDamage = event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION);
+                    double futureHealth = shot.getHealth() - damage - absorptionDamage;
+                    double formattedFutureHealth = Math.ceil(futureHealth * 10)/10;
+
+                    System.out.println("finalsdamage: " + event.getFinalDamage());
+                    System.out.println("getdamage: " + event.getDamage());
+                    System.out.println("getoriginaldamage: " + event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION));
+                    System.out.println(heartValue);
 
                     String shotName = shot.getName();
-                    shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + heartValue + ChatColor.GRAY + " HP!");
+                    if (formattedFutureHealth > 0)
+                        shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + formattedFutureHealth + ChatColor.GRAY + " HP!");
                     shoota.playSound(shoota.getLocation(), Sound.ORB_PICKUP, 1.0f, 0.5f);
                 }
 //                // CraftPlayer craft = (CraftPlayer) shot;

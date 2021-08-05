@@ -169,10 +169,15 @@ public class Game {
     }
 
     public static void main(String[] args) throws IOException {
-        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
-        ContainerMetadata containerMetaData = new ContainerMetadata(url);
-        ObjectMapper mapper = new ObjectMapper();
-        System.out.println( mapper.writeValueAsString(containerMetaData) );
+        double futureHealth = 17.19234324;
+        double formattedFutureHealth = Math.ceil(futureHealth * 10)/10;
+        System.out.println(formattedFutureHealth);
+
+
+//        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
+//        ContainerMetadata containerMetaData = new ContainerMetadata(url);
+//        ObjectMapper mapper = new ObjectMapper();
+//        System.out.println( mapper.writeValueAsString(containerMetaData) );
     }
 
     public boolean hasPlayer(Player player) {
