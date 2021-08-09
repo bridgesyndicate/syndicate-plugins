@@ -1,15 +1,41 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import com.amazonaws.DefaultRequest;
+import com.amazonaws.Request;
+import com.amazonaws.auth.AWS4Signer;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.http.HttpMethodName;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Iterator;
+import java.util.Map;
+
+import static com.amazonaws.auth.internal.SignerConstants.X_AMZ_CONTENT_SHA256;
+
 
 public class HttpClient {
+
+    public enum PUT_REASONS { FINISHED_GAME, CONTAINER_METADATA, ABORTED_GAME }
+
+    public static URI uriFactory(){
+        String protocol = "https";
+        String host = "knopfnsxoh.execute-api.us-west-2.amazonaws.com";
+        String path = "/Prod/auth/game/container_metadata";
+        String url = protocol + "://" + host + path;
+        return(URI.create(url));
+    }
 
     public static String get(String url) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -24,6 +50,88 @@ public class HttpClient {
                 if (entity != null) {
                     String result = EntityUtils.toString(entity);
                     return (result);
+                }
+            } finally {
+                response.close();
+            }
+        } finally {
+            httpClient.close();
+        }
+        throw new IOException("Something went terribly wrong");
+    }
+
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        put(new Game(), PUT_REASONS.ABORTED_GAME);
+    }
+
+    public static String getFileContent(FileInputStream fis, String encoding) throws IOException
+    {
+        try( BufferedReader br =
+                     new BufferedReader( new InputStreamReader(fis, encoding)))
+        {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while(( line = br.readLine()) != null ) {
+                sb.append( line );
+                sb.append( '\n' );
+            }
+            return sb.toString();
+        }
+    }
+
+    public static String put(Game game, PUT_REASONS PUT_REASONS) throws IOException, URISyntaxException {
+        DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
+        AWSCredentials credentials = credentialsProvider.getCredentials();
+        System.out.println(credentials.getAWSAccessKeyId());
+        System.out.println(credentials.getAWSSecretKey());
+        DefaultAwsRegionProviderChain regionProviderChain = new DefaultAwsRegionProviderChain();
+        String region = regionProviderChain.getRegion();
+
+        Request<Void> request = new DefaultRequest<Void>("execute-api");
+        request.setHttpMethod(HttpMethodName.PUT);
+        request.setEndpoint(new URI("https://knopfnsxoh.execute-api.us-west-2.amazonaws.com"));
+        request.setResourcePath("/Prod/auth/game/container_metadata");
+        String PAYLOAD_FILE = "/home/harry/syndicate-web-service/spec/mocks/game/container_metadata.json";
+        FileInputStream fis2 = new FileInputStream(PAYLOAD_FILE);
+        String payloadString = getFileContent(fis2, "UTF-8");
+        request.setContent(new ByteArrayInputStream(payloadString.getBytes()));
+        request.addHeader(X_AMZ_CONTENT_SHA256, "required");
+
+        AWS4Signer signer = new AWS4Signer();
+        signer.setRegionName(region);
+        signer.setServiceName(request.getServiceName());
+        // 2021-08-09 T 01:46:33 Z//
+//        Date staticTestingDate = new Date(121, 7, 8, 18, 46, 33);
+//        signer.setOverrideDate(staticTestingDate);
+        signer.sign(request, credentials);
+
+        Map<String, String> headerMap = request.getHeaders();
+        Iterator<String> iterator = headerMap.keySet().iterator();
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        try {
+            HttpPut httpPut = new HttpPut(uriFactory());
+
+            HttpEntity body = new StringEntity(payloadString);
+            httpPut.setEntity(body);
+
+            while(iterator.hasNext()) {
+                String key = iterator.next();
+                String value = headerMap.get(key);
+                System.out.println(key + " : " + value);
+                httpPut.addHeader(key,value);
+            }
+            CloseableHttpResponse response = httpClient.execute(httpPut);
+            try {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    HttpEntity entity = response.getEntity();
+                    System.out.println(EntityUtils.toString(entity));
+                    throw new IOException("Response Status not 200, was: " + response.getStatusLine().getStatusCode());
+                }
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    System.out.println(EntityUtils.toString(entity));
+                    return ("foo");
                 }
             } finally {
                 response.close();
