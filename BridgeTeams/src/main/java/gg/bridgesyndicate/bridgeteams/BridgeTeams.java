@@ -531,7 +531,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         broadcastStartMessages();
         buildScoreboards();
         startClock();
-        GameScore.scoreboardTeams();
     }
 
     private void startClock() {
