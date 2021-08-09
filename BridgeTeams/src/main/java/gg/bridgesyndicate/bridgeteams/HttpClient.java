@@ -7,6 +7,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.http.HttpMethodName;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -82,8 +83,6 @@ public class HttpClient {
     public static String put(Game game, PUT_REASONS PUT_REASONS) throws IOException, URISyntaxException {
         DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
         AWSCredentials credentials = credentialsProvider.getCredentials();
-        System.out.println(credentials.getAWSAccessKeyId());
-        System.out.println(credentials.getAWSSecretKey());
         DefaultAwsRegionProviderChain regionProviderChain = new DefaultAwsRegionProviderChain();
         String region = regionProviderChain.getRegion();
 
@@ -91,18 +90,18 @@ public class HttpClient {
         request.setHttpMethod(HttpMethodName.PUT);
         request.setEndpoint(new URI("https://knopfnsxoh.execute-api.us-west-2.amazonaws.com"));
         request.setResourcePath("/Prod/auth/game/container_metadata");
-        String PAYLOAD_FILE = "/home/harry/syndicate-web-service/spec/mocks/game/container_metadata.json";
-        FileInputStream fis2 = new FileInputStream(PAYLOAD_FILE);
-        String payloadString = getFileContent(fis2, "UTF-8");
+        ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(game.getUuid(), game.getTaskArn());
+        ObjectMapper mapper = new ObjectMapper();
+        String payloadString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arnUpdatePayload);
         request.setContent(new ByteArrayInputStream(payloadString.getBytes()));
         request.addHeader(X_AMZ_CONTENT_SHA256, "required");
 
         AWS4Signer signer = new AWS4Signer();
         signer.setRegionName(region);
         signer.setServiceName(request.getServiceName());
-        // 2021-08-09 T 01:46:33 Z//
-//        Date staticTestingDate = new Date(121, 7, 8, 18, 46, 33);
-//        signer.setOverrideDate(staticTestingDate);
+        // 2021-08-09 T 01:46:33 Z
+        // Date staticTestingDate = new Date(121, 7, 8, 18, 46, 33);
+        // signer.setOverrideDate(staticTestingDate);
         signer.sign(request, credentials);
 
         Map<String, String> headerMap = request.getHeaders();
@@ -118,20 +117,19 @@ public class HttpClient {
             while(iterator.hasNext()) {
                 String key = iterator.next();
                 String value = headerMap.get(key);
-                System.out.println(key + " : " + value);
                 httpPut.addHeader(key,value);
             }
             CloseableHttpResponse response = httpClient.execute(httpPut);
             try {
                 if (response.getStatusLine().getStatusCode() != 200) {
                     HttpEntity entity = response.getEntity();
-                    System.out.println(EntityUtils.toString(entity));
                     throw new IOException("Response Status not 200, was: " + response.getStatusLine().getStatusCode());
                 }
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
-                    System.out.println(EntityUtils.toString(entity));
-                    return ("foo");
+                    String returnValueString = EntityUtils.toString(entity);
+                    System.out.println("Result from " + PUT_REASONS + returnValueString);
+                    return(returnValueString);
                 }
             } finally {
                 response.close();
@@ -191,5 +189,15 @@ public class HttpClient {
                 "  },\n" +
                 "  \"LogDriver\": \"awslogs\"\n" +
                 "}\n");
+    }
+}
+
+class ArnUpdatePayload {
+    public final String uuid;
+    public final String taskArn;
+
+    ArnUpdatePayload(String uuid, String taskArn){
+        this.uuid = uuid;
+        this.taskArn = taskArn;
     }
 }

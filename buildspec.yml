@@ -20,6 +20,7 @@ phases:
       - echo package the plugins as a tar
       - mkdir tmp
       - aws s3 cp s3://syndicate-plugins-artifacts/worldedit-bukkit-6.1.9.jar tmp/
+      - aws s3 cp s3://syndicate-plugins-artifacts/ProtocolLib.jar tmp/
       - find . -type f -path \*target\* -name \*jar -exec cp -p {} tmp/ \;
       - tar -C tmp -cvf ./plugins.tar .
       - echo getting the jar deps from s3

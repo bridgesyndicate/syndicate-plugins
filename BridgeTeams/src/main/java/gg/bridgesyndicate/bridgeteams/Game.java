@@ -15,12 +15,13 @@ import java.util.*;
 public class Game {
     private int requiredPlayers=0;
     private final long createdAt;
+    private final String uuid = null;
     private int goalsToWin = 0;
     private int gameLengthInSeconds = 0;
     private final GameScore gameScore;
     public long gameStartedAt = 0;
     public long gameEndedAt = 0;
-    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE }
+    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE, ABORTED }
     private GameState state;
     private String taskArn;
     private List redTeam;
@@ -29,6 +30,7 @@ public class Game {
     private GameTimer gameTimer;
     private List<GoalMeta> goalsScored = new ArrayList<>();
     private List<KillMeta> killsRegistered = new ArrayList<>();
+    private HashMap<String, UUID> playerMap = new HashMap();
 
     public Game() {
         this.state = state.BEFORE_GAME;
@@ -37,6 +39,10 @@ public class Game {
     }
 
     /* METHODS */
+
+    public String getUuid() {
+        return uuid;
+    }
 
     public int getGameLengthInSeconds() {
         return gameLengthInSeconds;
@@ -172,8 +178,6 @@ public class Game {
         double futureHealth = 17.19234324;
         double formattedFutureHealth = Math.ceil(futureHealth * 10)/10;
         System.out.println(formattedFutureHealth);
-
-
 //        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
 //        ContainerMetadata containerMetaData = new ContainerMetadata(url);
 //        ObjectMapper mapper = new ObjectMapper();
@@ -194,7 +198,13 @@ public class Game {
     }
 
     public void playerJoined(String name) {
+        Player player = Bukkit.getPlayer(name);
         joinedPlayers.add(name);
+        playerMap.put(name, player.getUniqueId());
+    }
+
+    public HashMap<String, UUID> getPlayerMap(){
+        return(playerMap);
     }
 
     public boolean over() {

@@ -2,12 +2,11 @@ name: BridgeTeams
 version: ${project.version}
 main: gg.bridgesyndicate.bridgeteams.BridgeTeams
 api-version: 1.8
-authors: [ bdamja ]
+authors: [ bdamja, vice9]
 
 commands:
   assign:
     description: Assigns players to red and blue teams.
   myteam:
     description: Displays which team you are on.
-depend: [WorldEdit]
-
+depend: [WorldEdit, ProtocolLib]

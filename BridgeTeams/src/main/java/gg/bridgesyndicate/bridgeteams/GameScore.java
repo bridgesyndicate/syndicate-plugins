@@ -2,10 +2,9 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
+import org.bukkit.scoreboard.*;
 
 import java.util.Iterator;
 
@@ -46,7 +45,31 @@ class GameScore { // Singleton
         return blue;
     }
 
-    public static void initialize(Scoreboard board, Objective objective, Game game) {
+    public static void initHealthTags(Scoreboard board, Player player) {
+        Objective showhealth = board.registerNewObjective("showhealth", Criterias.HEALTH);
+        showhealth.setDisplaySlot(DisplaySlot.BELOW_NAME);
+        showhealth.setDisplayName(ChatColor.RED + "❤");
+    }
+
+    public static void initColorTags(Scoreboard board) {
+        Team redTeamTag = board.registerNewTeam("RedTeamTag");
+        Team blueTeamTag = board.registerNewTeam("BlueTeamTag");
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Team chosenTeam = null;
+            ChatColor chosenColor = null;
+            if (MatchTeam.getTeam(player) == TeamType.RED) {
+                chosenColor = ChatColor.RED;
+                chosenTeam = redTeamTag;
+            } else {
+                chosenColor = ChatColor.BLUE;
+                chosenTeam = blueTeamTag;
+            }
+            chosenTeam.setPrefix(chosenColor.toString());
+            chosenTeam.addPlayer(player);
+        }
+    }
+
+    public static void initialize(Scoreboard board, Objective objective, Game game, Player player) {
         goalsToWin = game.getGoalsToWin();
         Team redScore = board.registerNewTeam(String.valueOf(scoreboardSections.RED_SCORE));
         redScore.addEntry(RED_SCORE_LINE);
@@ -91,6 +114,9 @@ class GameScore { // Singleton
         ip.setSuffix("");
         ip.setPrefix("");
         objective.getScore(IP_LINE).setScore(0);
+
+        //initHealthTags(board, player);
+        initColorTags(board);
     }
 
     public void increment(TeamType playerTeam) {

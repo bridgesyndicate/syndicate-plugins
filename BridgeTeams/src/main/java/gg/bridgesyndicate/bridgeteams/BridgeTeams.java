@@ -3,6 +3,10 @@ package gg.bridgesyndicate.bridgeteams;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketContainer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.EditSession;
@@ -36,6 +40,7 @@ import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.Iterator;
@@ -44,8 +49,10 @@ import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
+    private ProtocolManager protocolManager;
     private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
+    private final int NO_START_ABORT_TIME_IN_SECONDS = 30;
 
     public enum scoreboardSections {TIMER}
 
@@ -64,6 +71,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
+        protocolManager = ProtocolLibrary.getProtocolManager();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
@@ -90,7 +98,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     game = Game.deserialize(message.getBody());
                     try {
                         game.addContainerMetaData();
-                        // TODO send task arn to syndicate web service
+                        HttpClient.put(game, HttpClient.PUT_REASONS.CONTAINER_METADATA);
+                        abortGameOnTimeout();
                     } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println("EXIT: Could not add container metadata.");
@@ -105,15 +114,72 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0, 200);
     }
 
+    private void abortGameOnTimeout() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (game.getState() == Game.GameState.BEFORE_GAME) {
+                    Game abortedGame = game;
+                    game = null;
+                    System.out.println("Game has not started in " + NO_START_ABORT_TIME_IN_SECONDS
+                    + " seconds. Aborting.");
+                    abortedGame.setState(Game.GameState.ABORTED);
+                    try {
+                        HttpClient.put(abortedGame, HttpClient.PUT_REASONS.ABORTED_GAME);
+                    } catch (IOException | URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.kickPlayer("Game did not start within " + NO_START_ABORT_TIME_IN_SECONDS);
+                    }
+                    pollForGameData();
+                }
+            }
+        }.runTaskLater(this, NO_START_ABORT_TIME_IN_SECONDS * 20);
+    }
+
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
-
         if (game.getState() != Game.GameState.DURING_GAME &&
                 game.getState() != Game.GameState.CAGED
         ) {
             event.setCancelled(true);
         }
+    }
 
+    @EventHandler
+    public void onHit(EntityDamageByEntityEvent event) {
+        if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
+            computeKnockback(event);
+        }
+    }
+
+
+    private void computeKnockback (EntityDamageByEntityEvent event) {
+//        Vector damagedPlayersVelocity = event.getEntity().getVelocity();
+//        Vector knockBackVector = damagedPlayersVelocity.multiply(-1);
+        Player player = (Player) event.getEntity();
+        Vector v = player.getVelocity();
+        v.setX(0);
+        v.setY(0);
+        v.setZ(0);
+        player.setVelocity(v);
+        PacketContainer explosion = protocolManager.createPacket(PacketType.Play.Server.EXPLOSION);
+        System.out.println("computeKnockback");
+        explosion.getDoubles().
+                write(0, player.getLocation().getX()).
+                write(1, player.getLocation().getY()).
+                write(2, player.getLocation().getZ());
+        explosion.getFloat().write(0, 0.75F);
+        explosion.getFloat().write(1, 0.5F);
+        explosion.getFloat().write(2, 0.75F);
+        try {
+            protocolManager.sendServerPacket(player, explosion);
+            System.out.println("explosion sent");
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(
+                    "Cannot send packet " + explosion, e);
+        }
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
@@ -456,7 +522,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         timer.setPrefix("");
         objective.getScore(TIMER_STRING).setScore(7);
 
-        GameScore.initialize(board, objective, game);
+        GameScore.initialize(board, objective, game, player);
     }
 
     private void startGame() {
@@ -465,6 +531,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         broadcastStartMessages();
         buildScoreboards();
         startClock();
+        GameScore.scoreboardTeams();
     }
 
     private void startClock() {
@@ -532,7 +599,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         new BukkitRunnable() {
             int attempt = 0;
-
             public void run() {
                 if (attempt > 5) {
                     Exception e = new Exception("FAILED TO SEND GAME DATA");
@@ -542,12 +608,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 try {
                     System.out.println(Game.serialize(game));
-                    // TODO send game results
+                    HttpClient.put(game, HttpClient.PUT_REASONS.FINISHED_GAME);
                     game.setState(Game.GameState.TERMINATE);
                     this.cancel();
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                     attempt++;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
                 }
             }
         }.runTaskTimer(this, 0, 40);
