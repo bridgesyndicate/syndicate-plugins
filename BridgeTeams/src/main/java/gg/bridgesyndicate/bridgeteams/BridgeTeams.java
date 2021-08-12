@@ -617,7 +617,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if (attempt > 5) {
                     Exception e = new Exception("FAILED TO SEND GAME DATA");
                     e.printStackTrace();
-                    game.setState(Game.GameState.TERMINATE);
                     this.cancel();
                 }
                 try {
@@ -766,28 +765,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
 //    public void printContainerMetaData() throws IOException, URISyntaxException {
 //        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
-        String gameJson = "{  \"blueTeam\": [\n" +
-                "    \"vice9\"\n" +
-                "  ],\n" +
-                "  \"requiredPlayers\": 2,\n" +
-                "  \"redTeam\": [\n" +
-                "    \"NitroholicPls\"\n" +
-                "  ]\n" +
-                "}}\n";
-        Game myGame = Game.deserialize(gameJson);
-        myGame.addContainerMetaData();
-        myGame.playerJoined("NitroholicPls");
-        myGame.playerJoined("vice9");
-        myGame.setState(Game.GameState.CAGED);
-        myGame.setState(Game.GameState.DURING_GAME);
-        myGame.addGoalInfo(UUID.randomUUID());
-        Thread.sleep(1000);
-        myGame.setState(Game.GameState.AFTER_GAME);
-        myGame.setEndTime();
-        myGame.addKillInfo(UUID.randomUUID());
-        System.out.println(Game.serialize(myGame));
-
-
 //        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
 //        String serialzedNewGame = jsonSerializer.serialize(myGame);
 //        System.out.println(serialzedNewGame);

@@ -23,6 +23,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.amazonaws.auth.internal.SignerConstants.X_AMZ_CONTENT_SHA256;
 
@@ -31,10 +32,9 @@ public class HttpClient {
 
     public enum PUT_REASONS { FINISHED_GAME, CONTAINER_METADATA, ABORTED_GAME }
 
-    public static URI uriFactory(){
+    public static URI uriFactory(String path){
         String protocol = "https";
         String host = "knopfnsxoh.execute-api.us-west-2.amazonaws.com";
-        String path = "/Prod/auth/game/container_metadata";
         String url = protocol + "://" + host + path;
         return(URI.create(url));
     }
@@ -61,8 +61,31 @@ public class HttpClient {
         throw new IOException("Something went terribly wrong");
     }
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        put(new Game(), PUT_REASONS.ABORTED_GAME);
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+        String gameJson = "{  \"blueTeam\": [\n" +
+                "    \"vice9\"\n" +
+                "  ],\n" +
+                "  \"uuid\": \"12345678-d05a-4b36-a489-8584b10deb7a\",\n" +
+                "  \"requiredPlayers\": 2,\n" +
+                "  \"goalsToWin\": 2,\n" +
+                "  \"gameLengthInSeconds\": 600,\n" +
+                "  \"redTeam\": [\n" +
+                "    \"NitroholicPls\"\n" +
+                "  ]\n" +
+                "}}\n";
+        Game game = Game.deserialize(gameJson);
+        game.addContainerMetaData();
+        game.playerJoined("NitroholicPls");
+        game.playerJoined("vice9");
+        game.setState(Game.GameState.CAGED);
+        game.setState(Game.GameState.DURING_GAME);
+        game.addGoalInfo(UUID.randomUUID());
+        Thread.sleep(2000);
+        game.setState(Game.GameState.AFTER_GAME);
+        game.setEndTime();
+        game.addKillInfo(UUID.randomUUID());
+        System.out.println(Game.serialize(game));
+        put(game, PUT_REASONS.FINISHED_GAME);
     }
 
     public static String put(Game game, PUT_REASONS put_reason) throws IOException, URISyntaxException {
@@ -93,7 +116,7 @@ public class HttpClient {
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
         try {
-            HttpPut httpPut = new HttpPut(uriFactory());
+            HttpPut httpPut = new HttpPut(uriFactory(putMetaObject.resource));
 
             HttpEntity body = new StringEntity(payloadString);
             httpPut.setEntity(body);
