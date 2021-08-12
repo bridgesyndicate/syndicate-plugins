@@ -109,8 +109,9 @@ public class ChatBroadcasts {
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
         player.sendMessage("" + ChatColor.YELLOW  + ChatColor.BOLD + getSpaces(23)
                 + "Bridge " + playersPerTeam + "v" + playersPerTeam
-                + ChatColor.GRAY  + " " + DASH + "" + ChatColor.WHITE
-        + game.getFinalGameLengthFormatted());
+                + ChatColor.RESET + ChatColor.GRAY  + " " + DASH + " "
+                + ChatColor.BOLD + ChatColor.WHITE
+                + game.getFinalGameLengthFormatted());
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
     }
 }

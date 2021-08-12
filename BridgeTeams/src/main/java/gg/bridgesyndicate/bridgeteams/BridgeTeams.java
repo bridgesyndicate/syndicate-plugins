@@ -149,7 +149,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onHit(EntityDamageByEntityEvent event) {
-        if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
+        if (event.getEntity() instanceof Player && event.getDamager() instanceof Player
+        && MatchTeam.getTeam((Player) event.getDamager()) != MatchTeam.getTeam((Player) event.getEntity())
+        ) {
             computeKnockback(event);
         }
     }
@@ -170,9 +172,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 write(0, player.getLocation().getX()).
                 write(1, player.getLocation().getY()).
                 write(2, player.getLocation().getZ());
-        explosion.getFloat().write(0, 0.75F);
-        explosion.getFloat().write(1, 0.5F);
-        explosion.getFloat().write(2, 0.75F);
+        explosion.getFloat().write(0, 0.6F);
+        explosion.getFloat().write(1, 0.4F);
+        explosion.getFloat().write(2, 0.6F);
         try {
             protocolManager.sendServerPacket(player, explosion);
             System.out.println("explosion sent");
@@ -538,6 +540,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 if ( game.getState() == Game.GameState.AFTER_GAME) {
+                    System.out.println("cancel the startclock timer");
                     this.cancel();
                     return;
                 }
