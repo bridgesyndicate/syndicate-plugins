@@ -60,6 +60,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final String WAS_KILLED_BY = " was killed by ";
     private static final String WAS_VOIDED_BY = " was hit into the void by ";
 
+    private CuboidClipboard clipboard = null;
+
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -76,7 +78,20 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
         Bukkit.getWorld("world").setTime(1000);
+        try {
+            prepareCages();
+        } catch (com.sk89q.worldedit.data.DataException | IOException e) {
+            e.printStackTrace();
+            System.out.println("ERROR: Could not prepare cages. Exiting.");
+            System.exit(-1);
+        }
         pollForGameData();
+    }
+
+    private void prepareCages() throws com.sk89q.worldedit.data.DataException, IOException {
+        final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
+        SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
+        clipboard = schematicFormat.load(schematic);
     }
 
     private void pollForGameData() {
@@ -352,13 +367,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         editSession.enableQueue();
         for (TeamType team : MatchTeam.getTeams()) {
             Location cageLocation = MatchTeam.getCageLocation(team);
-            final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
             try {
-                SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
-                CuboidClipboard clipboard = schematicFormat.load(schematic);
                 clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
-            } catch (MaxChangedBlocksException | DataException | IOException e) {
+            } catch (MaxChangedBlocksException e) {
                 e.printStackTrace();
+                System.out.println("ERROR: Could not build cages. Exiting.");
+                System.exit(-1);
             }
         }
         editSession.flushQueue();
