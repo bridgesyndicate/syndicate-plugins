@@ -62,6 +62,12 @@ public class Game {
         score.put("blue", GameScore.getBlue());
         return(score);
     }
+
+    public String getFinalGameLengthFormatted() {
+        int finalGameLengthInSeconds = gameTimer.convertMillisToSeconds(gameEndedAt - gameStartedAt);
+        return gameTimer.formatSeconds(finalGameLengthInSeconds);
+    }
+
     public List<GoalMeta> getGoalsScored() { return goalsScored; }
     public List<KillMeta> getKillsRegistered() { return killsRegistered; }
 

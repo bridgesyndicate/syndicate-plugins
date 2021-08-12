@@ -45,7 +45,7 @@ class GameScore { // Singleton
         return blue;
     }
 
-    public static void initHealthTags(Scoreboard board, Player player) {
+    public static void initHealthTags(Scoreboard board) {
         Objective showhealth = board.registerNewObjective("showhealth", Criterias.HEALTH);
         showhealth.setDisplaySlot(DisplaySlot.BELOW_NAME);
         showhealth.setDisplayName(ChatColor.RED + "❤");
@@ -115,7 +115,7 @@ class GameScore { // Singleton
         ip.setPrefix("");
         objective.getScore(IP_LINE).setScore(0);
 
-        //initHealthTags(board, player);
+        initHealthTags(board);
         initColorTags(board);
     }
 

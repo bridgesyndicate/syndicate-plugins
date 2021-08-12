@@ -26,18 +26,27 @@ public class GameTimer {
         long gameLengthInMillis = gameLengthInSeconds * 1_000;
         final long endTime = gameStartedUnixTime + gameLengthInMillis;
         long currentTime = System.currentTimeMillis();
-        return(endTime - currentTime);
+        return (endTime - currentTime);
     }
 
-    public long getRemainingTimeInSeconds(){
-        return(getRemainingTimeInMillis()/1000);
+    public long getRemainingTimeInSeconds() {
+        return (getRemainingTimeInMillis() / 1000);
     }
 
-    public String getRemainingTimeFormatted(){
+    public String formatSeconds(int seconds) {
+        int minutes = seconds % 3600 / 60;
+        return (String.format("%02d", minutes)
+                + ":" + String.format("%02d", seconds % 60));
+    }
+
+    public String getRemainingTimeFormatted() {
         long remainingTimeInMillis = getRemainingTimeInMillis();
-        int remainingTimeInSeconds = (int) Math.ceil( (float) remainingTimeInMillis / 1000 );
-        int remainingMinutes = remainingTimeInSeconds % 3600 / 60;
-        return(String.format("%02d", remainingMinutes)
-                + ":" + String.format("%02d", remainingTimeInSeconds % 60));
+        int remainingTimeInSeconds = (int) Math.ceil((float) remainingTimeInMillis / 1000);
+        return formatSeconds(remainingTimeInSeconds);
     }
+
+    public int convertMillisToSeconds(long m) {
+        return (int) Math.ceil((float) m / 1000);
+    }
+
 }

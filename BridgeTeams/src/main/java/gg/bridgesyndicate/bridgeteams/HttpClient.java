@@ -7,6 +7,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.http.HttpMethodName;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -49,8 +50,7 @@ public class HttpClient {
                 }
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
-                    String result = EntityUtils.toString(entity);
-                    return (result);
+                    return (EntityUtils.toString(entity));
                 }
             } finally {
                 response.close();
@@ -65,22 +65,8 @@ public class HttpClient {
         put(new Game(), PUT_REASONS.ABORTED_GAME);
     }
 
-    public static String getFileContent(FileInputStream fis, String encoding) throws IOException
-    {
-        try( BufferedReader br =
-                     new BufferedReader( new InputStreamReader(fis, encoding)))
-        {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while(( line = br.readLine()) != null ) {
-                sb.append( line );
-                sb.append( '\n' );
-            }
-            return sb.toString();
-        }
-    }
-
-    public static String put(Game game, PUT_REASONS PUT_REASONS) throws IOException, URISyntaxException {
+    public static String put(Game game, PUT_REASONS put_reason) throws IOException, URISyntaxException {
+        PutMetaObject putMetaObject = getPaylodAndResourceForPut(game, put_reason);
         DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
         AWSCredentials credentials = credentialsProvider.getCredentials();
         DefaultAwsRegionProviderChain regionProviderChain = new DefaultAwsRegionProviderChain();
@@ -89,10 +75,8 @@ public class HttpClient {
         Request<Void> request = new DefaultRequest<Void>("execute-api");
         request.setHttpMethod(HttpMethodName.PUT);
         request.setEndpoint(new URI("https://knopfnsxoh.execute-api.us-west-2.amazonaws.com"));
-        request.setResourcePath("/Prod/auth/game/container_metadata");
-        ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(game.getUuid(), game.getTaskArn());
-        ObjectMapper mapper = new ObjectMapper();
-        String payloadString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arnUpdatePayload);
+        request.setResourcePath(putMetaObject.resource);
+        String payloadString = putMetaObject.payload;
         request.setContent(new ByteArrayInputStream(payloadString.getBytes()));
         request.addHeader(X_AMZ_CONTENT_SHA256, "required");
 
@@ -122,13 +106,12 @@ public class HttpClient {
             CloseableHttpResponse response = httpClient.execute(httpPut);
             try {
                 if (response.getStatusLine().getStatusCode() != 200) {
-                    HttpEntity entity = response.getEntity();
                     throw new IOException("Response Status not 200, was: " + response.getStatusLine().getStatusCode());
                 }
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     String returnValueString = EntityUtils.toString(entity);
-                    System.out.println("Result from " + PUT_REASONS + returnValueString);
+                    System.out.println("Result from " + put_reason + returnValueString);
                     return(returnValueString);
                 }
             } finally {
@@ -138,6 +121,26 @@ public class HttpClient {
             httpClient.close();
         }
         throw new IOException("Something went terribly wrong");
+    }
+
+    private static PutMetaObject getPaylodAndResourceForPut(Game game, PUT_REASONS put_reason) throws JsonProcessingException {
+        String payload = null;
+        String resource = null;
+        ObjectMapper mapper = new ObjectMapper();
+        switch (put_reason) {
+            case ABORTED_GAME:
+            case FINISHED_GAME:
+                resource = "/Prod/auth/game";
+                payload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(game);
+                break;
+            case CONTAINER_METADATA:
+                ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(game.getUuid(), game.getTaskArn());
+                payload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arnUpdatePayload);
+                resource = "/Prod/auth/game/container_metadata";
+            break;
+            default:
+        }
+        return new PutMetaObject(resource, payload);
     }
 
     public static String getTestContainerMetadata(){
@@ -189,6 +192,15 @@ public class HttpClient {
                 "  },\n" +
                 "  \"LogDriver\": \"awslogs\"\n" +
                 "}\n");
+    }
+}
+class PutMetaObject {
+    public final String resource;
+    public final String payload;
+
+    PutMetaObject(String resource, String payload){
+        this.payload = payload;
+        this.resource = resource;
     }
 }
 

@@ -52,7 +52,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private ProtocolManager protocolManager;
     private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
-    private final int NO_START_ABORT_TIME_IN_SECONDS = 30;
+    private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
 
     public enum scoreboardSections {TIMER}
 
@@ -581,7 +581,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void endGame() throws JsonProcessingException {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
-        Bukkit.broadcastMessage("Game Over");
         broadcastEndMessages();
         List<String> titles = BridgeTitles.getFinalTitles();
         for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
@@ -595,6 +594,22 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Title title = new Title(titles.get(0), titles.get(1), 0, 6, 1);
             title.send(player);
         }
+        new BukkitRunnable() {
+            public void run() {
+                if (game.getState() == Game.GameState.TERMINATE){
+                    // everything is good. Quit
+                } else {
+                    System.out.println("ERROR: could not send end-of-game data");
+                    try {
+                        System.out.println(Game.serialize(game));
+                    } catch (JsonProcessingException e) {
+                        System.out.println("ERROR: Yikes, I could not send the end-of-game data and I could not serialize the game. This game is gone forever.");
+                        e.printStackTrace();
+                    }
+                }
+                System.exit(0);
+            }
+        }.runTaskLater(this, 600);
 
         new BukkitRunnable() {
             int attempt = 0;
@@ -606,17 +621,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     this.cancel();
                 }
                 try {
-                    System.out.println(Game.serialize(game));
                     HttpClient.put(game, HttpClient.PUT_REASONS.FINISHED_GAME);
                     game.setState(Game.GameState.TERMINATE);
                     this.cancel();
-                } catch (JsonProcessingException e) {
+                } catch (URISyntaxException | IOException e) {
                     e.printStackTrace();
                     attempt++;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
                 }
             }
         }.runTaskTimer(this, 0, 40);

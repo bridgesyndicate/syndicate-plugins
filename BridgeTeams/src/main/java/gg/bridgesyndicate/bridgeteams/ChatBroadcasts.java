@@ -107,7 +107,10 @@ public class ChatBroadcasts {
     public static void gameEndMessage(Player player, String opponentNames, Game game) {
         int playersPerTeam = game.getRequiredPlayers()/2;
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
-        player.sendMessage("" + ChatColor.YELLOW  + ChatColor.BOLD + getSpaces(23) + "Bridge " + playersPerTeam + "v" + playersPerTeam);
+        player.sendMessage("" + ChatColor.YELLOW  + ChatColor.BOLD + getSpaces(23)
+                + "Bridge " + playersPerTeam + "v" + playersPerTeam
+                + ChatColor.GRAY  + " " + DASH + "" + ChatColor.WHITE
+        + game.getFinalGameLengthFormatted());
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
     }
 }
