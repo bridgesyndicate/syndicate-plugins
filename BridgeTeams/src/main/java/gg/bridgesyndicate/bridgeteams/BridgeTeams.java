@@ -125,7 +125,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     System.out.println("Polling for game data. No games. Trying again in 10s.");
                 }
             }
-        }.runTaskTimer(this, 0, 200);
+        }.runTaskTimer(this, 0, 20);
     }
 
     private void abortGameOnTimeout() {
