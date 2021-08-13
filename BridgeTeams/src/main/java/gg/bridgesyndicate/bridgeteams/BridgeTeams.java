@@ -13,6 +13,7 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.schematic.MCEditSchematicFormat;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -157,8 +158,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (game.getState() != Game.GameState.DURING_GAME &&
-                game.getState() != Game.GameState.CAGED
+        if ( (game.getState() != Game.GameState.DURING_GAME &&
+                game.getState() != Game.GameState.CAGED)
+                ||
+                (event.getEntity() instanceof Player && event.getDamager() instanceof Player
+                        && MatchTeam.getTeam((Player) event.getDamager()) == MatchTeam.getTeam((Player) event.getEntity())
+                )
         ) {
             event.setCancelled(true);
         }
