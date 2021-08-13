@@ -31,6 +31,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -360,19 +361,24 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void buildCages() {
-        //EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
-        //editSession.enableQueue();
+        EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
+        printTiming("1");
+        editSession.enableQueue();
+        printTiming("2");
         for (TeamType team : MatchTeam.getTeams()) {
             Location cageLocation = MatchTeam.getCageLocation(team);
-//            try {
-//                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
-//            } catch (MaxChangedBlocksException e) {
-//                e.printStackTrace();
-//                System.out.println("ERROR: Could not build cages. Exiting.");
-//                System.exit(-1);
-//            }
+            printTiming("3");
+            try {
+                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
+                printTiming("4");
+            } catch (MaxChangedBlocksException e) {
+                e.printStackTrace();
+                System.out.println("ERROR: Could not build cages. Exiting.");
+                System.exit(-1);
+            }
         }
-       // editSession.flushQueue();
+        editSession.flushQueue();
+        printTiming("5");
 
         new BukkitRunnable() {
             @Override
@@ -381,7 +387,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
                 }
-                //editSession.undo(editSession);
+                editSession.undo(editSession);
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     setGameModeForPlayer(player);
                 }
@@ -391,13 +397,22 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
+        printTiming("0");
         buildCages();
         for (Player player : Bukkit.getOnlinePlayers()) {
             sendTitles(player);
+            printTiming("6");
             resetPlayerHealthAndInventory(player);
+            printTiming("7");
             setGameModeForPlayer(player);
+            printTiming("8");
             player.teleport(MatchTeam.getCagePlayerLocation(player));
+            printTiming("9");
         }
+    }
+
+    private void printTiming(String description) {
+        System.out.println(description + " : " + System.nanoTime());
     }
 
     public void checkForGoal(Player player) throws JsonProcessingException {
@@ -682,6 +697,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             event.setCancelled(true);
             player.setFoodLevel(20);
         }
+    }
+
+    @EventHandler
+    public void onWeatherChange(final WeatherChangeEvent e) {
+        e.setCancelled(true);
     }
 
     public void sendTitles(Player player) {
