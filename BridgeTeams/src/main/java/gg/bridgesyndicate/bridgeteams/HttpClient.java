@@ -18,7 +18,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
@@ -89,6 +90,10 @@ public class HttpClient {
     }
 
     public static String put(Game game, PUT_REASONS put_reason) throws IOException, URISyntaxException {
+        if (System.getenv("SYNDICATE_ENV").equals("development")) {
+            System.out.println("You are in the development environment. Not talking to syndicate web service.");
+            return("Foo");
+        }
         PutMetaObject putMetaObject = getPaylodAndResourceForPut(game, put_reason);
         DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
         AWSCredentials credentials = credentialsProvider.getCredentials();

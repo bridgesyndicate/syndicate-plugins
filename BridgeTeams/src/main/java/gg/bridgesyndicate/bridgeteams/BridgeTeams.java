@@ -14,7 +14,6 @@ import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
-import com.sk89q.worldedit.world.DataException;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
@@ -45,7 +44,6 @@ import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
@@ -347,15 +345,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         score.increment(MatchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
-
-        ChatBroadcasts.scoreMessage(game, player);
-        BridgeFireworks fireworks = new BridgeFireworks(this);
-        fireworks.spawnFireworks(player);
         if (!game.over()) {
             cagePlayers();
+            BridgeFireworks fireworks = new BridgeFireworks(this);
+            fireworks.spawnFireworks(player);
         } else {
             endGame();
         }
+        ChatBroadcasts.scoreMessage(game, player);
     }
 
     private Location getOrigin() {

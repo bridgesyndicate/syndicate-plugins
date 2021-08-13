@@ -64,6 +64,7 @@ public class Game {
     }
 
     public String getFinalGameLengthFormatted() {
+        if (gameTimer == null) return("");
         int finalGameLengthInSeconds = gameTimer.convertMillisToSeconds(gameEndedAt - gameStartedAt);
         return gameTimer.formatSeconds(finalGameLengthInSeconds);
     }
