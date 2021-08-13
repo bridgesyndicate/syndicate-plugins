@@ -391,7 +391,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
-        buildCages();
+        //buildCages();
         for (Player player : Bukkit.getOnlinePlayers()) {
             sendTitles(player);
             resetPlayerHealthAndInventory(player);

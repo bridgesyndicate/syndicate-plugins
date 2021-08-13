@@ -100,6 +100,7 @@ public class Game {
     }
 
     public long getRemainingTimeInSeconds() {
+        if (gameTimer == null) return(-1);
         return gameTimer.getRemainingTimeInSeconds();
     }
 
