@@ -380,7 +380,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.exit(-1);
             }
         }
-        editSession.flushQueue();
+        //editSession.flushQueue();
         printTiming("5");
 
         new BukkitRunnable() {
@@ -480,7 +480,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         // set waiting board
         if (game.hasPlayer(player)) {
             assignToTeam(player);
-            System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + "required players:" + game.getRequiredPlayers());
+            System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
             Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
             if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                 startGame();
