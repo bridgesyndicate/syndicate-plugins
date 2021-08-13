@@ -14,7 +14,7 @@ import java.util.*;
 @JsonIgnoreProperties(value = { "mostRecentScorerName" })
 public class Game {
     private int requiredPlayers=0;
-    private final long createdAt;
+    private final long dequeuedAt;
     private final String uuid = null;
     private int goalsToWin = 0;
     private int gameLengthInSeconds = 0;
@@ -26,6 +26,7 @@ public class Game {
     private String taskArn;
     private List redTeam;
     private List blueTeam;
+    private long queuedAt;
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
     private List<GoalMeta> goalsScored = new ArrayList<>();
@@ -34,11 +35,14 @@ public class Game {
 
     public Game() {
         this.state = state.BEFORE_GAME;
-        this.createdAt = System.currentTimeMillis();
+        this.dequeuedAt = System.currentTimeMillis();
         this.gameScore = GameScore.getInstance();
     }
 
     /* METHODS */
+    public long getDequeuedAt() { return dequeuedAt; }
+
+    public long getQueuedAt() { return dequeuedAt; }
 
     public String getUuid() {
         return uuid;

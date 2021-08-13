@@ -380,7 +380,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.exit(-1);
             }
         }
-        //editSession.flushQueue();
+        editSession.flushQueue();
         printTiming("5");
 
         new BukkitRunnable() {

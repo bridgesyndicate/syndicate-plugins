@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -e
-rm -rf tmp
-./scripts/localbuild.rb | grep -v 'aws ecr' | bash
-# rm plugins.tar mushroomcage.schematic *.jar
+if [[ -z $1 ]]
+then
+    echo "doing the build"
+    rm -rf tmp
+    ./scripts/localbuild.rb | grep -v 'aws ecr' | bash
+    rm -f plugins.tar mushroomcage.schematic *.jar
+else
+    echo "not building. just running"
+fi
 docker run \
        -e AWS_REGION=us-west-2 \
        -e AWS_ACCESS_KEY_ID=$DEV_AWS_ACCESS_KEY_ID \
