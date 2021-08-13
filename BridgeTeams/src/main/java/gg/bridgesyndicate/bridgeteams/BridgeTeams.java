@@ -61,6 +61,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private CuboidClipboard clipboard = null;
 
+    private long performanceTimingStart = 0;
+    private long performanceTimingLastCall = 0;
+
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -397,6 +400,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
+        startPerfTiming();
         printTiming("0");
         buildCages();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -411,8 +415,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
+    private void startPerfTiming() {
+        performanceTimingStart = System.nanoTime();
+    }
+
     private void printTiming(String description) {
-        System.out.println(description + " : " + System.nanoTime());
+        long now = System.nanoTime();
+        System.out.println(description + " : time elapsed since start: " + (now - performanceTimingStart) + " time since last : " + (now - performanceTimingLastCall));
+        performanceTimingLastCall = now;
     }
 
     public void checkForGoal(Player player) throws JsonProcessingException {
