@@ -95,6 +95,7 @@ public class Game {
     }
 
     public String getRemainingTimeFormatted() {
+        if (gameTimer == null) return("");
         return gameTimer.getRemainingTimeFormatted();
     }
 
