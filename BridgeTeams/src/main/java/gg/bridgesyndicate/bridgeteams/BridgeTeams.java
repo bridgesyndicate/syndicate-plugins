@@ -360,19 +360,19 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void buildCages() {
-        EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
-        editSession.enableQueue();
+        //EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
+        //editSession.enableQueue();
         for (TeamType team : MatchTeam.getTeams()) {
             Location cageLocation = MatchTeam.getCageLocation(team);
-            try {
-                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
-            } catch (MaxChangedBlocksException e) {
-                e.printStackTrace();
-                System.out.println("ERROR: Could not build cages. Exiting.");
-                System.exit(-1);
-            }
+//            try {
+//                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
+//            } catch (MaxChangedBlocksException e) {
+//                e.printStackTrace();
+//                System.out.println("ERROR: Could not build cages. Exiting.");
+//                System.exit(-1);
+//            }
         }
-        editSession.flushQueue();
+       // editSession.flushQueue();
 
         new BukkitRunnable() {
             @Override
@@ -381,7 +381,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
                 }
-                editSession.undo(editSession);
+                //editSession.undo(editSession);
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     setGameModeForPlayer(player);
                 }
@@ -391,7 +391,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
-        //buildCages();
+        buildCages();
         for (Player player : Bukkit.getOnlinePlayers()) {
             sendTitles(player);
             resetPlayerHealthAndInventory(player);
