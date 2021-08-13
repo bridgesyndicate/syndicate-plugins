@@ -194,9 +194,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 write(0, player.getLocation().getX()).
                 write(1, player.getLocation().getY()).
                 write(2, player.getLocation().getZ());
-        explosion.getFloat().write(0, 0.6F);
-        explosion.getFloat().write(1, 0.4F);
-        explosion.getFloat().write(2, 0.6F);
+        explosion.getFloat().write(0, 0.0F);
+        explosion.getFloat().write(1, 0.0F);
+        explosion.getFloat().write(2, 0.0F);
         try {
             protocolManager.sendServerPacket(player, explosion);
             System.out.println("explosion sent");
@@ -758,7 +758,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 Player shoota = (Player) arrow.getShooter();
                 Player shot = (Player) entityVictim;
 
-                if (!(MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot)))) {
+                if (MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot))) {
                     event.setCancelled(true);
                 } else {
                     double shotHealth = shot.getHealth();
