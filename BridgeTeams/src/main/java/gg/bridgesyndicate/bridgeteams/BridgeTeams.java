@@ -182,28 +182,28 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void computeKnockback (EntityDamageByEntityEvent event) {
 //        Vector damagedPlayersVelocity = event.getEntity().getVelocity();
 //        Vector knockBackVector = damagedPlayersVelocity.multiply(-1);
-        Player player = (Player) event.getEntity();
-        Vector v = player.getVelocity();
-        v.setX(0);
-        v.setY(0);
-        v.setZ(0);
-        player.setVelocity(v);
-        PacketContainer explosion = protocolManager.createPacket(PacketType.Play.Server.EXPLOSION);
-        System.out.println("computeKnockback");
-        explosion.getDoubles().
-                write(0, player.getLocation().getX()).
-                write(1, player.getLocation().getY()).
-                write(2, player.getLocation().getZ());
-        explosion.getFloat().write(0, 0.0F);
-        explosion.getFloat().write(1, 0.0F);
-        explosion.getFloat().write(2, 0.0F);
-        try {
-            protocolManager.sendServerPacket(player, explosion);
-            System.out.println("explosion sent");
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(
-                    "Cannot send packet " + explosion, e);
-        }
+//        Player player = (Player) event.getEntity();
+//        Vector v = player.getVelocity();
+//        v.setX(0);
+//        v.setY(0);
+//        v.setZ(0);
+//        player.setVelocity(v);
+//        PacketContainer explosion = protocolManager.createPacket(PacketType.Play.Server.EXPLOSION);
+//        System.out.println("computeKnockback");
+//        explosion.getDoubles().
+//                write(0, player.getLocation().getX()).
+//                write(1, player.getLocation().getY()).
+//                write(2, player.getLocation().getZ());
+//        explosion.getFloat().write(0, 0.0F);
+//        explosion.getFloat().write(1, 0.0F);
+//        explosion.getFloat().write(2, 0.0F);
+//        try {
+//            protocolManager.sendServerPacket(player, explosion);
+//            System.out.println("explosion sent");
+//        } catch (InvocationTargetException e) {
+//            throw new RuntimeException(
+//                    "Cannot send packet " + explosion, e);
+//        }
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
