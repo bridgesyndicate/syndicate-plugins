@@ -758,7 +758,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 Player shoota = (Player) arrow.getShooter();
                 Player shot = (Player) entityVictim;
 
-                if(!(MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot)))) {
+                if (!(MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot)))) {
+                    event.setCancelled(true);
+                } else {
                     double shotHealth = shot.getHealth();
                     DecimalFormat format = new DecimalFormat("##.#");
                     String heartValue = format.format(shotHealth);
