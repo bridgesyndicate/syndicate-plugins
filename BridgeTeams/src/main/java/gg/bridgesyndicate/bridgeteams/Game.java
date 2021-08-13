@@ -42,7 +42,7 @@ public class Game {
     /* METHODS */
     public long getDequeuedAt() { return dequeuedAt; }
 
-    public long getQueuedAt() { return dequeuedAt; }
+    public long getQueuedAt() { return queuedAt; }
 
     public String getUuid() {
         return uuid;
