@@ -361,13 +361,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void toteScore(Player player, GoalLocationInfo goal) throws JsonProcessingException {
         startPerfTiming();
-        printTiming("0");
+        printTiming("starting perf timing");
         GameScore score = GameScore.getInstance();
         score.increment(MatchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
         if (!game.over()) {
-            printTiming("1");
+            printTiming("after adding goal info");
             cagePlayers();
             BridgeFireworks fireworks = new BridgeFireworks(this);
             fireworks.spawnFireworks(player);
@@ -387,13 +387,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
             block.setTypeIdAndData(id, data,false);
         }
-        printTiming("3");
+        printTiming("after buildOrDestroyCageAtLocation");
     }
 
     private void buildCages(String createOrDestroy) {
         for (TeamType team : MatchTeam.getTeams()) {
             BlockVector cageLocation = MatchTeam.getCageLocation(team);
-            printTiming("2");
+            printTiming("before buildOrDestroyCageAtLocation");
             buildOrDestroyCageAtLocation(cageLocation, createOrDestroy);
         }
         if (createOrDestroy.equals("destroy"))
@@ -418,14 +418,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.setState(Game.GameState.CAGED);
         buildCages("create");
         for (Player player : Bukkit.getOnlinePlayers()) {
-            sendTitles(player);
-            printTiming("4");
-            resetPlayerHealthAndInventory(player);
-            printTiming("5");
-            setGameModeForPlayer(player);
-            printTiming("6");
+            printTiming("in player loop");
             player.teleport(MatchTeam.getCagePlayerLocation(player));
-            printTiming("7");
+            printTiming("after teleport");
+            sendTitles(player);
+            resetPlayerHealthAndInventory(player);
+            printTiming("after resetPlayerHealthAndInventory");
+            setGameModeForPlayer(player);
+            printTiming("after setGameModeForPlayer");
         }
     }
 
