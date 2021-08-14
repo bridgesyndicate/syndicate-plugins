@@ -385,7 +385,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     cageLocation.getBlockZ() + bridgeSchematicBlock.z);
             int id = (createOrDestroy.equals("create")) ? bridgeSchematicBlock.id : 0;
             byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
-            block.setTypeIdAndData(id, data,false);
+            block.setType(Material.WOOD);
+//            block.setTypeIdAndData(id, data,false);
         }
         printTiming("after buildOrDestroyCageAtLocation");
     }
