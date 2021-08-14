@@ -360,11 +360,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void toteScore(Player player, GoalLocationInfo goal) throws JsonProcessingException {
+        startPerfTiming();
+        printTiming("0");
         GameScore score = GameScore.getInstance();
         score.increment(MatchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
         if (!game.over()) {
+            printTiming("1");
             cagePlayers();
             BridgeFireworks fireworks = new BridgeFireworks(this);
             fireworks.spawnFireworks(player);
@@ -375,7 +378,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
-        System.out.println(cageLocation.toString());
         World world = Bukkit.getWorld("world");
         for (BridgeSchematicBlock bridgeSchematicBlock : bridgeSchematicBlockList) {
             Block block = world.getBlockAt(cageLocation.getBlockX() + bridgeSchematicBlock.x,
@@ -385,11 +387,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
             block.setTypeIdAndData(id, data,false);
         }
+        printTiming("3");
     }
 
     private void buildCages(String createOrDestroy) {
         for (TeamType team : MatchTeam.getTeams()) {
             BlockVector cageLocation = MatchTeam.getCageLocation(team);
+            printTiming("2");
             buildOrDestroyCageAtLocation(cageLocation, createOrDestroy);
         }
         if (createOrDestroy.equals("destroy"))
@@ -415,9 +419,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         buildCages("create");
         for (Player player : Bukkit.getOnlinePlayers()) {
             sendTitles(player);
+            printTiming("4");
             resetPlayerHealthAndInventory(player);
+            printTiming("5");
             setGameModeForPlayer(player);
+            printTiming("6");
             player.teleport(MatchTeam.getCagePlayerLocation(player));
+            printTiming("7");
         }
     }
 

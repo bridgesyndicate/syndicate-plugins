@@ -9,6 +9,7 @@ else
     readarray -t arns < <(aws ecs list-services | jq -r '.serviceArns[]')
     for arn in "${arns[@]}"
     do
+	echo setting $arn
 	aws ecs update-service \
 	    --service $arn \
 	    --desired-count $1 | \
