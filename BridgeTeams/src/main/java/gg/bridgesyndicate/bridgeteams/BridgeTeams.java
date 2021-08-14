@@ -3,18 +3,12 @@ package gg.bridgesyndicate.bridgeteams;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.sk89q.worldedit.CuboidClipboard;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.bukkit.BukkitUtil;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.schematic.MCEditSchematicFormat;
-import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
@@ -37,13 +31,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
+import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -60,11 +54,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final String WAS_KILLED_BY = " was killed by ";
     private static final String WAS_VOIDED_BY = " was hit into the void by ";
 
-    private CuboidClipboard clipboard = null;
+    List<BridgeSchematicBlock> bridgeSchematicBlockList = null;
 
     private long performanceTimingStart = 0;
     private long performanceTimingLastCall = 0;
-
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -83,7 +76,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setTime(1000);
         try {
             prepareCages();
-        } catch (com.sk89q.worldedit.data.DataException | IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             System.out.println("ERROR: Could not prepare cages. Exiting.");
             System.exit(-1);
@@ -91,16 +84,35 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         pollForGameData();
     }
 
-    private void prepareCages() throws com.sk89q.worldedit.data.DataException, IOException {
-        final File schematic = new File("/app/minecraft-home/plugins/WorldEdit/schematics/mushroomcage.schematic");
-        SchematicFormat schematicFormat = SchematicFormat.getFormat(schematic);
-        clipboard = schematicFormat.load(schematic);
+
+    public static String getFileContent(FileInputStream fis, String encoding) throws IOException
+    {
+        try( BufferedReader br =
+                     new BufferedReader( new InputStreamReader(fis, encoding)))
+        {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while(( line = br.readLine()) != null ) {
+                sb.append( line );
+                sb.append( '\n' );
+            }
+            return sb.toString();
+        }
+    }
+
+    private void prepareCages() throws IOException {
+        final String schematicJson = getFileContent(new FileInputStream("/app/minecraft-home/cage.json"), "UTF-8");
+        ObjectMapper objectMapper = new ObjectMapper();
+        CollectionType typeReference =
+                TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
+        bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
     }
 
     private void pollForGameData() {
         final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
         final String QUEUE_NAME = System.getenv(QUEUE_ENV_NAME);
+        System.out.println("Polling: " + QUEUE_NAME);
         if (QUEUE_NAME == null) {
             System.out.println("EXIT: " + QUEUE_ENV_NAME + " environment variable is null");
             System.exit(-1);
@@ -125,8 +137,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     }
                     sqs.deleteMessage(queueUrl, message.getReceiptHandle());
                     this.cancel();
-                } else {
-                    System.out.println("Polling for game data. No games. Trying again in 10s.");
                 }
             }
         }.runTaskTimer(this, 0, 20);
@@ -364,29 +374,26 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         ChatBroadcasts.scoreMessage(game, player);
     }
 
-    private Location getOrigin() {
-        return (new Location(Bukkit.getWorld("world"), 0, 0, 0, 0, 0));
+    private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
+        System.out.println(cageLocation.toString());
+        World world = Bukkit.getWorld("world");
+        for (BridgeSchematicBlock bridgeSchematicBlock : bridgeSchematicBlockList) {
+            Block block = world.getBlockAt(cageLocation.getBlockX() + bridgeSchematicBlock.x,
+                    cageLocation.getBlockY() + bridgeSchematicBlock.y,
+                    cageLocation.getBlockZ() + bridgeSchematicBlock.z);
+            int id = (createOrDestroy.equals("create")) ? bridgeSchematicBlock.id : 0;
+            byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
+            block.setTypeIdAndData(id, data,false);
+        }
     }
 
-    private void buildCages() {
-        EditSession editSession = new EditSession(new BukkitWorld(getOrigin().getWorld()), MAX_BLOCKS);
-        printTiming("1");
-        editSession.enableQueue();
-        printTiming("2");
+    private void buildCages(String createOrDestroy) {
         for (TeamType team : MatchTeam.getTeams()) {
-            Location cageLocation = MatchTeam.getCageLocation(team);
-            printTiming("3");
-            try {
-                clipboard.paste(editSession, BukkitUtil.toVector(cageLocation), true);
-                printTiming("4");
-            } catch (MaxChangedBlocksException e) {
-                e.printStackTrace();
-                System.out.println("ERROR: Could not build cages. Exiting.");
-                System.exit(-1);
-            }
+            BlockVector cageLocation = MatchTeam.getCageLocation(team);
+            buildOrDestroyCageAtLocation(cageLocation, createOrDestroy);
         }
-        editSession.flushQueue();
-        printTiming("5");
+        if (createOrDestroy.equals("destroy"))
+            return;
 
         new BukkitRunnable() {
             @Override
@@ -395,7 +402,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
                 }
-                editSession.undo(editSession);
+                buildCages("destroy");
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     setGameModeForPlayer(player);
                 }
@@ -405,18 +412,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
-        startPerfTiming();
-        printTiming("0");
-        buildCages();
+        buildCages("create");
         for (Player player : Bukkit.getOnlinePlayers()) {
             sendTitles(player);
-            printTiming("6");
             resetPlayerHealthAndInventory(player);
-            printTiming("7");
             setGameModeForPlayer(player);
-            printTiming("8");
             player.teleport(MatchTeam.getCagePlayerLocation(player));
-            printTiming("9");
         }
     }
 
@@ -842,5 +843,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 }
 
+class BridgeSchematicBlock {
+    public int x;
+    public int y;
+    public int z;
+    public int id;
+    public int data;
 
+    public BridgeSchematicBlock() { }
+
+    public BridgeSchematicBlock(int x, int y, int z, int id, int data) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.id = id;
+        this.data = data;
+    }
+}
 

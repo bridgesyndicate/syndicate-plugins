@@ -9,4 +9,4 @@ commands:
     description: Assigns players to red and blue teams.
   myteam:
     description: Displays which team you are on.
-depend: [WorldEdit, ProtocolLib]
+depend: [ProtocolLib]

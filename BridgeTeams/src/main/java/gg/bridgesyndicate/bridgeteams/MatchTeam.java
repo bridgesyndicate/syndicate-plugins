@@ -6,10 +6,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.util.BlockVector;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Vector;
 
 public class MatchTeam
 {
@@ -70,12 +72,12 @@ public class MatchTeam
         return MatchTeam.redTeam.contains(player.getName()) ? redLoc : blueLoc;
     }
 
-    public static Location getRedCageLocation() {
-        return(new Location(Bukkit.getWorld("world"), 28.5, 104, 0.5, 90, 0));
+    public static BlockVector getRedCageLocation() {
+        return new BlockVector(28, 99, 0);
     }
 
-    public static Location getBlueCageLocation() {
-        return(new Location(Bukkit.getWorld("world"), -27.5, 104, 0.5, -90, 0));
+    public static BlockVector getBlueCageLocation() {
+        return new BlockVector(-28, 99, 0);
     }
 
     public static Location getRedPlayerCageLocation() {
@@ -86,7 +88,7 @@ public class MatchTeam
         return(new Location(Bukkit.getWorld("world"), -27.5, 105, 0.5, -90, 0));
     }
 
-    public static Location getCageLocation(TeamType team) {
+    public static BlockVector getCageLocation(TeamType team) {
         return team == TeamType.RED ? getRedCageLocation() : getBlueCageLocation();
     }
 
