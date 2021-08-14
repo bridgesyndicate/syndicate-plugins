@@ -379,6 +379,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
         World world = Bukkit.getWorld("world");
+        int i = 0;
         for (BridgeSchematicBlock bridgeSchematicBlock : bridgeSchematicBlockList) {
             Block block = world.getBlockAt(cageLocation.getBlockX() + bridgeSchematicBlock.x,
                     cageLocation.getBlockY() + bridgeSchematicBlock.y,
@@ -391,6 +392,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             } else {
                 block.setType(Material.AIR);
             }
+            printTiming("block " + i++ );
 //            block.setTypeIdAndData(id, data,false);
         }
         printTiming("after buildOrDestroyCageAtLocation");
