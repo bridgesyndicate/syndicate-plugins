@@ -9,8 +9,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.sk89q.worldedit.bukkit.adapter.impl.Spigot_v1_8_R1;
+import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.ChunkSection;
+import net.minecraft.server.v1_8_R3.IBlockData;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -386,16 +391,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     cageLocation.getBlockZ() + bridgeSchematicBlock.z);
             int id = (createOrDestroy.equals("create")) ? bridgeSchematicBlock.id : 0;
             byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
-
-            if (createOrDestroy.equals("create")) {
-                block.setType(Material.WOOD);
-            } else {
-                block.setType(Material.AIR);
-            }
+            setBlockInNativeWorld(world, block.getX(), block.getY(), block.getZ(), id, data, false);
             printTiming("block " + i++ );
 //            block.setTypeIdAndData(id, data,false);
         }
         printTiming("after buildOrDestroyCageAtLocation");
+    }
+
+    private void setBlockInNativeWorld(World world, int x, int y, int z, int blockId, byte data, boolean applyPhysics){
+        net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
+        BlockPosition bp = new BlockPosition(x, y, z);
+        IBlockData ibd = net.minecraft.server.v1_8_R3.Block.getByCombinedId(blockId + (data << 12));
+        nmsWorld.setTypeAndData(bp, ibd, applyPhysics ? 3 : 2);
     }
 
     private void buildCages(String createOrDestroy) {
