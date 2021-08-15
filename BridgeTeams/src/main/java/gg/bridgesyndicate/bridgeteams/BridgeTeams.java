@@ -384,8 +384,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
         World world = Bukkit.getWorld("world");
-        int i = 0;
-        for (BridgeSchematicBlock bridgeSchematicBlock : bridgeSchematicBlockList) {
+        int size = bridgeSchematicBlockList.size();
+        BridgeSchematicBlock bridgeSchematicBlock = new BridgeSchematicBlock();
+        for(int i = bridgeSchematicBlockList.size(); i > size ; i--) {
+            bridgeSchematicBlock = bridgeSchematicBlockList.get(i);
             Block block = world.getBlockAt(cageLocation.getBlockX() + bridgeSchematicBlock.x,
                     cageLocation.getBlockY() + bridgeSchematicBlock.y,
                     cageLocation.getBlockZ() + bridgeSchematicBlock.z);
