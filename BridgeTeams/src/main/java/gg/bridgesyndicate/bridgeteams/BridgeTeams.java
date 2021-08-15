@@ -60,6 +60,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final String WAS_VOIDED_BY = " was hit into the void by ";
 
     List<BridgeSchematicBlock> bridgeSchematicBlockList = null;
+    private int[] cageSchematicIntegerList = null;
+    private int cageSchematicIntegerListSize = 0;
 
     private long performanceTimingStart = 0;
     private long performanceTimingLastCall = 0;
@@ -111,6 +113,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         CollectionType typeReference =
                 TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
         bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
+        cageSchematicIntegerListSize = bridgeSchematicBlockList.size();
+        cageSchematicIntegerList = new int[cageSchematicIntegerListSize * 5];
+        for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
+            BridgeSchematicBlock bridgeSchematicBlock = bridgeSchematicBlockList.get(i);
+            cageSchematicIntegerList[i * 5]     = bridgeSchematicBlock.x;
+            cageSchematicIntegerList[i * 5 + 1] = bridgeSchematicBlock.y;
+            cageSchematicIntegerList[i * 5 + 2] = bridgeSchematicBlock.z;
+            cageSchematicIntegerList[i * 5 + 3] = bridgeSchematicBlock.id;
+            cageSchematicIntegerList[i * 5 + 4] = bridgeSchematicBlock.data;
+        }
     }
 
     private void pollForGameData() {
@@ -384,18 +396,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
         World world = Bukkit.getWorld("world");
-        int size = bridgeSchematicBlockList.size();
-        BridgeSchematicBlock bridgeSchematicBlock = new BridgeSchematicBlock();
-        for(int i = bridgeSchematicBlockList.size(); i > size ; i--) {
-            bridgeSchematicBlock = bridgeSchematicBlockList.get(i);
-            Block block = world.getBlockAt(cageLocation.getBlockX() + bridgeSchematicBlock.x,
-                    cageLocation.getBlockY() + bridgeSchematicBlock.y,
-                    cageLocation.getBlockZ() + bridgeSchematicBlock.z);
-            int id = (createOrDestroy.equals("create")) ? bridgeSchematicBlock.id : 0;
-            byte data = (createOrDestroy.equals("create")) ? (byte) bridgeSchematicBlock.data : 0;
-            //setBlockInNativeWorld(world, block.getX(), block.getY(), block.getZ(), id, data, false);
-            printTiming("block " + id + ", " + i++ );
-//            block.setTypeIdAndData(id, data,false);
+        int cageX = cageLocation.getBlockX();
+        int cageY = cageLocation.getBlockY();
+        int cageZ = cageLocation.getBlockZ();
+        for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
+//            int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
+            int id = (createOrDestroy.equals("create")) ? 166 : 0;
+            byte data = (createOrDestroy.equals("create")) ? (byte) cageSchematicIntegerList[i * 5 + 4] : 0;
+            setBlockInNativeWorld(world,
+                    cageX + cageSchematicIntegerList[i * 5],
+                    cageY + cageSchematicIntegerList[i * 5 + 1],
+                    cageZ + cageSchematicIntegerList[i * 5 + 2],
+                    id,
+                    data,
+                    false);
+            printTiming("block " + id + ", " + i );
         }
         printTiming("after buildOrDestroyCageAtLocation");
     }
