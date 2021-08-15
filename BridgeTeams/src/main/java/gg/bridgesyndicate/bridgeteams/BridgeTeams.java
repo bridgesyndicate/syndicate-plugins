@@ -3,6 +3,7 @@ package gg.bridgesyndicate.bridgeteams;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -138,7 +139,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 final String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-                List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
+                ReceiveMessageRequest receive_request = new ReceiveMessageRequest()
+                        .withQueueUrl(QUEUE_NAME)
+                        .withWaitTimeSeconds(20);
+                List<Message> messages = sqs.receiveMessage(receive_request).getMessages();
                 if ( messages.size() > 0 ) {
                     Message message = messages.get(0);
                     System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
@@ -400,8 +404,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         int cageY = cageLocation.getBlockY();
         int cageZ = cageLocation.getBlockZ();
         for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
-//            int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
-            int id = (createOrDestroy.equals("create")) ? 166 : 0;
+            int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
+//            int id = (createOrDestroy.equals("create")) ? 166 : 0;
             byte data = (createOrDestroy.equals("create")) ? (byte) cageSchematicIntegerList[i * 5 + 4] : 0;
             setBlockInNativeWorld(world,
                     cageX + cageSchematicIntegerList[i * 5],
