@@ -3,18 +3,25 @@ package gg.bridgesyndicate.bridgeteams;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@JsonIgnoreProperties(value = { "mostRecentScorerName" })
+@JsonIgnoreProperties(value = { "most_recent_scorer_name" })
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Game {
     private int requiredPlayers=0;
-    private final long dequeuedAt;
+    private final String dequeuedAt;
     private final String uuid = null;
     private int goalsToWin = 0;
     private int gameLengthInSeconds = 0;
@@ -24,9 +31,15 @@ public class Game {
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE, ABORTED }
     private GameState state;
     private String taskArn;
-    private List redTeam;
-    private List blueTeam;
-    private long queuedAt;
+    private List redTeamMinecraftUuids;
+    private List blueTeamMinecraftUuids;
+    private List redTeamDiscordIds;
+    private List blueTeamDiscordIds;
+    private List redTeamDiscordNames;
+    private List blueTeamDiscordNames;
+    private String queuedAt;
+    private String queuedVia;
+    private List acceptedByDiscordIds;
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
     private List<GoalMeta> goalsScored = new ArrayList<>();
@@ -35,14 +48,15 @@ public class Game {
 
     public Game() {
         this.state = state.BEFORE_GAME;
-        this.dequeuedAt = System.currentTimeMillis();
+        this.dequeuedAt = Game.getIso8601NowString();
         this.gameScore = GameScore.getInstance();
     }
 
     /* METHODS */
-    public long getDequeuedAt() { return dequeuedAt; }
+    public String getDequeuedAt() { return dequeuedAt; }
+    public String getQueuedAt() { return queuedAt; }
+    public String getQueuedVia() { return queuedVia; }
 
-    public long getQueuedAt() { return queuedAt; }
 
     public String getUuid() {
         return uuid;
@@ -90,14 +104,32 @@ public class Game {
         return joinedPlayers.iterator();
     }
 
-    public List getRedTeam() {
-        return redTeam;
+    public List getRedTeamMinecraftUuids() {
+        return redTeamMinecraftUuids;
     }
 
-    public List getBlueTeam() {
-        return blueTeam;
+    public List getBlueTeamMinecraftUuids() {
+        return blueTeamMinecraftUuids;
     }
 
+    public List getRedTeamDiscordIds() {
+        return redTeamDiscordIds;
+    }
+
+    public List getBlueTeamDiscordIds() {
+        return blueTeamDiscordIds;
+    }
+
+    public List getRedTeamDiscordNames() {
+        return redTeamDiscordNames;
+    }
+
+    public List getBlueTeamDiscordNames() {
+        return blueTeamDiscordNames;
+    }
+    public List getAcceptedByDiscordIds(){
+        return acceptedByDiscordIds;
+    }
     public String getRemainingTimeFormatted() {
         if (gameTimer == null) return("");
         return gameTimer.getRemainingTimeFormatted();
@@ -198,12 +230,12 @@ public class Game {
     }
 
     public boolean hasPlayer(Player player) {
-        return (getRedTeam().contains(player.getName()) ||
-                getBlueTeam().contains(player.getName()));
+        return (getRedTeamMinecraftUuids().contains(player.getName()) ||
+                getBlueTeamMinecraftUuids().contains(player.getName()));
     }
 
     public TeamType getTeam(Player player) {
-        if (getRedTeam().contains(player.getName())) {
+        if (getRedTeamMinecraftUuids().contains(player.getName())) {
             return (TeamType.RED);
         } else {
             return (TeamType.BLUE);
@@ -224,6 +256,10 @@ public class Game {
         return(GameScore.getBlue() == goalsToWin || GameScore.getRed() == goalsToWin);
     }
 
+    public static String getIso8601NowString() {
+        return(ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
+    }
+
     class GoalMeta {
         private final UUID playerUUID;
         private final long goalTime;
@@ -237,7 +273,6 @@ public class Game {
         public UUID getPlayerUUID() {
             return playerUUID;
         }
-
     }
 
     class KillMeta {
@@ -253,7 +288,7 @@ public class Game {
             return playerUUID;
         }
         public long getKillTime() { return killTime; }
-
     }
+
 
 }

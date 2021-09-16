@@ -46,6 +46,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
@@ -405,7 +406,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         int cageZ = cageLocation.getBlockZ();
         for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
             int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
-//            int id = (createOrDestroy.equals("create")) ? 166 : 0;
+//            int id = (createOrDestroy.equals("create")) ? 166 : 0; // 166 is much faster.
             byte data = (createOrDestroy.equals("create")) ? (byte) cageSchematicIntegerList[i * 5 + 4] : 0;
             setBlockInNativeWorld(world,
                     cageX + cageSchematicIntegerList[i * 5],
@@ -858,17 +859,35 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-//    public void printContainerMetaData() throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
 //        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
 //        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
 //        String serialzedNewGame = jsonSerializer.serialize(myGame);
 //        System.out.println(serialzedNewGame);
-
+//
 //        URI uri = new URI("https://www.google.com");
 //        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
 //        System.out.println(foo);
-//
+
+        String myJson = "{\"blue_team_minecraft_uuids\":[\"fff47ae2-dec5-4de8-9172-1ab9216b30e0\"],\"queued_at\":\"2021-09-16T03:50:57Z\",\"red_team_minecraft_uuids\":[\"65188b65-76e3-4079-8c28-02ea07c91448\"],\"required_players\":2.0,\"queued_via\":\"discord duel slash command\",\"blue_team_discord_ids\":[\"417766998471213061\"],\"uuid\":\"c996dae3-433c-48f4-8a90-d4ea2d50f2a6\",\"blue_team_discord_names\":[\"viceversa\"],\"accepted_by_discord_ids\":[{\"accepted_at\":\"2021-09-16T16:10:12Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:09:34Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:08:55Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:07:04Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:05:07Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:11:31Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:08:57Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:03:16Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:02:32Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:37Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:17Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:02Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:51:32Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:50:57Z\",\"discord_id\":\"417766998471213061\"}],\"red_team_discord_ids\":[\"240177490906054658\"],\"game_length_in_seconds\":900.0,\"goals_to_win\":5.0,\"red_team_discord_names\":[\"ken\"]}";
+        Game myGame = Game.deserialize(myJson);
+        myGame.addContainerMetaData();
+        myGame.playerJoined("NitroholicPls");
+        myGame.playerJoined("vice9");
+        myGame.setState(Game.GameState.CAGED);
+        myGame.setState(Game.GameState.DURING_GAME);
+        myGame.addGoalInfo(UUID.randomUUID());
+        Thread.sleep(1000);
+        myGame.setState(Game.GameState.AFTER_GAME);
+        myGame.setEndTime();
+        myGame.addKillInfo(UUID.randomUUID());
+        System.out.println(Game.serialize(myGame));
+
+
+        String foobar = Game.serialize(myGame);
+        System.out.println(foobar);
+        System.exit(0);
+
 //        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
 //        String QUEUE_NAME = System.getenv("SYNDICATE_MATCH_QUEUE_NAME");
 //        System.out.println(QUEUE_NAME);
@@ -878,7 +897,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 //        System.out.println("Messages: " + messages.size());
 //        for (Message message : messages) {
 //            System.out.println("found message:" + message.getBody());
-//            Game myGame = Game.juneauGameFactory(message.getBody());
+//            Game myGame = Game.deserialize(message.getBody());
 //            JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
 //            String serialzedNewGame = jsonSerializer.serialize(myGame);
 //            System.out.println(serialzedNewGame);

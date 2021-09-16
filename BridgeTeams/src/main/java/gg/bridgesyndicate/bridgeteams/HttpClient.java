@@ -76,30 +76,34 @@ public class HttpClient {
                 "}}\n";
         Game game = Game.deserialize(gameJson);
         game.addContainerMetaData();
-        game.playerJoined("NitroholicPls");
-        game.playerJoined("vice9");
+//        game.playerJoined("NitroholicPls");
+//        game.playerJoined("vice9");
         game.setState(Game.GameState.CAGED);
         game.setState(Game.GameState.DURING_GAME);
         game.addGoalInfo(UUID.randomUUID());
-        Thread.sleep(2000);
+//        Thread.sleep(2000);
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
         game.addKillInfo(UUID.randomUUID());
         System.out.println(Game.serialize(game));
-        put(game, PUT_REASONS.FINISHED_GAME);
+        String foo = put(game, PUT_REASONS.FINISHED_GAME);
+        System.out.println(foo);
     }
 
     public static String put(Game game, PUT_REASONS put_reason) throws IOException, URISyntaxException {
-        if (System.getenv("SYNDICATE_ENV").equals("development")) {
-            System.out.println("You are in the development environment. Not talking to syndicate web service.");
+        if ( System.getenv("SYNDICATE_ENV") == null ){
+            System.out.println("SYNDICATE_ENV not set. Skipping put().");
             return("Foo");
+        } else if ( System.getenv("SYNDICATE_ENV").equals("development")) {
+            System.out.println("SYNDICATE_ENV is development, using local endpoints.");
         }
         PutMetaObject putMetaObject = getPaylodAndResourceForPut(game, put_reason);
+
         DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
         AWSCredentials credentials = credentialsProvider.getCredentials();
         DefaultAwsRegionProviderChain regionProviderChain = new DefaultAwsRegionProviderChain();
         String region = regionProviderChain.getRegion();
-
+        System.out.println(credentials.getAWSAccessKeyId());
         Request<Void> request = new DefaultRequest<Void>("execute-api");
         request.setHttpMethod(HttpMethodName.PUT);
         request.setEndpoint(new URI("https://knopfnsxoh.execute-api.us-west-2.amazonaws.com"));
@@ -111,9 +115,6 @@ public class HttpClient {
         AWS4Signer signer = new AWS4Signer();
         signer.setRegionName(region);
         signer.setServiceName(request.getServiceName());
-        // 2021-08-09 T 01:46:33 Z
-        // Date staticTestingDate = new Date(121, 7, 8, 18, 46, 33);
-        // signer.setOverrideDate(staticTestingDate);
         signer.sign(request, credentials);
 
         Map<String, String> headerMap = request.getHeaders();
