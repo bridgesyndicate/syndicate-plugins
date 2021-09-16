@@ -6,12 +6,13 @@ then
     echo 'e.g:'
     echo $0 1
 else
-    readarray -t arns < <(aws ecs list-services | jq -r '.serviceArns[]')
+    readarray -t arns < <(aws ecs list-services --cluster syndicate-bungee-01 | jq -r '.serviceArns[]')
     for arn in "${arns[@]}"
     do
 	echo setting $arn
 	aws ecs update-service \
 	    --service $arn \
+	    --cluster syndicate-bungee-01 \
 	    --desired-count $1 | \
 	    jq '.service.desiredCount'
     done
