@@ -6,5 +6,6 @@ WORKDIR /app/minecraft-home/plugins/lib
 ADD ./jar-deps.tar .
 WORKDIR /app/minecraft-home
 ADD ./cage.json .
+ADD run-spigot.sh .
 
-CMD ["java", "-jar", "spigot-1.8.8.jar", "nogui"]
+CMD ["./run-spigot.sh"]

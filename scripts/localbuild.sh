@@ -17,5 +17,6 @@ docker run \
        -e SYNDICATE_ENV=development \
        -e ECS_CONTAINER_METADATA_URI_V4=https://kenpublic.s3.amazonaws.com/2021-08-04/sAfyVbYGjZAJlKli/container-metadata.json \
        -p 25565:25565 \
+       --add-host=host.docker.internal:host-gateway \
        -it \
        595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers:latest
