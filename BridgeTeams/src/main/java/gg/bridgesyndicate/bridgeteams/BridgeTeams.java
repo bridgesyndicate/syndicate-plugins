@@ -93,7 +93,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         pollForGameData();
     }
 
-
     public static String getFileContent(FileInputStream fis, String encoding) throws IOException
     {
         try( BufferedReader br =
@@ -151,7 +150,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     try {
                         game.addContainerMetaData();
                         HttpClient.put(game, HttpClient.PUT_REASONS.CONTAINER_METADATA);
-                        abortGameOnTimeout();
+                        if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
+                            System.out.println("Environment is " + SyndicateEnvironment.SYNDICATE_ENV() +
+                                    " aborting game after " + NO_START_ABORT_TIME_IN_SECONDS);
+                            abortGameOnTimeout();
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println("EXIT: Could not add container metadata.");
@@ -169,23 +172,27 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 if (game.getState() == Game.GameState.BEFORE_GAME) {
-                    Game abortedGame = game;
-                    game = null;
                     System.out.println("Game has not started in " + NO_START_ABORT_TIME_IN_SECONDS
                     + " seconds. Aborting.");
-                    abortedGame.setState(Game.GameState.ABORTED);
+                    game.setState(Game.GameState.ABORTED);
                     try {
-                        HttpClient.put(abortedGame, HttpClient.PUT_REASONS.ABORTED_GAME);
+                        HttpClient.put(game, HttpClient.PUT_REASONS.ABORTED_GAME);
                     } catch (IOException | URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    for (Player player : Bukkit.getOnlinePlayers()) {
-                        player.kickPlayer("Game did not start within " + NO_START_ABORT_TIME_IN_SECONDS);
-                    }
-                    pollForGameData();
+                    quitAfterTimeout();
                 }
             }
         }.runTaskLater(this, NO_START_ABORT_TIME_IN_SECONDS * 20);
+    }
+
+    private void quitAfterTimeout(){
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                System.exit(-1);
+            }
+        }.runTaskLater(this, 5 * 20);
     }
 
     @EventHandler
@@ -493,6 +500,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void playerMove(PlayerMoveEvent event) throws JsonProcessingException {
+        if (game == null) return;
         final Player player = event.getPlayer();
         if (player.getLocation().getY() < 83) {
             if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
@@ -515,11 +523,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        final String UNINITIALIZED_MESSAGE = ChatColor.RED + "Game not initialized";
         Player player = event.getPlayer();
-        event.setJoinMessage("");
 
         if (game == null) {
+            final String UNINITIALIZED_MESSAGE = ChatColor.RED + "Game not initialized";
             System.err.println(UNINITIALIZED_MESSAGE);
             player.kickPlayer(UNINITIALIZED_MESSAGE);
             return;
@@ -528,7 +535,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
 
-        // set waiting board
         if (game.hasPlayer(player)) {
             assignToTeam(player);
             System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
@@ -657,8 +663,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    //set holograms at each goal location
-
     private void makeSpectator(Player player) {
     }
 
@@ -691,6 +695,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 } else {
                     System.out.println("ERROR: could not send end-of-game data");
                     try {
+                        System.out.println("GAME JSON");
                         System.out.println(Game.serialize(game));
                     } catch (JsonProcessingException e) {
                         System.out.println("ERROR: Yikes, I could not send the end-of-game data and I could not serialize the game. This game is gone forever.");
@@ -718,7 +723,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     attempt++;
                 }
             }
-        }.runTaskTimer(this, 0, 40);
+        }.runTaskTimer(this, 10 * 20, 40);
     }
 
     private void broadcastEndMessages() {

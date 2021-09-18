@@ -230,12 +230,12 @@ public class Game {
     }
 
     public boolean hasPlayer(Player player) {
-        return (getRedTeamMinecraftUuids().contains(player.getName()) ||
-                getBlueTeamMinecraftUuids().contains(player.getName()));
+        return (getRedTeamMinecraftUuids().contains(player.getUniqueId().toString()) ||
+                getBlueTeamMinecraftUuids().contains(player.getUniqueId().toString()));
     }
 
     public TeamType getTeam(Player player) {
-        if (getRedTeamMinecraftUuids().contains(player.getName())) {
+        if (getRedTeamMinecraftUuids().contains(player.getUniqueId().toString())) {
             return (TeamType.RED);
         } else {
             return (TeamType.BLUE);
@@ -260,6 +260,7 @@ public class Game {
         return(ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
     }
 
+    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
     class GoalMeta {
         private final UUID playerUUID;
         private final long goalTime;
@@ -275,6 +276,7 @@ public class Game {
         }
     }
 
+    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
     class KillMeta {
         private final UUID playerUUID;
         private final long killTime;

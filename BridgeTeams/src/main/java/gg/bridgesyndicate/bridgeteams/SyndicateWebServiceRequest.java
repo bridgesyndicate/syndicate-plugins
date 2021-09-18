@@ -38,8 +38,6 @@ public class SyndicateWebServiceRequest {
         this.development = development;
         this.method = method;
         this.resourcePath = (development) ? resourcePath : addProductionEnvironmentToResource(resourcePath);
-//        request = createRequest();
-//        signRequest(request, credentials);
     }
 
     public void createAndSignRequest() throws URISyntaxException {
@@ -71,7 +69,7 @@ public class SyndicateWebServiceRequest {
     }
 
     private String getDevelopmentEndpoint() {
-        String host = "localhost:4567";
+        String host = "host.docker.internal:4567";
         String protocol = "http";
         return (protocol + "://" + host);
     }
