@@ -73,7 +73,7 @@ public class HttpClient {
                 payload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(game);
                 break;
             case CONTAINER_METADATA:
-                ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(game.getUuid(), game.getTaskArn());
+                ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(game.getUuid(), game.getTaskIP());
                 payload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arnUpdatePayload);
                 resource = "/auth/game/container_metadata";
             break;

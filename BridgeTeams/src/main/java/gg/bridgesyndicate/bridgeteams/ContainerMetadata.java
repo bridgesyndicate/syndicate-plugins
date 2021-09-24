@@ -18,10 +18,19 @@ public class ContainerMetadata {
         }
     }
 
-    public String getTaskArn() {
+    public String getTaskIP() {
         JsonElement jelement = new JsonParser().parse(containerMetadataJson);
         JsonObject jobject = jelement.getAsJsonObject();
-        jobject = jobject.getAsJsonObject("Labels");
-        return(jobject.get("com.amazonaws.ecs.task-arn").getAsString());
+        return (jobject.getAsJsonArray("Networks")
+                .get(0)
+                .getAsJsonObject()
+                .getAsJsonArray("IPv4Addresses")
+                .get(0)
+                .getAsString());
+    }
+
+    public static void main(String[] args) throws IOException {
+        ContainerMetadata containerMetadata = new ContainerMetadata(null);
+        System.out.println(containerMetadata.getTaskIP());
     }
 }

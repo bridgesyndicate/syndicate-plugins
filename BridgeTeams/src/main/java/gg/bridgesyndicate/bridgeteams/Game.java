@@ -30,7 +30,7 @@ public class Game {
     public long gameEndedAt = 0;
     public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE, ABORTED }
     private GameState state;
-    private String taskArn;
+    private String taskIP;
     private List redTeamMinecraftUuids;
     private List blueTeamMinecraftUuids;
     private List redTeamDiscordIds;
@@ -70,8 +70,8 @@ public class Game {
         return goalsToWin;
     }
 
-    public String getTaskArn() {
-        return taskArn;
+    public String getTaskIP() {
+        return taskIP;
     }
 
     public HashMap getGameScore() {
@@ -97,7 +97,7 @@ public class Game {
     public void addContainerMetaData() throws URISyntaxException, IOException {
         String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
         ContainerMetadata containerMetaData = new ContainerMetadata(url);
-        this.taskArn = containerMetaData.getTaskArn();
+        this.taskIP = containerMetaData.getTaskIP();
     }
 
     public Iterator<String> getJoinedPlayers() {
