@@ -688,7 +688,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Title title = new Title(titles.get(0), titles.get(1), 0, 6, 1);
             title.send(player);
         }
-        new BukkitRunnable() {
+        new BukkitRunnable() { // terminate the container so a new, fresh, game container can launch
             public void run() {
                 if (game.getState() == Game.GameState.TERMINATE){
                     // everything is good. Quit
@@ -704,7 +704,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 System.exit(0);
             }
-        }.runTaskLater(this, 600);
+        }.runTaskLater(this, 600); // 30 seconds
 
         new BukkitRunnable() {
             int attempt = 0;
@@ -723,7 +723,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     attempt++;
                 }
             }
-        }.runTaskTimer(this, 10 * 20, 40);
+        }.runTaskTimer(this, 0, 40); // try to send the game data every 2 seconds
     }
 
     private void broadcastEndMessages() {
