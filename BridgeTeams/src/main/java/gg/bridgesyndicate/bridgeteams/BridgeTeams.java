@@ -632,7 +632,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if ( game.getState() == Game.GameState.AFTER_GAME) {
+                if ( game.getState() == Game.GameState.AFTER_GAME ||
+                        game.getState() == Game.GameState.TERMINATE) {
                     System.out.println("cancel the startclock timer");
                     this.cancel();
                     return;
