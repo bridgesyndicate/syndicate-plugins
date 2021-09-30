@@ -545,11 +545,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                     startGame();
             } else {
-                System.out.println("player " + player.getName() + "already joined");
+                System.out.println("player " + player.getName() + " already joined");
+                createScoreboardForPlayer(Bukkit.getScoreboardManager(), player);
                 teleportRejoinedPlayer(player);
             }
         } else {
-            System.out.println(player.getName() + "is spectator.");
+            System.out.println(player.getName() + " is spectator.");
             makeSpectator(player);
         }
     }
@@ -631,7 +632,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         cagePlayers();
         buildScoreboards();
         broadcastStartMessages();
-        buildScoreboards();
         startClock();
     }
 
