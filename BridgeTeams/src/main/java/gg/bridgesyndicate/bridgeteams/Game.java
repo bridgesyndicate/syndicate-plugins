@@ -260,6 +260,10 @@ public class Game {
         return(ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
     }
 
+    public boolean hasJoinedPlayer(Player player) {
+        return joinedPlayers.contains(player);
+    }
+
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
     class GoalMeta {
         private final UUID playerUUID;

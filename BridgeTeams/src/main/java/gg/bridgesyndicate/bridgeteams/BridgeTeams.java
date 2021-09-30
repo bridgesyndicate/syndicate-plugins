@@ -536,15 +536,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         resetPlayerHealthAndInventory(player);
 
         if (game.hasPlayer(player)) {
-            assignToTeam(player);
-            System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
-            Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
-            if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
-                startGame();
+            if (!game.hasJoinedPlayer(player)) {
+                assignToTeam(player);
+                System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
+                Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
+                if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
+                    startGame();
+            } else {
+                teleportRejoinedPlayer(player);
+            }
         } else {
             makeSpectator(player);
         }
-        teleportRejoinedPlayer(player);
     }
 
     private void teleportRejoinedPlayer(Player player) {
