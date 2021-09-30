@@ -261,7 +261,7 @@ public class Game {
     }
 
     public boolean hasJoinedPlayer(Player player) {
-        return joinedPlayers.contains(player);
+        return joinedPlayers.contains(player.getName());
     }
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)

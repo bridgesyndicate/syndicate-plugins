@@ -538,7 +538,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
             if (!game.hasJoinedPlayer(player)) {
-                System.out.println("player " + player.getName() + "has not previously joined.");
+                System.out.println("player " + player.getName() + " has not previously joined.");
                 assignToTeam(player);
                 System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
                 Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
