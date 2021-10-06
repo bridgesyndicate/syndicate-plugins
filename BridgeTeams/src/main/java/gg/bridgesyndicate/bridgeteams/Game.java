@@ -45,6 +45,7 @@ public class Game {
     private List<GoalMeta> goalsScored = new ArrayList<>();
     private List<KillMeta> killsRegistered = new ArrayList<>();
     private HashMap<String, UUID> playerMap = new HashMap();
+    private HashMap<String, Integer> eloBeforeGame = new HashMap<>();
 
     public Game() {
         this.state = state.BEFORE_GAME;
@@ -53,6 +54,9 @@ public class Game {
     }
 
     /* METHODS */
+    public HashMap<String, Integer> getEloBeforeGame() {
+        return eloBeforeGame;
+    }
     public String getDequeuedAt() { return dequeuedAt; }
     public String getQueuedAt() { return queuedAt; }
     public String getQueuedVia() { return queuedVia; }
