@@ -128,21 +128,33 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void pollForGameData() {
         final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
-        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+        AmazonSQS sqs = null;
+        try {
+             sqs = AmazonSQSClientBuilder.defaultClient();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error building an SQS client. This container will never poll for a game.");
+            if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
+                System.out.println("Exiting because this is fatal in production.");
+                System.exit(-1);
+            }
+            return;
+        }
         final String QUEUE_NAME = System.getenv(QUEUE_ENV_NAME);
         System.out.println("Polling: " + QUEUE_NAME);
         if (QUEUE_NAME == null) {
             System.out.println("EXIT: " + QUEUE_ENV_NAME + " environment variable is null");
             System.exit(-1);
         }
+        AmazonSQS finalSqs = sqs;
         new BukkitRunnable() {
             @Override
             public void run() {
-                final String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+                final String queueUrl = finalSqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
                 ReceiveMessageRequest receive_request = new ReceiveMessageRequest()
                         .withQueueUrl(QUEUE_NAME)
                         .withWaitTimeSeconds(20);
-                List<Message> messages = sqs.receiveMessage(receive_request).getMessages();
+                List<Message> messages = finalSqs.receiveMessage(receive_request).getMessages();
                 if ( messages.size() > 0 ) {
                     Message message = messages.get(0);
                     System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
@@ -160,7 +172,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                         System.out.println("EXIT: Could not add container metadata.");
                         System.exit(-1);
                     }
-                    sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+                    finalSqs.deleteMessage(queueUrl, message.getReceiptHandle());
                     this.cancel();
                 }
             }
@@ -882,11 +894,51 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 //        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
 //        System.out.println(foo);
 
-        String myJson = "{\"blue_team_minecraft_uuids\":[\"fff47ae2-dec5-4de8-9172-1ab9216b30e0\"],\"queued_at\":\"2021-09-16T03:50:57Z\",\"red_team_minecraft_uuids\":[\"65188b65-76e3-4079-8c28-02ea07c91448\"],\"required_players\":2.0,\"queued_via\":\"discord duel slash command\",\"blue_team_discord_ids\":[\"417766998471213061\"],\"uuid\":\"c996dae3-433c-48f4-8a90-d4ea2d50f2a6\",\"blue_team_discord_names\":[\"viceversa\"],\"accepted_by_discord_ids\":[{\"accepted_at\":\"2021-09-16T16:10:12Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:09:34Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:08:55Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:07:04Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T16:05:07Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:11:31Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:08:57Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:03:16Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T04:02:32Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:37Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:17Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:53:02Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:51:32Z\",\"discord_id\":\"240177490906054658\"},{\"accepted_at\":\"2021-09-16T03:50:57Z\",\"discord_id\":\"417766998471213061\"}],\"red_team_discord_ids\":[\"240177490906054658\"],\"game_length_in_seconds\":900.0,\"goals_to_win\":5.0,\"red_team_discord_names\":[\"ken\"]}";
+        String myJson = "{\n" +
+                "  \"uuid\": \"f1543f5d-8f44-4f09-af36-6aa0a2024707\",\n" +
+                "  \"blue_team_discord_ids\": [\n" +
+                "    \"240177490906054658\"\n" +
+                "  ],\n" +
+                "  \"blue_team_discord_names\": [\n" +
+                "    \"ken\"\n" +
+                "  ],\n" +
+                "  \"red_team_discord_ids\": [\n" +
+                "    \"417766998471213061\"\n" +
+                "  ],\n" +
+                "  \"red_team_discord_names\": [\n" +
+                "    \"viceversa\"\n" +
+                "  ],\n" +
+                "  \"required_players\": 2,\n" +
+                "  \"goals_to_win\": 1,\n" +
+                "  \"game_length_in_seconds\": 120,\n" +
+                "  \"queued_at\": \"2021-10-06T00:41:53Z\",\n" +
+                "  \"accepted_by_discord_ids\": [\n" +
+                "    {\n" +
+                "      \"discord_id\": \"240177490906054658\",\n" +
+                "      \"accepted_at\": \"2021-10-06T00:41:53Z\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"discord_id\": \"417766998471213061\",\n" +
+                "      \"accepted_at\": \"2021-10-06T00:41:53Z\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"queued_via\": \"queue match\",\n" +
+                "  \"elo_before_game\": {\n" +
+                "    \"240177490906054658\": 1000,\n" +
+                "    \"417766998471213061\": 1000\n" +
+                "  },\n" +
+                "  \"blue_team_minecraft_uuids\": [\n" +
+                "    \"3bdf3018-3558-46d5-b405-a654cb40e222\"\n" +
+                "  ],\n" +
+                "  \"red_team_minecraft_uuids\": [\n" +
+                "    \"f0885cea-8291-4734-be1b-bf37f6bcab7c\"\n" +
+                "  ]\n" +
+                "}";
+
         Game myGame = Game.deserialize(myJson);
         myGame.addContainerMetaData();
-        myGame.playerJoined("NitroholicPls");
-        myGame.playerJoined("vice9");
+        //myGame.playerJoined("NitroholicPls");
+        //myGame.playerJoined("vice9");
         myGame.setState(Game.GameState.CAGED);
         myGame.setState(Game.GameState.DURING_GAME);
         myGame.addGoalInfo(UUID.randomUUID());
