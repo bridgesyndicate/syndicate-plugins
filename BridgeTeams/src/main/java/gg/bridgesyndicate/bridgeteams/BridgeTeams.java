@@ -132,7 +132,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         try {
              sqs = AmazonSQSClientBuilder.defaultClient();
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println("Error building an SQS client. This container will never poll for a game.");
             if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
                 System.out.println("Exiting because this is fatal in production.");
