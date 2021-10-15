@@ -30,14 +30,13 @@ phases:
       - aws s3 cp s3://syndicate-plugins-artifacts/cage.v02.json cage.json
       - echo running docker build
       - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest
+      - echo not docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:latest
       - echo not tagging with $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker images...
       - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
 artifacts:
   files:
     - "**/target/*"
