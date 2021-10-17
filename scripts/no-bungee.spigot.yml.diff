@@ -1,0 +1,10 @@
+--- ./spigot.yml	2021-09-17 09:16:59.000000000 -0700
++++ /tmp/spigot.yml	2021-10-17 13:37:04.874402097 -0700
+@@ -13,7 +13,6 @@
+ config-version: 8
+ settings:
+   save-user-cache-on-stop-only: false
+-  bungeecord: true
+   late-bind: false
+   sample-count: 12
+   player-shuffle: 0

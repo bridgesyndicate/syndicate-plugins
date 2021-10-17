@@ -1,0 +1,10 @@
+--- ./server.properties	2021-09-17 08:54:57.000000000 -0700
++++ /tmp/server.properties	2021-10-17 13:36:53.010229964 -0700
+@@ -1,6 +1,6 @@
+ #Minecraft server properties
+ #Sat Jul 10 16:55:22 PDT 2021
+-online-mode=false
++online-mode=true
+ snooper-enabled=false
+ spawn-protection=0
+ generator-settings=
