@@ -415,15 +415,23 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         ChatBroadcasts.scoreMessage(game, player);
     }
 
-    private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy) {
+    private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy, TeamType team) {
         World world = Bukkit.getWorld("world");
         int cageX = cageLocation.getBlockX();
         int cageY = cageLocation.getBlockY();
         int cageZ = cageLocation.getBlockZ();
         for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
             int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
-//            int id = (createOrDestroy.equals("create")) ? 166 : 0; // 166 is much faster.
             byte data = (createOrDestroy.equals("create")) ? (byte) cageSchematicIntegerList[i * 5 + 4] : 0;
+            if (team == TeamType.BLUE) { // turn the cage blue
+                if (id == 100 && data == 0) {
+                    id = 99;
+                    data = 0;
+                }
+                if ( (id == 159 && (int) data == 14) || (id == 35 && (int) data == 14) ){
+                    data = 11;
+                }
+            }
             setBlockInNativeWorld(world,
                     cageX + cageSchematicIntegerList[i * 5],
                     cageY + cageSchematicIntegerList[i * 5 + 1],
@@ -431,7 +439,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     id,
                     data,
                     false);
-            // printTiming("block " + id + ", " + i );
         }
     }
 
@@ -445,7 +452,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void buildCages(String createOrDestroy) {
         for (TeamType team : MatchTeam.getTeams()) {
             BlockVector cageLocation = MatchTeam.getCageLocation(team);
-            buildOrDestroyCageAtLocation(cageLocation, createOrDestroy);
+            buildOrDestroyCageAtLocation(cageLocation, createOrDestroy, team);
         }
         if (createOrDestroy.equals("destroy"))
             return;

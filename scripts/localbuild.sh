@@ -2,14 +2,14 @@
 set -e
 TAG=latest
 IMAGE=595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers
-if [[ -z $1 ]]
+echo "doing the build"
+rm -rf tmp
+./scripts/localbuild.rb | grep -v 'aws ecr' | bash
+rm -f plugins.tar mushroomcage.schematic *.jar
+
+if [[ -n $1 ]]
 then
-    echo "doing the build"
-    rm -rf tmp
-    ./scripts/localbuild.rb | grep -v 'aws ecr' | bash
-    rm -f plugins.tar mushroomcage.schematic *.jar
-else
-    echo "not building. just running without bungee"
+    echo "running without bungee"
     TAG=no-bungee
     docker build -t $IMAGE:$TAG -f scripts/Dockerfile.nobungee .
 fi
