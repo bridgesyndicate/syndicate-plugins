@@ -49,7 +49,10 @@ class GameScore { // Singleton
         Objective showhealth = board.registerNewObjective("showhealth", Criterias.HEALTH);
         showhealth.setDisplaySlot(DisplaySlot.BELOW_NAME);
         showhealth.setDisplayName(ChatColor.RED + "❤");
-        showhealth.setDisplaySlot(DisplaySlot.PLAYER_LIST);
+
+        Objective showhealth2 = board.registerNewObjective("showhealth2", Criterias.HEALTH);
+        showhealth2.setDisplaySlot(DisplaySlot.PLAYER_LIST);
+
     }
 
     public static void initColorTags(Scoreboard board) {
