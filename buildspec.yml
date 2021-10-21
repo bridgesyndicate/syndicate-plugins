@@ -25,7 +25,7 @@ phases:
       - find . -type f -path \*target\* -name \*jar -exec cp -p {} tmp/ \;
       - tar -C tmp -cvf ./plugins.tar .
       - echo getting the jar deps from s3
-      - aws s3 cp s3://syndicate-plugins-artifacts/jar-deps/jar-deps-v02.tar jar-deps.tar
+      - aws s3 cp s3://syndicate-plugins-artifacts/jar-deps/jar-deps-v03.tar jar-deps.tar
       - echo getting the cage schematic from s3
       - aws s3 cp s3://syndicate-plugins-artifacts/cage.v02.json cage.json
       - echo running docker build

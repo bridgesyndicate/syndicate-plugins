@@ -1,5 +1,13 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -8,11 +16,79 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Inventory {
+    private static final String SYNDICATE_ENV = System.getenv("SYNDICATE_ENV");
+    private static final String BUCKET_NAME = "syndicate-" + SYNDICATE_ENV + "-bridge-kit-layouts";
+    private final AmazonS3 s3Client;
+    private HashMap<UUID, HashMap<String, Integer>> playerKitMap = new HashMap();
 
-    public static void setDefaultInventory(Player player) {
+    Inventory() {
+        s3Client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new DefaultAWSCredentialsProviderChain())
+                .withRegion(new DefaultAwsRegionProviderChain().getRegion())
+                .build();
+    }
+
+    private String objectNameFromPlayerUUID(UUID uniqueId){
+        return uniqueId.toString() + ".json";
+    }
+
+    public void addPlayer(Player player) {
+        System.out.println("Adding kit for " + player.getUniqueId() + " from S3.");
+        String playerKitJson = getKitJsonFromS3(player.getUniqueId());
+        if (playerKitJson != null) {
+            HashMap<String, Integer> playerHashMap = getPlayerHashMap(playerKitJson);
+            if (playerHashMap != null)
+                playerKitMap.put(player.getUniqueId(), playerHashMap);
+        } else {
+            System.out.println("No kit for " + player.getUniqueId() + " in S3.");
+            return;
+        }
+    }
+
+    public HashMap<String, Integer> getPlayerHashMap(String playerKitJson) {
+        HashMap<String, Integer> kitLayoutMap = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            kitLayoutMap = mapper.readValue(playerKitJson, HashMap.class);
+        } catch (IllegalArgumentException | JsonProcessingException e) {
+            System.out.println("Error. Cannot deserialize players saved layout. Will use defaults.");
+        }
+        return kitLayoutMap;
+    }
+
+    private String getKitJsonFromS3(UUID uniqueId) {
+        S3Object s3Object;
+        try {
+            s3Object = s3Client.getObject(BUCKET_NAME, objectNameFromPlayerUUID(uniqueId));
+        } catch (Exception e) {
+            return null;
+        }
+        S3ObjectInputStream inputStream = s3Object.getObjectContent();
+        String text = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                .lines()
+                .collect(Collectors.joining("\n"));
+        return(text);
+    }
+
+    private int getInventoryLocation(Player player, String key, int defaultValue){
+        HashMap<String, Integer> map = playerKitMap.get(player.getUniqueId());
+        if (map == null)
+            return defaultValue;
+        return ( map.get(key) != null ) ? map.get(key) : defaultValue;
+    }
+
+    public void setDefaultInventory(Player player) {
         // HOTBAR
         player.getInventory().clear();
         ItemStack ironSword = new ItemStack(Material.IRON_SWORD);
@@ -21,9 +97,9 @@ public class Inventory {
         itemMetaSword.spigot().setUnbreakable(true);
         ironSword.setItemMeta(itemMetaSword);
 
-
-        player.getInventory().setItem(0, ironSword);
-        player.updateInventory();
+        player.getInventory().setItem(
+                getInventoryLocation(player, "IRON_SWORD", 0),
+                ironSword);
 
         ItemStack bow = new ItemStack(Material.BOW);
 
@@ -40,8 +116,9 @@ public class Inventory {
         itemMetaBow.spigot().setUnbreakable(true);
         bow.setItemMeta(itemMetaBow);
 
-        player.getInventory().setItem(1, bow);
-        player.updateInventory();
+        player.getInventory().setItem(
+                getInventoryLocation(player, "BOW", 1),
+                bow);
 
         ItemStack pick = new ItemStack(Material.DIAMOND_PICKAXE);
 
@@ -50,22 +127,25 @@ public class Inventory {
         itemMetaPick.addEnchant(Enchantment.DIG_SPEED, 2, false);
         pick.setItemMeta(itemMetaPick);
 
-        player.getInventory().setItem(2, pick);
-        player.updateInventory();
+        player.getInventory().setItem(
+                getInventoryLocation(player, "DIAMOND_PICKAXE", 2),
+                pick);
 
         ItemStack blocks1 = new ItemStack(Material.STAINED_CLAY, 64);
 
         blocks1.setDurability(MatchTeam.getBlockColor(player));
 
-        player.getInventory().setItem(3, blocks1);
-        player.getInventory().setItem(4, blocks1);
-        player.updateInventory();
-
+        player.getInventory().setItem(
+                getInventoryLocation(player, "STAINED_CLAY0", 3),
+                blocks1);
+        player.getInventory().setItem(
+                getInventoryLocation(player, "STAINED_CLAY1", 4),
+                blocks1);
         ItemStack gaps = new ItemStack(Material.GOLDEN_APPLE, 8);
 
-        player.getInventory().setItem(5, gaps);
-        player.updateInventory();
-
+        player.getInventory().setItem(
+                getInventoryLocation(player, "GOLDEN_APPLE", 5),
+                gaps);
         ItemStack arrow = new ItemStack(Material.ARROW, 1);
 
         ItemMeta itemMetaArrow = arrow.getItemMeta();
@@ -76,9 +156,9 @@ public class Inventory {
         itemMetaArrow.setLore(arrowLore);
 
         arrow.setItemMeta(itemMetaArrow);
-        player.getInventory().setItem(8, arrow);
-        player.updateInventory();
-
+        player.getInventory().setItem(
+                getInventoryLocation(player, "ARROW", 8),
+                arrow);
         //ARMOR SLOTS
 
         ItemStack chest = new ItemStack(Material.LEATHER_CHESTPLATE);
@@ -90,19 +170,15 @@ public class Inventory {
 
         chest.setItemMeta(leatherArmorMeta);
         player.getInventory().setChestplate(chest);
-        player.updateInventory();
 
         ItemStack leg = new ItemStack(Material.LEATHER_LEGGINGS);
 
         leg.setItemMeta(leatherArmorMeta);
         player.getInventory().setLeggings(leg);
-        player.updateInventory();
 
         ItemStack boot = new ItemStack(Material.LEATHER_BOOTS);
 
         boot.setItemMeta(leatherArmorMeta);
         player.getInventory().setBoots(boot);
-        player.updateInventory();
-
     }
 }

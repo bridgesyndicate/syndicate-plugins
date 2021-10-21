@@ -44,11 +44,12 @@ public class HttpClient {
 
     public static String put(Game game, PUT_REASONS put_reason) throws IOException, URISyntaxException {
         boolean development = false;
-        if ( System.getenv("SYNDICATE_ENV") == null ){
-            System.out.println("SYNDICATE_ENV not set. Skipping put().");
+        if ( System.getenv("SYNDICATE_SKIP_SERVICE_CALLS") == null ){
+            System.out.println("SYNDICATE_SKIP_SERVICE_CALLS is set. Skipping put().");
             return("");
         } else if ( System.getenv("SYNDICATE_ENV").equals("development")) {
             System.out.println("SYNDICATE_ENV is development, using local endpoints.");
+            System.out.println("set SYNDICATE_SKIP_SERVICE_CALLS to skip service calls in development.");
             development = true;
         }
         PutMetaObject putMetaObject = getPaylodAndResourceForPut(game, put_reason);

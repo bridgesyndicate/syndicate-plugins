@@ -54,6 +54,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private ProtocolManager protocolManager;
     private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
+    private static Inventory inventory = null;
     private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
     private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
 
@@ -84,6 +85,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
         protocolManager = ProtocolLibrary.getProtocolManager();
+        inventory = new Inventory();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
@@ -583,6 +585,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 assignToTeam(player);
                 System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
                 Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
+                inventory.addPlayer(player);
                 if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                     startGame();
             } else {
@@ -622,7 +625,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 break;
             case DURING_GAME:
             case CAGED:
-                Inventory.setDefaultInventory(player);
+                inventory.setDefaultInventory(player);
                 break;
             default:
                 // do nothing
