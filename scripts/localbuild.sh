@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ev
 TAG=latest
 IMAGE=595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers
 echo "doing the build"

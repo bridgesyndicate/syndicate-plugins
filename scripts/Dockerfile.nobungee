@@ -5,3 +5,4 @@ ADD scripts/no-bungee.server.properties.diff .
 ADD scripts/no-bungee.spigot.yml.diff .
 RUN patch -p1 < ./no-bungee.spigot.yml.diff
 RUN patch -p1 < ./no-bungee.server.properties.diff
+CMD ["java", "-jar", "spigot-1.8.8.jar", "nogui"]

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -88,96 +89,95 @@ public class Inventory {
         return ( map.get(key) != null ) ? map.get(key) : defaultValue;
     }
 
-    public void setDefaultInventory(Player player) {
-        // HOTBAR
-        player.getInventory().clear();
+    private ItemStack getIronSword() {
         ItemStack ironSword = new ItemStack(Material.IRON_SWORD);
-
         ItemMeta itemMetaSword = ironSword.getItemMeta();
         itemMetaSword.spigot().setUnbreakable(true);
         ironSword.setItemMeta(itemMetaSword);
+        return ironSword;
+    }
 
-        player.getInventory().setItem(
-                getInventoryLocation(player, "IRON_SWORD", 0),
-                ironSword);
-
+    private ItemStack getBow() {
         ItemStack bow = new ItemStack(Material.BOW);
-
         ItemMeta itemMetaBow = bow.getItemMeta();
         itemMetaBow.setDisplayName(ChatColor.GREEN + "Bow");
-
         ArrayList<String> bowLore = new ArrayList<>();
         bowLore.add(ChatColor.GRAY + "Arrows regenerate every");
         bowLore.add(ChatColor.GREEN + "3.5s" + ChatColor.GRAY + ". You can have a maximum");
         bowLore.add(ChatColor.GRAY + "of " + ChatColor.GREEN + "1 " + ChatColor.GRAY + "arrow at a time.");
         bowLore.add("");
         itemMetaBow.setLore(bowLore);
-
         itemMetaBow.spigot().setUnbreakable(true);
         bow.setItemMeta(itemMetaBow);
+        return bow;
+    }
 
-        player.getInventory().setItem(
-                getInventoryLocation(player, "BOW", 1),
-                bow);
-
+    private ItemStack getPickAxe() {
         ItemStack pick = new ItemStack(Material.DIAMOND_PICKAXE);
-
         ItemMeta itemMetaPick = pick.getItemMeta();
         itemMetaPick.spigot().setUnbreakable(true);
         itemMetaPick.addEnchant(Enchantment.DIG_SPEED, 2, false);
         pick.setItemMeta(itemMetaPick);
+        return pick;
+    }
 
-        player.getInventory().setItem(
-                getInventoryLocation(player, "DIAMOND_PICKAXE", 2),
-                pick);
+    private ItemStack getBlock(Player player) {
+        ItemStack block = new ItemStack(Material.STAINED_CLAY, 64);
+        block.setDurability(MatchTeam.getBlockColor(player));
+        return(block);
+    }
 
-        ItemStack blocks1 = new ItemStack(Material.STAINED_CLAY, 64);
-
-        blocks1.setDurability(MatchTeam.getBlockColor(player));
-
-        player.getInventory().setItem(
-                getInventoryLocation(player, "STAINED_CLAY0", 3),
-                blocks1);
-        player.getInventory().setItem(
-                getInventoryLocation(player, "STAINED_CLAY1", 4),
-                blocks1);
-        ItemStack gaps = new ItemStack(Material.GOLDEN_APPLE, 8);
-
-        player.getInventory().setItem(
-                getInventoryLocation(player, "GOLDEN_APPLE", 5),
-                gaps);
+    private ItemStack getArrow() {
         ItemStack arrow = new ItemStack(Material.ARROW, 1);
-
         ItemMeta itemMetaArrow = arrow.getItemMeta();
         itemMetaArrow.setDisplayName(ChatColor.GREEN + "Arrow");
-
         ArrayList<String> arrowLore = new ArrayList<>();
         arrowLore.add(ChatColor.GRAY + "Regenerates every " + ChatColor.GREEN + "3.5s" + ChatColor.GRAY + "!");
         itemMetaArrow.setLore(arrowLore);
-
         arrow.setItemMeta(itemMetaArrow);
+        return arrow;
+    }
+
+    private ItemStack getApple() {
+        return new ItemStack(Material.GOLDEN_APPLE, 8);
+    }
+
+    public void setDefaultInventory(Player player) {
+        player.getInventory().clear();
+
+        player.getInventory().setItem(
+                getInventoryLocation(player, "IRON_SWORD", 0),
+                getIronSword());
+        player.getInventory().setItem(
+                getInventoryLocation(player, "BOW", 1),
+                getBow());
+        player.getInventory().setItem(
+                getInventoryLocation(player, "DIAMOND_PICKAXE", 2),
+                getPickAxe());
+        player.getInventory().setItem(
+                getInventoryLocation(player, "STAINED_CLAY0", 3),
+                getBlock(player));
+        player.getInventory().setItem(
+                getInventoryLocation(player, "STAINED_CLAY1", 4),
+                getBlock(player));
+        player.getInventory().setItem(
+                getInventoryLocation(player, "GOLDEN_APPLE", 5),
+                getApple());
         player.getInventory().setItem(
                 getInventoryLocation(player, "ARROW", 8),
-                arrow);
-        //ARMOR SLOTS
+                getArrow());
 
         ItemStack chest = new ItemStack(Material.LEATHER_CHESTPLATE);
-
         LeatherArmorMeta leatherArmorMeta = (LeatherArmorMeta) chest.getItemMeta();
         leatherArmorMeta.setColor(MatchTeam.getArmorColor(player));
         leatherArmorMeta.setDisplayName(MatchTeam.getChatColor(player) + MatchTeam.getTeamName(player));
         leatherArmorMeta.spigot().setUnbreakable(true);
-
         chest.setItemMeta(leatherArmorMeta);
         player.getInventory().setChestplate(chest);
-
         ItemStack leg = new ItemStack(Material.LEATHER_LEGGINGS);
-
         leg.setItemMeta(leatherArmorMeta);
         player.getInventory().setLeggings(leg);
-
         ItemStack boot = new ItemStack(Material.LEATHER_BOOTS);
-
         boot.setItemMeta(leatherArmorMeta);
         player.getInventory().setBoots(boot);
     }
