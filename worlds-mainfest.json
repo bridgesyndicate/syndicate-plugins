@@ -1,12 +1,10 @@
 {
-  "maps": {
-    "sorcery": {
-      "world": "s3://syndicate-maps/sorcery/world.tar.gz",
-      "meta": "s3://syndicate-maps/sorcery/meta.json"
-    },
-    "urban": {
-      "world": "s3://syndicate-maps/urban/world.tar.gz",
-      "meta": "s3://syndicate-maps/urban/meta.json"
-    }
+  "sorcery": {
+    "world_uri": "s3://syndicate-maps/sorcery/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/sorcery/meta.json"
+  },
+  "urban": {
+    "world_uri": "s3://syndicate-maps/urban/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/urban/meta.json"
   }
 }

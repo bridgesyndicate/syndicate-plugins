@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import gg.bridgesyndicate.util.ReadFile;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import org.bukkit.*;
@@ -57,6 +58,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Inventory inventory = null;
     private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
     private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
+    private static String mapName;
 
     public enum scoreboardSections {TIMER}
 
@@ -91,6 +93,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
         Bukkit.getWorld("world").setTime(1000);
 
+        mapName = System.getProperty("mapName", "errorMapNotSet");
+
         try {
             prepareCages();
         } catch (IOException e) {
@@ -102,23 +106,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     }
 
-    public static String getFileContent(FileInputStream fis, String encoding) throws IOException
-    {
-        try( BufferedReader br =
-                     new BufferedReader( new InputStreamReader(fis, encoding)))
-        {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while(( line = br.readLine()) != null ) {
-                sb.append( line );
-                sb.append( '\n' );
-            }
-            return sb.toString();
-        }
-    }
-
     private void prepareCages() throws IOException {
-        final String schematicJson = getFileContent(new FileInputStream("cage.json"), "UTF-8");
+        final String schematicJson = ReadFile.read(new FileInputStream("cage.json"), "UTF-8");
         ObjectMapper objectMapper = new ObjectMapper();
         CollectionType typeReference =
                 TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
@@ -885,36 +874,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     if (formattedFutureHealth > 0)
                         shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + formattedFutureHealth + ChatColor.GRAY + " HP!");
                 }
-//                // CraftPlayer craft = (CraftPlayer) shot;
-//                // float absFloat = craft.getHandle().getAbsorptionHearts();
-//                // int absInt = (int) absFloat;
-//                int absInt = 0;
-//
-//                int health = (int)(shot.getHealth() - event.getFinalDamage())/2;
-//                double dmgD = event.getFinalDamage()/2;
-//                int dmg = (int) Math.round(dmgD);
-//                int goneHealth = 10 - (health + dmg);
-//
-//                String damage = ActionBarHealth.formatDamage(dmg);
-//                String hearts = ActionBarHealth.formatHealth(health);
-//                String blackHearts = ActionBarHealth.formatBlackHearts(goneHealth);
-//                String goldHearts = ActionBarHealth.formatGoldHearts(absInt);
-//
-//                if(health >= 0){
-//                    if(absInt > 0){
-//
-//                        ActionBarHealth showHearts = new ActionBarHealth(MatchTeam.getChatColor(shot) + "" + shotName + " "
-//                                + hearts + goldHearts);
-//                        showHearts.sendToPlayer(shoota);
-//
-//                    }else{
-//
-//                        ActionBarHealth showHearts = new ActionBarHealth(MatchTeam.getChatColor(shot) + "" + shotName + " "
-//                                + hearts + damage + blackHearts);
-//                        showHearts.sendToPlayer(shoota);
-//
-//                    }
-//                }
+
             }
         }
     }
