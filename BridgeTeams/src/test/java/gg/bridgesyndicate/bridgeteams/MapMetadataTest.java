@@ -22,7 +22,7 @@ public class MapMetadataTest {
         mapMetadata.setBlueCageLocation(new Vector(-28.5, 102, 0.5));
         String json = mapMetadata.serialize();
 
-        // System.out.println(json);
+        System.out.println(json);
 
         MapMetadata newMapMetadata = MapMetadata.deserialize(json);
         assertEquals(mapMetadata.getMapName(), newMapMetadata.getMapName());

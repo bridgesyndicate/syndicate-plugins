@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import gg.bridgesyndicate.util.BoundingBox;
 import gg.bridgesyndicate.util.ReadFile;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.IBlockData;
@@ -32,6 +33,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -39,10 +41,8 @@ import org.bukkit.scoreboard.*;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -76,6 +76,57 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
 
+    private static MatchTeam matchTeam = null;
+
+    public static String mapMetaDataJson =
+            "{\n" +
+            "  \"map_name\" : \"Aquatica\",\n" +
+            "  \"red_respawn\" : {\n" +
+            "    \"x\" : 29.5,\n" +
+            "    \"y\" : 98.0,\n" +
+            "    \"z\" : 0.5\n" +
+            "  },\n" +
+            "  \"blue_respawn\" : {\n" +
+            "    \"x\" : -28.5,\n" +
+            "    \"y\" : 98.0,\n" +
+            "    \"z\" : 0.5\n" +
+            "  },\n" +
+            "  \"red_cage_location\" : {\n" +
+            "    \"x\" : 30.5,\n" +
+            "    \"y\" : 104.0,\n" +
+            "    \"z\" : 0.5\n" +
+            "  },\n" +
+            "  \"blue_cage_location\" : {\n" +
+            "    \"x\" : -29.5,\n" +
+            "    \"y\" : 104.0,\n" +
+            "    \"z\" : 0.5\n" +
+            "  },\n" +
+            "  \"build_limits\" : {\n" +
+            "    \"minX\" : -25.0,\n" +
+            "    \"minY\" : 84.0,\n" +
+            "    \"minZ\" : -20.0,\n" +
+            "    \"maxX\" : 25.0,\n" +
+            "    \"maxY\" : 99.0,\n" +
+            "    \"maxZ\" : 20.0\n" +
+            "  },\n" +
+            "  \"red_goal_location\" : {\n" +
+            "    \"minX\" : 30.0,\n" +
+            "    \"minY\" : 83.0,\n" +
+            "    \"minZ\" : -3.0,\n" +
+            "    \"maxX\" : 36.0,\n" +
+            "    \"maxY\" : 88.0,\n" +
+            "    \"maxZ\" : 3.0\n" +
+            "  },\n" +
+            "  \"blue_goal_location\" : {\n" +
+            "    \"minX\" : -36.0,\n" +
+            "    \"minY\" : 83.0,\n" +
+            "    \"minZ\" : -3.0,\n" +
+            "    \"maxX\" : -30.0,\n" +
+            "    \"maxY\" : 88.0,\n" +
+            "    \"maxZ\" : 3.0\n" +
+            "  }\n" +
+            "}";
+
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
             System.out.println(gameRule + " : " + Bukkit.getWorld("world").getGameRuleValue(gameRule));
@@ -103,6 +154,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             System.exit(-1);
         }
         pollForGameData();
+
+        MapMetadata mapMetadata = MapMetadata.deserialize(mapMetaDataJson);
+        MatchTeam matchTeam = new MatchTeam(mapMetadata);
 
     }
 
@@ -210,7 +264,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 game.getState() != Game.GameState.CAGED)
                 ||
                 (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-                        && MatchTeam.getTeam((Player) event.getDamager()) == MatchTeam.getTeam((Player) event.getEntity())
+                        && matchTeam.getTeam((Player) event.getDamager()) == matchTeam.getTeam((Player) event.getEntity())
                  )
         ) {
             event.setCancelled(true);
@@ -220,7 +274,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onHit(EntityDamageByEntityEvent event) {
         if (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-        && MatchTeam.getTeam((Player) event.getDamager()) != MatchTeam.getTeam((Player) event.getEntity())
+        && matchTeam.getTeam((Player) event.getDamager()) != matchTeam.getTeam((Player) event.getEntity())
         ) {
             Player damager = (Player) event.getDamager();
             UUID id = damager.getUniqueId();
@@ -295,7 +349,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void sendDeathMessages(Player player, Player killer, Event event) {
-        String deathMessage = MatchTeam.getChatColor(player).toString()
+        String deathMessage = matchTeam.getChatColor(player).toString()
                 + player.getName() + ChatColor.GRAY;
 
         if (event instanceof PlayerDeathEvent) {
@@ -309,7 +363,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             deathMessage = deathMessage.concat(WAS_VOIDED_BY);
         }
 
-        deathMessage = deathMessage.concat(MatchTeam.getChatColor(killer) + killer.getName());
+        deathMessage = deathMessage.concat(matchTeam.getChatColor(killer) + killer.getName());
         deathMessage = deathMessage.concat(ChatColor.GRAY + ".");
 
         if (event instanceof PlayerDeathEvent) {
@@ -324,7 +378,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void sendDeadPlayerToSpawn(Player player) {
         resetPlayerHealthAndInventory(player);
-        player.teleport(MatchTeam.getSpawnLocation(player));
+        player.teleport(matchTeam.getSpawnLocation(player));
         zeroPlayerVelocity(player);
         player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
@@ -343,53 +397,50 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void cancelBlockPlacement(BlockPlaceEvent event) {
+    public void blockPlace(BlockPlaceEvent event) {
+
         Player player = event.getPlayer();
-        final String NO_BLOCKS_THERE = ChatColor.RED + "You can't place blocks there!";
+        if (player.getGameMode() != GameMode.CREATIVE) { // if you are in creative mode none of this should apply
 
-        Block b = event.getBlock();
-        int bX = b.getX();
-        int bY = b.getY();
-        int bZ = b.getZ();
+            final String NO_BLOCKS_THERE = ChatColor.RED + "You can't place blocks there!";
+            Block b = event.getBlock();
+            double bX = b.getX();
+            double bY = b.getY();
+            double bZ = b.getZ();
 
-        if (bX > 25 || bX < -25) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BLOCKS_THERE);
-            return;
-        }
-        if (bY > 99 || bY < 84) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BLOCKS_THERE);
-            return;
-        }
-        if (bZ > 20 || bZ < -20) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BLOCKS_THERE);
+            // i'm sure there's a better way to do this but for now i'm going to do it like this
+            BoundingBox allowedBlocks = matchTeam.getBuildLimits();
+
+            if (bY > allowedBlocks.getMaxY() || bY < allowedBlocks.getMinY() || bX > allowedBlocks.getMaxX() || bX < allowedBlocks.getMinX() || bZ > allowedBlocks.getMaxZ() || bZ < allowedBlocks.getMinZ()) {
+                event.setCancelled(true);
+                player.sendMessage(NO_BLOCKS_THERE);
+            } else {
+                b.setMetadata("placedByPlayer", new FixedMetadataValue(this, "Metadata value")); // this tells the server that this block was placed by a player, and not already there
+            }
+
         }
     }
 
     @EventHandler
-    public void cancelBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        final String NO_BREAK_THERE = ChatColor.RED + "You can't break that block!";
-        Block b = event.getBlock();
-        int bX = b.getX();
-        int bY = b.getY();
-        int bZ = b.getZ();
+    public void blockBreak(BlockBreakEvent event) {
 
-        if (event.getBlock().getType() != Material.STAINED_CLAY) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BREAK_THERE);
-            return;
-        }
-        if (bY > 99 || bY < 84 || bX > 25 || bX < -25 || bZ > 20 || bZ < -20) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BREAK_THERE);
-            return;
-        }
-        if (bY == 99 && (bX == 25 || bX == -25) && (bZ == 4 || bZ == -4)) {
-            event.setCancelled(true);
-            player.sendMessage(NO_BREAK_THERE);
+        Player player = event.getPlayer();
+        if (player.getGameMode() != GameMode.CREATIVE) { // if you are in creative mode none of this should apply
+
+            final String NO_BREAK_THERE = ChatColor.RED + "You can't break that block!";
+            Block b = event.getBlock();
+            double bX = b.getX();
+            double bY = b.getY();
+            double bZ = b.getZ();
+
+            if ((event.getBlock().getType() != Material.STAINED_CLAY) // the only blocks you are ever allowed to break is stained clay
+            || ((!b.hasMetadata("placedByPlayer")) && // checks to see if the block was not placed by a player
+                    (!(bZ==0 && (bX < 21 && bX > -21) && (bY < 93 && bY > 83)))) ) { // checks to see if it's not part of the bridge. Also, these values are ALWAYS the same
+
+                event.setCancelled(true);
+                player.sendMessage(NO_BREAK_THERE);
+
+            }
         }
     }
 
@@ -413,7 +464,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void toteScore(Player player, GoalLocationInfo goal) throws JsonProcessingException {
         startPerfTiming();
         GameScore score = GameScore.getInstance();
-        score.increment(MatchTeam.getTeam(player));
+        score.increment(matchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
         if (!game.over()) {
@@ -461,8 +512,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void buildCages(String createOrDestroy) {
-        for (TeamType team : MatchTeam.getTeams()) {
-            BlockVector cageLocation = MatchTeam.getCageLocation(team);
+        for (TeamType team : matchTeam.getTeams()) {
+            BlockVector cageLocation = matchTeam.getCageLocation(team);
             buildOrDestroyCageAtLocation(cageLocation, createOrDestroy, team);
         }
         if (createOrDestroy.equals("destroy"))
@@ -486,7 +537,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.teleport(MatchTeam.getCagePlayerLocation(player));
+            player.teleport(matchTeam.getCagePlayerLocation(player));
             sendTitles(player);
             resetPlayerHealthAndInventory(player);
             setGameModeForPlayer(player);
@@ -508,7 +559,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         if (game.getState() != Game.GameState.DURING_GAME) return;
 
         for (GoalLocationInfo goal : BridgeGoals.getGoalList()) {
-            if (MatchTeam.getTeam(player) != goal.getTeam()) {
+            if (matchTeam.getTeam(player) != goal.getTeam()) {
                 if (goal.getBoundingBox().contains(
                         player.getLocation().getX(),
                         player.getLocation().getY(),
@@ -537,13 +588,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     onDeathOfPlayerImpl(player, killer, event);
                 } else {
                     String shootaKilled = player.getName();
-                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + shootaKilled + ChatColor.GRAY + " fell into the void.");
+                    Bukkit.broadcastMessage(matchTeam.getChatColor(player) + shootaKilled + ChatColor.GRAY + " fell into the void.");
                 }
 
             } else {
                 if (game.getState() == Game.GameState.DURING_GAME) {
                     String killed = player.getName();
-                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
+                    Bukkit.broadcastMessage(matchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
                 }
             }
             sendDeadPlayerToSpawn(player);
@@ -573,7 +624,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.out.println("player " + player.getName() + " has not previously joined.");
                 assignToTeam(player);
                 System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
-                Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + MatchTeam.getChatColor(player) + "]");
+                Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + matchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + matchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + matchTeam.getChatColor(player) + "]");
                 inventory.addPlayer(player);
                 if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                     startGame();
@@ -595,7 +646,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 sendDeadPlayerToSpawn(player);
                 break;
             case CAGED:
-                player.teleport(MatchTeam.getCagePlayerLocation(player));
+                player.teleport(matchTeam.getCagePlayerLocation(player));
                 break;
             default:
                 // do nothing
@@ -694,11 +745,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void broadcastStartMessages() {
-        for (TeamType team : MatchTeam.getTeams()) {
-            for (String playerName : MatchTeam.getPlayers(team)) {
+        for (TeamType team : matchTeam.getTeams()) {
+            for (String playerName : matchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
-                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
+                TeamType opposingTeam = matchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", matchTeam.getPlayers(opposingTeam));
                 ChatBroadcasts.gameStartMessage(player, opponentNames, game);
             }
         }
@@ -709,7 +760,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void assignToTeam(Player player) {
         TeamType teamColor = game.getTeam(player);
-        MatchTeam.addToTeam(teamColor, player);
+        matchTeam.addToTeam(teamColor, player);
         game.playerJoined(player.getName());
     }
 
@@ -768,11 +819,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void broadcastEndMessages() {
-        for (TeamType team : MatchTeam.getTeams()) {
-            for (String playerName : MatchTeam.getPlayers(team)) {
+        for (TeamType team : matchTeam.getTeams()) {
+            for (String playerName : matchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
-                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
+                TeamType opposingTeam = matchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", matchTeam.getPlayers(opposingTeam));
                 ChatBroadcasts.gameEndMessage(player, opponentNames, game);
             }
         }
@@ -785,7 +836,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void onDisable() {
-        MatchTeam.clearTeams();
+        matchTeam.clearTeams();
     }
 
     @EventHandler
@@ -821,7 +872,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     if (game.hasScore()){
                         String scorerName = game.getMostRecentScorerName();
                         Player scorer = Bukkit.getPlayer(scorerName);
-                        ChatColor chatColor = MatchTeam.getChatColor(scorer);
+                        ChatColor chatColor = matchTeam.getChatColor(scorer);
                         titleText = chatColor + scorerName + " scored!";
                     }
                     Title title = new Title(titleText, "&7Cages open in: &a" + secondsUntilCagesOpen + "s&7...", 0, 3, 0);
@@ -853,7 +904,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 UUID id = shoota.getUniqueId();
                 lastHitTimestampInMillis.put(id, System.currentTimeMillis());
 
-                if (MatchTeam.getTeam(shoota).equals(MatchTeam.getTeam(shot))) {
+                if (matchTeam.getTeam(shoota).equals(matchTeam.getTeam(shot))) {
                     event.setCancelled(true);
                 } else {
                     double shotHealth = shot.getHealth();

@@ -1,22 +1,26 @@
 package gg.bridgesyndicate.bridgeteams;
 
 import gg.bridgesyndicate.util.BoundingBox;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockVector;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
 
 public class MatchTeam
 {
     private static List<String> redTeam;
     private static List<String> blueTeam;
+
+    private static MapMetadata mapMetadata = null;
+
+    private static World world = Bukkit.getWorld("world");
+
+    MatchTeam(MapMetadata mapMetadata) {
+        this.mapMetadata = mapMetadata;
+    }
 
     public static void addToTeam(final TeamType type, final Player player) {
         if (isInTeam(player)) {
@@ -66,26 +70,25 @@ public class MatchTeam
     }
 
     public static Location getSpawnLocation(final Player player) {
-        final Location redLoc = new Location(Bukkit.getWorld("world"), 28.5, 98, 0.5, 90, 0);
-        final Location blueLoc = new Location(Bukkit.getWorld("world"), -27.5, 98, 0.5, -90, 0);
-
+        final Location redLoc = LocationHelper.makeLocation(world, mapMetadata.getRedRespawn(), 90, 0);
+        final Location blueLoc = LocationHelper.makeLocation(world, mapMetadata.getBlueRespawn(), -90, 0);
         return MatchTeam.redTeam.contains(player.getName()) ? redLoc : blueLoc;
     }
 
     public static BlockVector getRedCageLocation() {
-        return new BlockVector(28, 99, 0);
+        return new BlockVector(LocationHelper.convertRedPlayerCageLocToActualRedCageLoc(mapMetadata.getRedCageLocation()));
     }
 
     public static BlockVector getBlueCageLocation() {
-        return new BlockVector(-28, 99, 0);
+        return new BlockVector(LocationHelper.convertBluePlayerCageLocToActualBlueCageLoc(mapMetadata.getBlueCageLocation()));
     }
 
     public static Location getRedPlayerCageLocation() {
-        return(new Location(Bukkit.getWorld("world"), 28.5, 105, 0.5, 90, 0));
+        return(LocationHelper.makeLocation(world, mapMetadata.getRedCageLocation(), 90, 0));
     }
 
     public static Location getBluePlayerCageLocation() {
-        return(new Location(Bukkit.getWorld("world"), -27.5, 105, 0.5, -90, 0));
+        return(LocationHelper.makeLocation(world, mapMetadata.getBlueCageLocation(), -90, 0));
     }
 
     public static BlockVector getCageLocation(TeamType team) {
@@ -97,11 +100,15 @@ public class MatchTeam
     }
 
     public static GoalLocationInfo getRedGoalMeta() {
-        return (new GoalLocationInfo(new BoundingBox(-30, 83, 3, -36, 88, -3), TeamType.BLUE, "Blue Goal"));
+        return (new GoalLocationInfo(mapMetadata.getBlueGoalLocation(), TeamType.BLUE, "Blue Goal")); //the goal that red players score on, which is on the blue side
     }
 
     public static GoalLocationInfo getBlueGoalMeta() {
-        return (new GoalLocationInfo( new BoundingBox(30,83,-3,36,88,3), TeamType.RED, "Red Goal"));
+        return (new GoalLocationInfo(mapMetadata.getRedGoalLocation(), TeamType.RED, "Red Goal")); //the goal that blue players score on, which is on the red side
+    }
+
+    public static BoundingBox getBuildLimits() {
+        return(mapMetadata.getBuildLimits());
     }
 
     public static Collection<TeamType> getTeams(){
