@@ -14,8 +14,8 @@ manifest = {}
 s3retval.contents.each do |object|
   if %r{/$}.match(object.key)
     manifest[object.key.chop] = {
-      world_uri: "#{bucket_uri}/world.tar.gz",
-      meta_uri: "#{bucket_uri}/meta.json"
+      world_uri: "#{bucket_uri}/#{object.key.chop}/world.tar.gz",
+      meta_uri: "#{bucket_uri}/#{object.key.chop}/meta.json"
     }
   end
 end

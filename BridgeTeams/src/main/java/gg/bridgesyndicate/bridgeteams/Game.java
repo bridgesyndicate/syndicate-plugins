@@ -46,6 +46,7 @@ public class Game {
     private List<KillMeta> killsRegistered = new ArrayList<>();
     private HashMap<String, UUID> playerMap = new HashMap();
     private HashMap<String, Integer> eloBeforeGame = new HashMap<>();
+    private String mapName;
 
     public Game() {
         this.state = state.BEFORE_GAME;
@@ -60,8 +61,8 @@ public class Game {
     public String getDequeuedAt() { return dequeuedAt; }
     public String getQueuedAt() { return queuedAt; }
     public String getQueuedVia() { return queuedVia; }
-
-
+    public void setMapName(String mapName) { this.mapName = mapName; }
+    public String getMapName() { return mapName; }
     public String getUuid() {
         return uuid;
     }

@@ -103,10 +103,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
-        Bukkit.getWorld("world").setGameRuleValue("randomTickSpeed", "0");
+        Bukkit.getWorld("world").setTime(1000);
 
         mapName = System.getProperty("mapName", "errorMapNotSet");
-	System.out.println("using map " + mapName);
+        System.out.println("using map " + mapName);
 
         try {
             prepareCages();
@@ -172,6 +172,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     Message message = messages.get(0);
                     System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
                     game = Game.deserialize(message.getBody());
+                    game.setMapName(mapName);
                     try {
                         game.addContainerMetaData();
                         HttpClient.put(game, HttpClient.PUT_REASONS.CONTAINER_METADATA);

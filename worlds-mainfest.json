@@ -1,42 +1,42 @@
 {
   "aquatica": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/aquatica/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/aquatica/meta.json"
   },
   "boo": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/boo/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/boo/meta.json"
   },
   "chronon": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/chronon/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/chronon/meta.json"
   },
   "condo": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/condo/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/condo/meta.json"
   },
   "dojo": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/dojo/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/dojo/meta.json"
   },
   "galaxy": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/galaxy/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/galaxy/meta.json"
   },
   "hyperfrost": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/hyperfrost/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/hyperfrost/meta.json"
   },
   "sorcery": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/sorcery/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/sorcery/meta.json"
   },
   "treehouse": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/treehouse/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/treehouse/meta.json"
   },
   "urban": {
-    "world_uri": "s3://syndicate-maps/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/meta.json"
+    "world_uri": "s3://syndicate-maps/urban/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/urban/meta.json"
   }
 }
