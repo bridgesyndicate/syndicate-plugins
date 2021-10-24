@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ve
-VERSION=09
+VERSION=10
 echo version $VERSION
 echo building with the contents of minecraft-home
 echo edit if you don\'t have this directory

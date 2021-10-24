@@ -12,6 +12,6 @@ metadata = maps[map]['meta_uri']
 
 # echo the map name
 export_cmd = <<EOD
-export SYNDICATE_JAVA_OPTS="-DmapName=#{map}"
+export SYNDICATE_MAP_NAME="#{map}"
 EOD
 puts export_cmd

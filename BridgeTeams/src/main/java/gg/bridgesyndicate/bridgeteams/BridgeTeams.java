@@ -81,7 +81,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public static String mapMetaDataJson = null;
     static {
         try {
-            mapMetaDataJson = ReadFile.read(new FileInputStream("C:\\Users\\benal\\IdeaProjects\\syndicate-plugins4\\meta.json"), "UTF-8");
+            mapMetaDataJson = ReadFile.read(new FileInputStream("./meta.json"), "UTF-8");
             // would rather use a relative path but for some reason i can't get it to work unless i use my absolute path
         } catch (IOException e) {
             e.printStackTrace();
@@ -106,6 +106,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("randomTickSpeed", "0");
 
         mapName = System.getProperty("mapName", "errorMapNotSet");
+	System.out.println("using map " + mapName);
 
         try {
             prepareCages();

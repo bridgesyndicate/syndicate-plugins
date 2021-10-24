@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-set -ev
+set -evx
 TAG=latest
 IMAGE=595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers
 echo "doing the build"
 rm -rf tmp
 ./scripts/localbuild.rb | grep -v 'aws ecr' | bash
-rm -f plugins.tar mushroomcage.schematic *.jar
+rm -f plugins.tar *.jar
 
 if [[ -n $1 ]]
 then
