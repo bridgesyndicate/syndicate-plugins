@@ -78,54 +78,15 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private static MatchTeam matchTeam = null;
 
-    public static String mapMetaDataJson =
-            "{\n" +
-            "  \"map_name\" : \"Aquatica\",\n" +
-            "  \"red_respawn\" : {\n" +
-            "    \"x\" : 29.5,\n" +
-            "    \"y\" : 98.0,\n" +
-            "    \"z\" : 0.5\n" +
-            "  },\n" +
-            "  \"blue_respawn\" : {\n" +
-            "    \"x\" : -28.5,\n" +
-            "    \"y\" : 98.0,\n" +
-            "    \"z\" : 0.5\n" +
-            "  },\n" +
-            "  \"red_cage_location\" : {\n" +
-            "    \"x\" : 30.5,\n" +
-            "    \"y\" : 104.0,\n" +
-            "    \"z\" : 0.5\n" +
-            "  },\n" +
-            "  \"blue_cage_location\" : {\n" +
-            "    \"x\" : -29.5,\n" +
-            "    \"y\" : 104.0,\n" +
-            "    \"z\" : 0.5\n" +
-            "  },\n" +
-            "  \"build_limits\" : {\n" +
-            "    \"minX\" : -25.0,\n" +
-            "    \"minY\" : 84.0,\n" +
-            "    \"minZ\" : -20.0,\n" +
-            "    \"maxX\" : 25.0,\n" +
-            "    \"maxY\" : 99.0,\n" +
-            "    \"maxZ\" : 20.0\n" +
-            "  },\n" +
-            "  \"red_goal_location\" : {\n" +
-            "    \"minX\" : 30.0,\n" +
-            "    \"minY\" : 83.0,\n" +
-            "    \"minZ\" : -3.0,\n" +
-            "    \"maxX\" : 36.0,\n" +
-            "    \"maxY\" : 88.0,\n" +
-            "    \"maxZ\" : 3.0\n" +
-            "  },\n" +
-            "  \"blue_goal_location\" : {\n" +
-            "    \"minX\" : -36.0,\n" +
-            "    \"minY\" : 83.0,\n" +
-            "    \"minZ\" : -3.0,\n" +
-            "    \"maxX\" : -30.0,\n" +
-            "    \"maxY\" : 88.0,\n" +
-            "    \"maxZ\" : 3.0\n" +
-            "  }\n" +
-            "}";
+    public static String mapMetaDataJson = null;
+    static {
+        try {
+            mapMetaDataJson = ReadFile.read(new FileInputStream("C:\\Users\\benal\\IdeaProjects\\syndicate-plugins4\\meta.json"), "UTF-8");
+            // would rather use a relative path but for some reason i can't get it to work unless i use my absolute path
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void printWorldRules() {
         for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
@@ -142,7 +103,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
-        Bukkit.getWorld("world").setTime(1000);
+        Bukkit.getWorld("world").setGameRuleValue("randomTickSpeed", "0");
 
         mapName = System.getProperty("mapName", "errorMapNotSet");
 
@@ -400,48 +361,48 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void blockPlace(BlockPlaceEvent event) {
 
         Player player = event.getPlayer();
-        if (player.getGameMode() != GameMode.CREATIVE) { // if you are in creative mode none of this should apply
 
-            final String NO_BLOCKS_THERE = ChatColor.RED + "You can't place blocks there!";
-            Block b = event.getBlock();
-            double bX = b.getX();
-            double bY = b.getY();
-            double bZ = b.getZ();
 
-            // i'm sure there's a better way to do this but for now i'm going to do it like this
-            BoundingBox allowedBlocks = matchTeam.getBuildLimits();
+        final String NO_BLOCKS_THERE = ChatColor.RED + "You can't place blocks there!";
+        Block b = event.getBlock();
+        double bX = b.getX();
+        double bY = b.getY();
+        double bZ = b.getZ();
 
-            if (bY > allowedBlocks.getMaxY() || bY < allowedBlocks.getMinY() || bX > allowedBlocks.getMaxX() || bX < allowedBlocks.getMinX() || bZ > allowedBlocks.getMaxZ() || bZ < allowedBlocks.getMinZ()) {
-                event.setCancelled(true);
-                player.sendMessage(NO_BLOCKS_THERE);
-            } else {
-                b.setMetadata("placedByPlayer", new FixedMetadataValue(this, "Metadata value")); // this tells the server that this block was placed by a player, and not already there
-            }
+        // i'm sure there's a better way to do this but for now i'm going to do it like this
+        BoundingBox allowedBlocks = matchTeam.getBuildLimits();
 
+        if (bY > allowedBlocks.getMaxY() || bY < allowedBlocks.getMinY() || bX > allowedBlocks.getMaxX() || bX < allowedBlocks.getMinX() || bZ > allowedBlocks.getMaxZ() || bZ < allowedBlocks.getMinZ()) {
+            event.setCancelled(true);
+            player.sendMessage(NO_BLOCKS_THERE);
+        } else {
+            b.setMetadata("placedByPlayer", new FixedMetadataValue(this, "Metadata value")); // this tells the server that this block was placed by a player, and not already there
         }
+
+
     }
 
     @EventHandler
     public void blockBreak(BlockBreakEvent event) {
 
         Player player = event.getPlayer();
-        if (player.getGameMode() != GameMode.CREATIVE) { // if you are in creative mode none of this should apply
 
-            final String NO_BREAK_THERE = ChatColor.RED + "You can't break that block!";
-            Block b = event.getBlock();
-            double bX = b.getX();
-            double bY = b.getY();
-            double bZ = b.getZ();
 
-            if ((event.getBlock().getType() != Material.STAINED_CLAY) // the only blocks you are ever allowed to break is stained clay
-            || ((!b.hasMetadata("placedByPlayer")) && // checks to see if the block was not placed by a player
-                    (!(bZ==0 && (bX < 21 && bX > -21) && (bY < 93 && bY > 83)))) ) { // checks to see if it's not part of the bridge. Also, these values are ALWAYS the same
+        final String NO_BREAK_THERE = ChatColor.RED + "You can't break that block!";
+        Block b = event.getBlock();
+        double bX = b.getX();
+        double bY = b.getY();
+        double bZ = b.getZ();
 
-                event.setCancelled(true);
-                player.sendMessage(NO_BREAK_THERE);
+        if ((event.getBlock().getType() != Material.STAINED_CLAY) // the only blocks you are ever allowed to break is stained clay
+                || ((!b.hasMetadata("placedByPlayer")) && // checks to see if the block was not placed by a player
+                (!(bZ == 0 && (bX < 21 && bX > -21) && (bY < 93 && bY > 83))))) { // checks to see if it's not part of the bridge. Also, these values are ALWAYS the same
 
-            }
+            event.setCancelled(true);
+            player.sendMessage(NO_BREAK_THERE);
+
         }
+
     }
 
     private void zeroPlayerVelocity(Player player) {

@@ -76,11 +76,11 @@ public class MatchTeam
     }
 
     public static BlockVector getRedCageLocation() {
-        return new BlockVector(LocationHelper.convertRedPlayerCageLocToActualRedCageLoc(mapMetadata.getRedCageLocation()));
+        return new BlockVector(LocationHelper.convertPlayerCageLocToActualCageLoc(mapMetadata.getRedCageLocation()));
     }
 
     public static BlockVector getBlueCageLocation() {
-        return new BlockVector(LocationHelper.convertBluePlayerCageLocToActualBlueCageLoc(mapMetadata.getBlueCageLocation()));
+        return new BlockVector(LocationHelper.convertPlayerCageLocToActualCageLoc(mapMetadata.getBlueCageLocation()));
     }
 
     public static Location getRedPlayerCageLocation() {

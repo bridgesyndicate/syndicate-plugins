@@ -1,0 +1,47 @@
+{
+  "map_name" : "Aquatica",
+  "red_respawn" : {
+    "x" : 29.5,
+    "y" : 98.0,
+    "z" : 0.5
+  },
+  "blue_respawn" : {
+    "x" : -28.5,
+    "y" : 98.0,
+    "z" : 0.5
+  },
+  "red_cage_location" : {
+    "x" : 30.5,
+    "y" : 104.0,
+    "z" : 0.5
+  },
+  "blue_cage_location" : {
+    "x" : -29.5,
+    "y" : 104.0,
+    "z" : 0.5
+  },
+  "build_limits" : {
+    "minX" : -25.0,
+    "minY" : 84.0,
+    "minZ" : -20.0,
+    "maxX" : 25.0,
+    "maxY" : 99.0,
+    "maxZ" : 20.0
+  },
+  "red_goal_location" : {
+    "minX" : 30.0,
+    "minY" : 83.0,
+    "minZ" : -3.0,
+    "maxX" : 36.0,
+    "maxY" : 88.0,
+    "maxZ" : 3.0
+  },
+  "blue_goal_location" : {
+    "minX" : -36.0,
+    "minY" : 83.0,
+    "minZ" : -3.0,
+    "maxX" : -30.0,
+    "maxY" : 88.0,
+    "maxZ" : 3.0
+  }
+}

@@ -11,17 +11,11 @@ public class LocationHelper {
         return(location);
     }
 
-    static BlockVector convertRedPlayerCageLocToActualRedCageLoc(Vector vector) {
-        double x = vector.getX() + 0.5;
-        double y = vector.getY() - 6;
-        double z = vector.getZ() - 0.5;
-        return(new BlockVector(x, y, z));
-    }
-
-    static BlockVector convertBluePlayerCageLocToActualBlueCageLoc(Vector vector) {
+    static BlockVector convertPlayerCageLocToActualCageLoc(Vector vector) {
         double x = vector.getX() - 0.5;
         double y = vector.getY() - 6;
         double z = vector.getZ() - 0.5;
         return(new BlockVector(x, y, z));
     }
+
 }
