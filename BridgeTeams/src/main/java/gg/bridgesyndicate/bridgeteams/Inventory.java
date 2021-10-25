@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -180,5 +179,6 @@ public class Inventory {
         ItemStack boot = new ItemStack(Material.LEATHER_BOOTS);
         boot.setItemMeta(leatherArmorMeta);
         player.getInventory().setBoots(boot);
+        player.updateInventory();
     }
 }
