@@ -4,8 +4,6 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -49,7 +47,6 @@ import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
 
-    private ProtocolManager protocolManager;
     private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
     private static Inventory inventory = null;
@@ -96,7 +93,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
-        protocolManager = ProtocolLibrary.getProtocolManager();
         inventory = new Inventory();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
@@ -117,7 +113,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
         MapMetadata mapMetadata = MapMetadata.deserialize(mapMetaDataJson);
         MatchTeam matchTeam = new MatchTeam(mapMetadata);
-
     }
 
     private void prepareCages() throws IOException {
