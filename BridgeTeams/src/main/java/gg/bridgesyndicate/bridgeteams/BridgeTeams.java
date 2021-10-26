@@ -31,7 +31,6 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -56,6 +55,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Inventory inventory = null;
     private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
     private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
+    private final int ARROW_COOLDOWN_TIME_IN_MILLIS = 3500;
     private static String mapName;
 
     public enum scoreboardSections {TIMER}
@@ -73,7 +73,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private long performanceTimingLastCall = 0;
 
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
-    public static HashMap<UUID, Boolean> isArrowOnCooldownHashMap = new HashMap<UUID, Boolean>();
+    public static HashMap<UUID, Boolean> arrowCooldown = new HashMap<UUID, Boolean>();
 
     private static MatchTeam matchTeam = null;
 
@@ -96,7 +96,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
-        this.getServer().getPluginManager().registerEvents(this, (Plugin) new ArrowCooldown(this));
         protocolManager = ProtocolLibrary.getProtocolManager();
         inventory = new Inventory();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
@@ -269,23 +268,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler // gives the player their arrow back after 3.5 seconds
     public void onEntityShootBowEvent(final EntityShootBowEvent event) {
         Player player = (Player) event.getEntity();
-        UUID id = player.getUniqueId();
-        isArrowOnCooldownHashMap.put(id, true);
+        beginArrowCooldown(player);
         new BukkitRunnable() {
             int ticksSinceShootBow = 0;
             public void run() {
                 if (isArrowOnCooldown(player)){
-                    if (ticksSinceShootBow < 70) {
+                    if (ticksSinceShootBow < (ARROW_COOLDOWN_TIME_IN_MILLIS/50)) {
                         ticksSinceShootBow++;
-                        player.setExp(1-ticksSinceShootBow / 70F);
+                        player.setExp(1-ticksSinceShootBow / (ARROW_COOLDOWN_TIME_IN_MILLIS/50F));
                         player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
                     } else{
                         inventory.reload(player);
                         player.setLevel(0);
-                        isArrowOnCooldownHashMap.put(id, false);
+                        cancelArrowCooldown(player);
                     }
                 } else { // called when they die
-                    isArrowOnCooldownHashMap.put(id, false);
                     this.cancel();
                 }
             }
@@ -293,7 +290,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private static boolean isArrowOnCooldown(Player player){
-        return isArrowOnCooldownHashMap.get(player.getUniqueId());
+        return arrowCooldown.get(player.getUniqueId());
+    }
+
+    private static boolean beginArrowCooldown(Player player){
+        return Boolean.TRUE.equals(arrowCooldown.put(player.getUniqueId(), true));
+    }
+    private static boolean cancelArrowCooldown(Player player){
+        return Boolean.TRUE.equals(arrowCooldown.put(player.getUniqueId(), false));
     }
 
     private void computeKnockback (EntityDamageByEntityEvent event) {
@@ -334,7 +338,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             player.removePotionEffect(effect.getType());
         }
         zeroPlayerVelocity(player);
-        isArrowOnCooldownHashMap.put(player.getUniqueId(), false);
+        cancelArrowCooldown(player);
     }
 
     @EventHandler
@@ -632,7 +636,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
         lastHitTimestampInMillis.put(id, 0L);
-        isArrowOnCooldownHashMap.put(id, false);
+        cancelArrowCooldown(player);
 
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
