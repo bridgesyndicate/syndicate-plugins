@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -180,5 +181,14 @@ public class Inventory {
         boot.setItemMeta(leatherArmorMeta);
         player.getInventory().setBoots(boot);
         player.updateInventory();
+    }
+
+    // Arrow Regen
+
+    public void reload(Player player) {
+        player.getInventory().setItem(
+                getInventoryLocation(player, "ARROW", 8),
+                getArrow());
+        player.playSound(player.getLocation(), Sound.CHICKEN_EGG_POP, 1.0f, 1.0f);
     }
 }

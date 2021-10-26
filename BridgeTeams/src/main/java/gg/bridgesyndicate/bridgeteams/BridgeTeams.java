@@ -27,10 +27,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -58,6 +55,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Inventory inventory = null;
     private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
     private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
+    private final int ARROW_COOLDOWN_TIME_IN_MILLIS = 3500;
     private static String mapName;
 
     public enum scoreboardSections {TIMER}
@@ -75,6 +73,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private long performanceTimingLastCall = 0;
 
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
+    public static HashMap<UUID, Boolean> arrowCooldown = new HashMap<UUID, Boolean>();
 
     private static MatchTeam matchTeam = null;
 
@@ -82,7 +81,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     static {
         try {
             mapMetaDataJson = ReadFile.read(new FileInputStream("./meta.json"), "UTF-8");
-            // would rather use a relative path but for some reason i can't get it to work unless i use my absolute path
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -247,6 +245,61 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler // removes arrows sticking onto players visually
+    public void ProjectileHit(ProjectileHitEvent event) {
+        if (event.getEntity() instanceof Arrow) {
+            Arrow arrow = (Arrow) event.getEntity();
+            arrow.remove();
+        }
+    }
+
+    @EventHandler // removes ability to hit yourself with an arrow
+    public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Arrow && event.getEntity() instanceof Player) {
+            Arrow arrow = (Arrow) event.getDamager();
+            Player shooter = (Player) arrow.getShooter();
+            Player victim = (Player) event.getEntity();
+            if (victim.equals(shooter)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler // gives the player their arrow back after 3.5 seconds
+    public void onEntityShootBowEvent(final EntityShootBowEvent event) {
+        Player player = (Player) event.getEntity();
+        beginArrowCooldown(player);
+        new BukkitRunnable() {
+            int ticksSinceShootBow = 0;
+            public void run() {
+                if (isArrowOnCooldown(player)){
+                    if (ticksSinceShootBow < (ARROW_COOLDOWN_TIME_IN_MILLIS/50)) {
+                        ticksSinceShootBow++;
+                        player.setExp(1-ticksSinceShootBow / (ARROW_COOLDOWN_TIME_IN_MILLIS/50F));
+                        player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
+                    } else{
+                        inventory.reload(player);
+                        player.setLevel(0);
+                        cancelArrowCooldown(player);
+                    }
+                } else { // called when they die
+                    this.cancel();
+                }
+            }
+        }.runTaskTimer(this, 0, 1);
+    }
+
+    private static boolean isArrowOnCooldown(Player player){
+        return arrowCooldown.get(player.getUniqueId());
+    }
+
+    private void beginArrowCooldown(Player player){
+        arrowCooldown.put(player.getUniqueId(), true);
+    }
+    private void cancelArrowCooldown(Player player){
+        arrowCooldown.put(player.getUniqueId(), false);
+    }
+
     private void computeKnockback (EntityDamageByEntityEvent event) {
 //        Vector damagedPlayersVelocity = event.getEntity().getVelocity();
 //        Vector knockBackVector = damagedPlayersVelocity.multiply(-1);
@@ -278,11 +331,14 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
+        player.setExp(0);
+        player.setLevel(0);
         setInventoryForPlayer(player);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
         zeroPlayerVelocity(player);
+        cancelArrowCooldown(player);
     }
 
     @EventHandler
@@ -580,6 +636,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
         lastHitTimestampInMillis.put(id, 0L);
+        cancelArrowCooldown(player);
 
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
