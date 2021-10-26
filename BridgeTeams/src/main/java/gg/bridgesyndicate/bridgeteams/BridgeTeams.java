@@ -293,11 +293,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         return arrowCooldown.get(player.getUniqueId());
     }
 
-    private static boolean beginArrowCooldown(Player player){
-        return Boolean.TRUE.equals(arrowCooldown.put(player.getUniqueId(), true));
+    private void beginArrowCooldown(Player player){
+        arrowCooldown.put(player.getUniqueId(), true);
     }
-    private static boolean cancelArrowCooldown(Player player){
-        return Boolean.TRUE.equals(arrowCooldown.put(player.getUniqueId(), false));
+    private void cancelArrowCooldown(Player player){
+        arrowCooldown.put(player.getUniqueId(), false);
     }
 
     private void computeKnockback (EntityDamageByEntityEvent event) {
