@@ -27,10 +27,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -75,6 +72,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private long performanceTimingLastCall = 0;
 
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
+    public static HashMap<UUID, Integer> isArrowOnCooldown = new HashMap<UUID, Integer>();
 
     private static MatchTeam matchTeam = null;
 
@@ -82,7 +80,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     static {
         try {
             mapMetaDataJson = ReadFile.read(new FileInputStream("./meta.json"), "UTF-8");
-            // would rather use a relative path but for some reason i can't get it to work unless i use my absolute path
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -247,6 +244,51 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler // removes arrows sticking onto players visually
+    public void ProjectileHit(ProjectileHitEvent event) {
+        if (event.getEntity() instanceof Arrow) {
+            Arrow arrow = (Arrow) event.getEntity();
+            arrow.remove();
+        }
+    }
+
+    @EventHandler // removes ability to hit yourself with an arrow
+    public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Arrow && event.getEntity() instanceof Player) {
+            Arrow arrow = (Arrow) event.getDamager();
+            Player shooter = (Player) arrow.getShooter();
+            Player victim = (Player) event.getEntity();
+            if (victim.equals(shooter)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler // gives the player their arrow back after 3.5 seconds
+    public void onEntityShootBowEvent(final EntityShootBowEvent event) {
+        Player player = (Player) event.getEntity();
+        UUID id = player.getUniqueId();
+        isArrowOnCooldown.put(id, 1);
+        new BukkitRunnable() {
+            int ticksSinceShootBow = 0;
+            public void run() {
+                if ((ticksSinceShootBow < 70) && (isArrowOnCooldown.get(id) == 1)) { // if they are alive and the arrow is on a cooldown
+                    ticksSinceShootBow++;
+                    player.setExp(1-ticksSinceShootBow / 70F);
+                    player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
+                } else if ((ticksSinceShootBow > 69) && (isArrowOnCooldown.get(id) == 1)) { // if they are alive and the arrow cooldown is over
+                    inventory.reload(player);
+                    player.setLevel(0);
+                    isArrowOnCooldown.put(id, 0);
+                    this.cancel();
+                } else { // if they die
+                    isArrowOnCooldown.put(id, 0);
+                    this.cancel();
+                }
+            }
+        }.runTaskTimer(this, 0, 1);
+    }
+
     private void computeKnockback (EntityDamageByEntityEvent event) {
 //        Vector damagedPlayersVelocity = event.getEntity().getVelocity();
 //        Vector knockBackVector = damagedPlayersVelocity.multiply(-1);
@@ -278,11 +320,15 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20);
+        player.setExp(0);
+        player.setLevel(0);
         setInventoryForPlayer(player);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
         zeroPlayerVelocity(player);
+        UUID id = player.getUniqueId();
+        isArrowOnCooldown.put(id, 0);
     }
 
     @EventHandler
@@ -580,6 +626,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
         lastHitTimestampInMillis.put(id, 0L);
+        isArrowOnCooldown.put(id, 0);
 
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
