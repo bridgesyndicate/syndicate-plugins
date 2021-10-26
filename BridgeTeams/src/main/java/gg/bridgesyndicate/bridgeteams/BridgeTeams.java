@@ -31,6 +31,7 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -72,7 +73,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private long performanceTimingLastCall = 0;
 
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
-    public static HashMap<UUID, Integer> isArrowOnCooldown = new HashMap<UUID, Integer>();
+    public static HashMap<UUID, Boolean> isArrowOnCooldownHashMap = new HashMap<UUID, Boolean>();
 
     private static MatchTeam matchTeam = null;
 
@@ -95,6 +96,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getPluginManager().registerEvents(this, (Plugin) new ArrowCooldown(this));
         protocolManager = ProtocolLibrary.getProtocolManager();
         inventory = new Inventory();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
@@ -268,25 +270,30 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEntityShootBowEvent(final EntityShootBowEvent event) {
         Player player = (Player) event.getEntity();
         UUID id = player.getUniqueId();
-        isArrowOnCooldown.put(id, 1);
+        isArrowOnCooldownHashMap.put(id, true);
         new BukkitRunnable() {
             int ticksSinceShootBow = 0;
             public void run() {
-                if ((ticksSinceShootBow < 70) && (isArrowOnCooldown.get(id) == 1)) { // if they are alive and the arrow is on a cooldown
-                    ticksSinceShootBow++;
-                    player.setExp(1-ticksSinceShootBow / 70F);
-                    player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
-                } else if ((ticksSinceShootBow > 69) && (isArrowOnCooldown.get(id) == 1)) { // if they are alive and the arrow cooldown is over
-                    inventory.reload(player);
-                    player.setLevel(0);
-                    isArrowOnCooldown.put(id, 0);
-                    this.cancel();
-                } else { // if they die
-                    isArrowOnCooldown.put(id, 0);
+                if (isArrowOnCooldown(player)){
+                    if (ticksSinceShootBow < 70) {
+                        ticksSinceShootBow++;
+                        player.setExp(1-ticksSinceShootBow / 70F);
+                        player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
+                    } else{
+                        inventory.reload(player);
+                        player.setLevel(0);
+                        isArrowOnCooldownHashMap.put(id, false);
+                    }
+                } else { // called when they die
+                    isArrowOnCooldownHashMap.put(id, false);
                     this.cancel();
                 }
             }
         }.runTaskTimer(this, 0, 1);
+    }
+
+    private static boolean isArrowOnCooldown(Player player){
+        return isArrowOnCooldownHashMap.get(player.getUniqueId());
     }
 
     private void computeKnockback (EntityDamageByEntityEvent event) {
@@ -327,8 +334,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             player.removePotionEffect(effect.getType());
         }
         zeroPlayerVelocity(player);
-        UUID id = player.getUniqueId();
-        isArrowOnCooldown.put(id, 0);
+        isArrowOnCooldownHashMap.put(player.getUniqueId(), false);
     }
 
     @EventHandler
@@ -626,7 +632,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameModeForPlayer(player);
         resetPlayerHealthAndInventory(player);
         lastHitTimestampInMillis.put(id, 0L);
-        isArrowOnCooldown.put(id, 0);
+        isArrowOnCooldownHashMap.put(id, false);
 
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
