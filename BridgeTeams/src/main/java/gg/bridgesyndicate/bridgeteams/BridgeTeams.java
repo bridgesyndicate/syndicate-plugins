@@ -97,7 +97,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
-        Bukkit.getWorld("world").setTime(1000);
+        Bukkit.getWorld("world").setGameRuleValue("randomTickSpeed", "0");
 
         mapName = System.getProperty("mapName", "errorMapNotSet");
         System.out.println("using map " + mapName);
