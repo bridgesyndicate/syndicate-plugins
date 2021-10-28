@@ -93,6 +93,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
         inventory = new Inventory();
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
@@ -334,14 +335,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         zeroPlayerVelocity(player);
         cancelArrowCooldown(player);
-    }
-
-    @EventHandler
-    public static void onPlayerChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        String msg = event.getMessage();
-        event.setCancelled(true);
-        Bukkit.broadcastMessage(ChatColor.GREEN + "[GAME] " + player.getName() + ChatColor.WHITE + ": " + msg);
     }
 
     @EventHandler
