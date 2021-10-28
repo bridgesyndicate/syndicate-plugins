@@ -1,0 +1,47 @@
+{
+  "uuid": "deadbeef-f5b0-4246-9263-5a07fe15a9e6",
+  "blue_team_discord_ids": [
+    "417766998471213061", "562075850883989514"
+  ],
+"red_team_minecraft_uuids" : ["2b7fa93b-f690-46b8-bfe6-a07b2ec42563", "3bdf3018-3558-46d5-b405-a654cb40e222"],
+"blue_team_minecraft_uuids" : ["f0885cea-8291-4734-be1b-bf37f6bcab7c", "0d56f190-5d6f-4fe6-9061-8e7797d64337"],
+  "blue_team_discord_names": [
+    "vice9", "izzytheking"
+  ],
+  "red_team_discord_ids": [
+    "246107858712788993", "523316151044931604"
+  ],
+  "red_team_discord_names": [
+    "bdamja", "KIER"
+  ],
+  "required_players": 2,
+  "goals_to_win": 1,
+  "game_length_in_seconds": 120,
+  "queued_at": "2021-10-02T15:48:53Z",
+  "accepted_by_discord_ids": [
+    {
+      "discord_id": "240177490906054658",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    },
+    {
+      "discord_id": "417766998471213062",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    },
+ {
+      "discord_id": "523316151044931604",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    },
+ {
+      "discord_id": "562075850883989514",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    }
+  ],
+  "queued_via": "queue match",
+  "elo_before_game": {
+    "246107858712788993": 1019,
+    "417766998471213061": 1012,
+    "562075850883989514": 974,
+    "523316151044931604": 934
+  }
+}
+
