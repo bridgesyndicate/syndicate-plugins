@@ -759,6 +759,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void makeSpectator(Player player) {
+        player.setGameMode(GameMode.SPECTATOR);
+        player.sendMessage(ChatColor.GRAY + "You have joined as a spectator");
     }
 
     private void assignToTeam(Player player) {
