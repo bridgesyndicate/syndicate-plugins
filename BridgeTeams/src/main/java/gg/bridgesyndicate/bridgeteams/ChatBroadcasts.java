@@ -90,6 +90,16 @@ public class ChatBroadcasts {
         return result;
     }
 
+    public static void playerQuitMessage(Player player){
+        Bukkit.broadcastMessage(MatchTeam.getChatColor(player).toString() + player.getName() +
+                ChatColor.GRAY + " has left the game.");
+    }
+
+    public static void playerRejoinMessage(Player player){
+        Bukkit.broadcastMessage(MatchTeam.getChatColor(player).toString() + player.getName() +
+                ChatColor.GRAY + " has rejoined.");
+    }
+
     public static void gameStartMessage(Player player, String opponentNames, Game game){
 
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));

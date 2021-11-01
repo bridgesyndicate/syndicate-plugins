@@ -634,6 +634,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.out.println("player " + player.getName() + " already joined");
                 createScoreboardForPlayer(Bukkit.getScoreboardManager(), player);
                 teleportRejoinedPlayer(player);
+                ChatBroadcasts.playerRejoinMessage(player);
             }
         } else {
             System.out.println(player.getName() + " is spectator.");
@@ -834,7 +835,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onQuit(final PlayerQuitEvent e) {
+        Player player = e.getPlayer();
         e.setQuitMessage("");
+        if(game != null){
+            ChatBroadcasts.playerQuitMessage(player);
+        }
     }
 
     public void onDisable() {
