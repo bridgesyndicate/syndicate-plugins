@@ -617,6 +617,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         resetPlayerHealthAndInventory(player);
         lastHitTimestampInMillis.put(id, 0L);
         arrowHandler.cancelArrowCooldown(player);
+        event.setJoinMessage("");
 
         if (game.hasPlayer(player)) {
             System.out.println("game has player " + player.getName());
