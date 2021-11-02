@@ -1,5 +1,5 @@
 package gg.bridgesyndicate.bridgeteams;
 
 public enum Environments {
-    DEVELOPMENT, PRODUCTION;
+    DEVELOPMENT, PRODUCTION, TEST;
 }

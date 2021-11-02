@@ -1,9 +1,5 @@
 package gg.bridgesyndicate.bridgeteams;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -26,61 +22,56 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
-
     private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
     private static Inventory inventory = null;
     private static ArrowHandler arrowHandler = null;
-    private final int NO_START_ABORT_TIME_IN_SECONDS = 120;
     private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
     private final int ARROW_COOLDOWN_TIME_IN_MILLIS = 3500;
     private static String mapName;
-
     public enum scoreboardSections {TIMER}
-
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
     private static final String WAS_KILLED_BY = " was killed by ";
     private static final String WAS_VOIDED_BY = " was thrown off a cliff by ";
     private static final String WAS_SHOT_BY = " was shot by ";
-
     List<BridgeSchematicBlock> bridgeSchematicBlockList = null;
     private int[] cageSchematicIntegerList = null;
     private int cageSchematicIntegerListSize = 0;
-
     private long performanceTimingStart = 0;
     private long performanceTimingLastCall = 0;
-
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
-
+    public static HashMap<UUID, Scoreboard> disconnectedPlayerScoreboard = new HashMap<UUID, Scoreboard>();
     private static MatchTeam matchTeam = null;
-
     public static String mapMetaDataJson = null;
-    static {
-        try {
-            mapMetaDataJson = ReadFile.read(new FileInputStream("./meta.json"), "UTF-8");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+    public BridgeTeams() {
+        super();
+    }
+
+    protected BridgeTeams(JavaPluginLoader loader, PluginDescriptionFile description, File dataFolder, File file) {
+        super(loader, description, dataFolder, file);
     }
 
     public Inventory getInventory() { return inventory; }
@@ -93,6 +84,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
+        mapMetaDataJson = loadMapMetaDataJson();
         this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
@@ -113,14 +105,24 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             System.out.println("ERROR: Could not prepare cages. Exiting.");
             System.exit(-1);
         }
-        pollForGameData();
+        GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
+        gameDataPoller.poll(this);
 
         MapMetadata mapMetadata = MapMetadata.deserialize(mapMetaDataJson);
         MatchTeam matchTeam = new MatchTeam(mapMetadata);
     }
 
+    private String loadMapMetaDataJson() {
+        try {
+            return(ReadFile.read(ReadFile.pathToResources() + "meta.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private void prepareCages() throws IOException {
-        final String schematicJson = ReadFile.read(new FileInputStream("cage.json"), "UTF-8");
+        final String schematicJson = ReadFile.read(ReadFile.pathToResources() + "cage.json");
         ObjectMapper objectMapper = new ObjectMapper();
         CollectionType typeReference =
                 TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
@@ -137,85 +139,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    private void pollForGameData() {
-        final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
-        AmazonSQS sqs = null;
-        try {
-             sqs = AmazonSQSClientBuilder.defaultClient();
-        } catch (Exception e) {
-            System.out.println("Error building an SQS client. This container will never poll for a game.");
-            if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
-                System.out.println("Exiting because this is fatal in production.");
-                System.exit(-1);
-            }
-            return;
-        }
-        final String QUEUE_NAME = System.getenv(QUEUE_ENV_NAME);
-        System.out.println("Polling: " + QUEUE_NAME);
-        if (QUEUE_NAME == null) {
-            System.out.println("EXIT: " + QUEUE_ENV_NAME + " environment variable is null");
-            System.exit(-1);
-        }
-        AmazonSQS finalSqs = sqs;
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                final String queueUrl = finalSqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-                ReceiveMessageRequest receive_request = new ReceiveMessageRequest()
-                        .withQueueUrl(QUEUE_NAME)
-                        .withWaitTimeSeconds(20);
-                List<Message> messages = finalSqs.receiveMessage(receive_request).getMessages();
-                if ( messages.size() > 0 ) {
-                    Message message = messages.get(0);
-                    System.out.println("found message on " + QUEUE_NAME + ": " + message.getBody());
-                    game = Game.deserialize(message.getBody());
-                    game.setMapName(mapName);
-                    try {
-                        game.addContainerMetaData();
-                        HttpClient.put(game, HttpClient.PUT_REASONS.CONTAINER_METADATA);
-                        if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
-                            System.out.println("Environment is " + SyndicateEnvironment.SYNDICATE_ENV() +
-                                    " aborting game after " + NO_START_ABORT_TIME_IN_SECONDS);
-                            abortGameOnTimeout();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        System.out.println("EXIT: Could not add container metadata.");
-                        System.exit(-1);
-                    }
-                    finalSqs.deleteMessage(queueUrl, message.getReceiptHandle());
-                    this.cancel();
-                }
-            }
-        }.runTaskTimer(this, 0, 20);
-    }
-
-    private void abortGameOnTimeout() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (game.getState() == Game.GameState.BEFORE_GAME) {
-                    System.out.println("Game has not started in " + NO_START_ABORT_TIME_IN_SECONDS
-                    + " seconds. Aborting.");
-                    game.setState(Game.GameState.ABORTED);
-                    try {
-                        HttpClient.put(game, HttpClient.PUT_REASONS.ABORTED_GAME);
-                    } catch (IOException | URISyntaxException e) {
-                        e.printStackTrace();
-                    }
-                    quitAfterTimeout();
-                }
-            }
-        }.runTaskLater(this, NO_START_ABORT_TIME_IN_SECONDS * 20);
-    }
-
-    private void quitAfterTimeout(){
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                System.exit(-1);
-            }
-        }.runTaskLater(this, 5 * 20);
+    public void receiveGame(Game game) {
+        this.game = game;
+        this.game.setMapName(mapName);
     }
 
     @EventHandler
@@ -632,7 +558,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     startGame();
             } else {
                 System.out.println("player " + player.getName() + " already joined");
-                createScoreboardForPlayer(Bukkit.getScoreboardManager(), player);
+                Scoreboard board = disconnectedPlayerScoreboard.get(player.getUniqueId());
+                player.setScoreboard(board);
+                GameScore.updateScoreBubbles(board);
                 teleportRejoinedPlayer(player);
                 ChatBroadcasts.playerRejoinMessage(player);
             }
@@ -661,10 +589,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             case BEFORE_GAME:
             case AFTER_GAME:
                 player.getInventory().clear();
-                player.getInventory().setHelmet(null);
-                player.getInventory().setChestplate(null);
-                player.getInventory().setLeggings(null);
-                player.getInventory().setBoots(null);
                 break;
             case DURING_GAME:
             case CAGED:
@@ -766,7 +690,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void assignToTeam(Player player) {
         TeamType teamColor = game.getTeam(player);
         matchTeam.addToTeam(teamColor, player);
-        game.playerJoined(player.getName());
+        game.playerJoined(player.getName(), player.getUniqueId());
     }
 
     private void endGame() throws JsonProcessingException {
@@ -839,7 +763,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onQuit(final PlayerQuitEvent e) {
         Player player = e.getPlayer();
         e.setQuitMessage("");
-        if(game != null){
+        Scoreboard board = player.getScoreboard();
+        disconnectedPlayerScoreboard.put(player.getUniqueId(), board);
+        if (game != null){
             ChatBroadcasts.playerQuitMessage(player);
         }
     }

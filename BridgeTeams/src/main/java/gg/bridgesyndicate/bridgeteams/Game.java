@@ -247,10 +247,10 @@ public class Game {
         }
     }
 
-    public void playerJoined(String name) {
+    public void playerJoined(String name, UUID uniqueId) {
         Player player = Bukkit.getPlayer(name);
         joinedPlayers.add(name);
-        playerMap.put(name, player.getUniqueId());
+        playerMap.put(name, uniqueId);
     }
 
     public HashMap<String, UUID> getPlayerMap(){

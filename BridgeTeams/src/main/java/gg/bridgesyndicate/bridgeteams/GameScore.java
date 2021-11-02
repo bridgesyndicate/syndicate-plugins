@@ -2,7 +2,6 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
@@ -139,7 +138,7 @@ class GameScore { // Singleton
         }
     }
 
-    private void updateScoreBubbles(Scoreboard board) {
+    public static void updateScoreBubbles(Scoreboard board) {
         Team redScore = board.getTeam(String.valueOf(scoreboardSections.RED_SCORE));
         redScore.setSuffix(getBubbles(red, ChatColor.RED));
         Team blueScore = board.getTeam(String.valueOf(scoreboardSections.BLUE_SCORE));
@@ -158,7 +157,7 @@ class GameScore { // Singleton
         goals.setSuffix(ChatColor.GREEN + "" + game.getNumberOfGoalsForPlayer(player) );
     }
 
-    private String getBubbles(int coloredBubbles, ChatColor teamColor) {
+    private static String getBubbles(int coloredBubbles, ChatColor teamColor) {
         String bubbles = "";
         int idx = 0;
         while (idx < goalsToWin) {

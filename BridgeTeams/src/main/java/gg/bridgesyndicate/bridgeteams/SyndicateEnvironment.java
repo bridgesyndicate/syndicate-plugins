@@ -6,7 +6,10 @@ public class SyndicateEnvironment {
         String syndicateEnv = System.getenv("SYNDICATE_ENV");
         if (syndicateEnv == null || syndicateEnv.equals("development")) {
             return Environments.DEVELOPMENT;
+        } else if (syndicateEnv.equals("test") ) {
+            return Environments.TEST;
+        } else {
+            return Environments.PRODUCTION;
         }
-        return Environments.PRODUCTION;
     }
 }
