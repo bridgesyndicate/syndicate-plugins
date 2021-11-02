@@ -19,7 +19,7 @@ phases:
   build:
     commands:
       - echo Compile jars started on `date`
-      - mvn clean package -P package-all
+      - MINECRAFT_HOME=$PWD mvn clean package -P package-all
       - echo Building the Docker image...
       - echo package the plugins as a tar
       - mkdir tmp
