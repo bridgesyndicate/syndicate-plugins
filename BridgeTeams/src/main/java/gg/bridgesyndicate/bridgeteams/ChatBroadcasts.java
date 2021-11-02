@@ -3,6 +3,7 @@ package gg.bridgesyndicate.bridgeteams;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+
 import java.text.DecimalFormat;
 
 public class ChatBroadcasts {
@@ -114,7 +115,7 @@ public class ChatBroadcasts {
 
     }
 
-    public static void gameEndMessage(Player player, String opponentNames, Game game) {
+    public static void gameEndMessage(Player player, Game game) {
         int playersPerTeam = game.getRequiredPlayers()/2;
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
         player.sendMessage("" + ChatColor.YELLOW  + ChatColor.BOLD + getSpaces(23)
@@ -122,6 +123,12 @@ public class ChatBroadcasts {
                 + ChatColor.RESET + ChatColor.GRAY  + " " + DASH + " "
                 + ChatColor.WHITE + ChatColor.BOLD
                 + game.getFinalGameLengthFormatted());
+        player.sendMessage("");
+        player.sendMessage(MatchTeam.getChatColor(player).toString() + ChatColor.BOLD +
+                getSpaces(29)+ getScoreForPlayersTeam(player) + ChatColor.RESET +
+                ChatColor.GRAY + " - " + MatchTeam.getOpponentChatColor(player) +
+                ChatColor.BOLD + getScoreForOpponentsTeam(player));
         player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + getDashes(64));
+
     }
 }

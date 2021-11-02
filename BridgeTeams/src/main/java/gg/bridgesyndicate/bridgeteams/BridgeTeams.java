@@ -392,6 +392,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         score.increment(matchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
+        ChatBroadcasts.scoreMessage(game, player);
         if (!game.over()) {
             cagePlayers();
             BridgeFireworks fireworks = new BridgeFireworks(this);
@@ -399,7 +400,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         } else {
             endGame();
         }
-        ChatBroadcasts.scoreMessage(game, player);
     }
 
     private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy, TeamType team) {
@@ -751,13 +751,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         for (TeamType team : matchTeam.getTeams()) {
             for (String playerName : matchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = matchTeam.getOpposingTeam(team);
-                String opponentNames = String.join(", ", matchTeam.getPlayers(opposingTeam));
-                ChatBroadcasts.gameEndMessage(player, opponentNames, game);
+                ChatBroadcasts.gameEndMessage(player, game);
             }
         }
     }
-
 
     @EventHandler
     public void onQuit(final PlayerQuitEvent e) {
