@@ -44,13 +44,10 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
-    private static final int MAX_BLOCKS = 10000;
     private static Game game = null;
     private static Inventory inventory = null;
     private static ArrowHandler arrowHandler = null;
-    private final int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
-    private final int ARROW_COOLDOWN_TIME_IN_MILLIS = 3500;
-    private static String mapName;
+    private final int ARROW_COOL_DOWN_TIME_IN_MILLIS = 3500;
     public enum scoreboardSections {TIMER}
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
     private static final String WAS_KILLED_BY = " was killed by ";
@@ -59,12 +56,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     List<BridgeSchematicBlock> bridgeSchematicBlockList = null;
     private int[] cageSchematicIntegerList = null;
     private int cageSchematicIntegerListSize = 0;
-    private long performanceTimingStart = 0;
-    private long performanceTimingLastCall = 0;
-    public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<UUID, Long>();
-    public static HashMap<UUID, Scoreboard> disconnectedPlayerScoreboard = new HashMap<UUID, Scoreboard>();
-    private static MatchTeam matchTeam = null;
-    public static String mapMetaDataJson = null;
+    public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<>();
+    public static HashMap<UUID, Scoreboard> disconnectedPlayerScoreboard = new HashMap<>();
 
     public BridgeTeams() {
         super();
@@ -75,41 +68,33 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public Inventory getInventory() { return inventory; }
-    private void printWorldRules() {
-        for (String gameRule : Bukkit.getWorld("world").getGameRules()) {
-            System.out.println(gameRule + " : " + Bukkit.getWorld("world").getGameRuleValue(gameRule));
-        }
-    }
 
     @Override
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
-        mapMetaDataJson = loadMapMetaDataJson();
         this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
+        setGameRules();
+        MapMetadata mapMetadata = prepareMapMetadata();
+        MatchTeam.setMapMetadata(mapMetadata);
         inventory = new Inventory();
         arrowHandler = new ArrowHandler(this);
+        prepareCages();
+        GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
+        gameDataPoller.poll(this);
+    }
+
+    private MapMetadata prepareMapMetadata() {
+        String mapMetaDataJson = loadMapMetaDataJson();
+        return MapMetadata.deserialize(mapMetaDataJson);
+    }
+
+    private void setGameRules() {
         Bukkit.getWorld("world").setGameRuleValue("keepInventory", "true");
         Bukkit.getWorld("world").setGameRuleValue("naturalRegeneration", "false");
         Bukkit.getWorld("world").setGameRuleValue("doDaylightCycle", "false");
         Bukkit.getWorld("world").setGameRuleValue("randomTickSpeed", "0");
-
-        mapName = System.getProperty("mapName", "errorMapNotSet");
-        System.out.println("using map " + mapName);
-
-        try {
-            prepareCages();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("ERROR: Could not prepare cages. Exiting.");
-            System.exit(-1);
-        }
-        GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
-        gameDataPoller.poll(this);
-
-        MapMetadata mapMetadata = MapMetadata.deserialize(mapMetaDataJson);
-        MatchTeam matchTeam = new MatchTeam(mapMetadata);
     }
 
     private String loadMapMetaDataJson() {
@@ -121,12 +106,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    private void prepareCages() throws IOException {
-        final String schematicJson = ReadFile.read(ReadFile.pathToResources() + "cage.json");
-        ObjectMapper objectMapper = new ObjectMapper();
-        CollectionType typeReference =
-                TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
-        bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
+    private void prepareCages() {
+        try {
+            final String schematicJson = ReadFile.read(ReadFile.pathToResources() + "cage.json");
+            ObjectMapper objectMapper = new ObjectMapper();
+            CollectionType typeReference =
+                    TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
+            bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("ERROR: Could not prepare cages. Exiting.");
+            System.exit(-1);
+        }
         cageSchematicIntegerListSize = bridgeSchematicBlockList.size();
         cageSchematicIntegerList = new int[cageSchematicIntegerListSize * 5];
         for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
@@ -140,8 +131,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void receiveGame(Game game) {
-        this.game = game;
-        this.game.setMapName(mapName);
+        BridgeTeams.game = game;
+        String mapName = System.getProperty("mapName", "errorMapNotSet");
+        System.out.println("using map " + mapName);
+        BridgeTeams.game.setMapName(mapName);
     }
 
     @EventHandler
@@ -150,7 +143,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 game.getState() != Game.GameState.CAGED)
                 ||
                 (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-                        && matchTeam.getTeam((Player) event.getDamager()) == matchTeam.getTeam((Player) event.getEntity())
+                        && MatchTeam.getTeam((Player) event.getDamager()) == MatchTeam.getTeam((Player) event.getEntity())
                  )
         ) {
             event.setCancelled(true);
@@ -160,12 +153,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onHit(EntityDamageByEntityEvent event) {
         if (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-        && matchTeam.getTeam((Player) event.getDamager()) != matchTeam.getTeam((Player) event.getEntity())
+        && MatchTeam.getTeam((Player) event.getDamager()) != MatchTeam.getTeam((Player) event.getEntity())
         ) {
-            Player damager = (Player) event.getDamager();
-            UUID id = damager.getUniqueId();
-            computeKnockback(event);
-
+            Player damage_maker = (Player) event.getDamager();
+            UUID id = damage_maker.getUniqueId();
             lastHitTimestampInMillis.put(id, System.currentTimeMillis());
         }
     }
@@ -198,9 +189,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             int ticksSinceShootBow = 0;
             public void run() {
                 if (arrowHandler.isArrowOnCooldown(player)){
-                    if (ticksSinceShootBow < (ARROW_COOLDOWN_TIME_IN_MILLIS/50)) {
+                    if (ticksSinceShootBow < (ARROW_COOL_DOWN_TIME_IN_MILLIS /50)) {
                         ticksSinceShootBow++;
-                        player.setExp(1-ticksSinceShootBow / (ARROW_COOLDOWN_TIME_IN_MILLIS/50F));
+                        player.setExp(1-ticksSinceShootBow / (ARROW_COOL_DOWN_TIME_IN_MILLIS /50F));
                         player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
                     } else{
                         inventory.reload(player);
@@ -212,33 +203,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
             }
         }.runTaskTimer(this, 0, 1);
-    }
-
-    private void computeKnockback (EntityDamageByEntityEvent event) {
-//        Vector damagedPlayersVelocity = event.getEntity().getVelocity();
-//        Vector knockBackVector = damagedPlayersVelocity.multiply(-1);
-//        Player player = (Player) event.getEntity();
-//        Vector v = player.getVelocity();
-//        v.setX(0);
-//        v.setY(0);
-//        v.setZ(0);
-//        player.setVelocity(v);
-//        PacketContainer explosion = protocolManager.createPacket(PacketType.Play.Server.EXPLOSION);
-//        System.out.println("computeKnockback");
-//        explosion.getDoubles().
-//                write(0, player.getLocation().getX()).
-//                write(1, player.getLocation().getY()).
-//                write(2, player.getLocation().getZ());
-//        explosion.getFloat().write(0, 0.0F);
-//        explosion.getFloat().write(1, 0.0F);
-//        explosion.getFloat().write(2, 0.0F);
-//        try {
-//            protocolManager.sendServerPacket(player, explosion);
-//            System.out.println("explosion sent");
-//        } catch (InvocationTargetException e) {
-//            throw new RuntimeException(
-//                    "Cannot send packet " + explosion, e);
-//        }
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
@@ -274,7 +238,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void sendDeathMessages(Player player, Player killer, Event event) {
-        String deathMessage = matchTeam.getChatColor(player).toString()
+        String deathMessage = MatchTeam.getChatColor(player).toString()
                 + player.getName() + ChatColor.GRAY;
 
         if (event instanceof PlayerDeathEvent) {
@@ -288,7 +252,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             deathMessage = deathMessage.concat(WAS_VOIDED_BY);
         }
 
-        deathMessage = deathMessage.concat(matchTeam.getChatColor(killer) + killer.getName());
+        deathMessage = deathMessage.concat(MatchTeam.getChatColor(killer) + killer.getName());
         deathMessage = deathMessage.concat(ChatColor.GRAY + ".");
 
         if (event instanceof PlayerDeathEvent) {
@@ -303,7 +267,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void sendDeadPlayerToSpawn(Player player) {
         resetPlayerHealthAndInventory(player);
-        player.teleport(matchTeam.getSpawnLocation(player));
+        player.teleport(MatchTeam.getSpawnLocation(player));
         zeroPlayerVelocity(player);
         player.playSound(player.getLocation(), Sound.HURT_FLESH, 1.0f, 0.9f);
     }
@@ -334,7 +298,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         double bZ = b.getZ();
 
         // i'm sure there's a better way to do this but for now i'm going to do it like this
-        BoundingBox allowedBlocks = matchTeam.getBuildLimits();
+        BoundingBox allowedBlocks = MatchTeam.getBuildLimits();
 
         if (bY > allowedBlocks.getMaxY() || bY < allowedBlocks.getMinY() || bX > allowedBlocks.getMaxX() || bX < allowedBlocks.getMinX() || bZ > allowedBlocks.getMaxZ() || bZ < allowedBlocks.getMinZ()) {
             event.setCancelled(true);
@@ -386,10 +350,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }.runTaskLater(this, 1);
     }
 
-    public void toteScore(Player player, GoalLocationInfo goal) throws JsonProcessingException {
-        startPerfTiming();
+    public void toteScore(Player player) throws JsonProcessingException {
         GameScore score = GameScore.getInstance();
-        score.increment(matchTeam.getTeam(player));
+        score.increment(MatchTeam.getTeam(player));
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
         ChatBroadcasts.scoreMessage(game, player);
@@ -424,21 +387,21 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     cageY + cageSchematicIntegerList[i * 5 + 1],
                     cageZ + cageSchematicIntegerList[i * 5 + 2],
                     id,
-                    data,
-                    false);
+                    data
+            );
         }
     }
 
-    private void setBlockInNativeWorld(World world, int x, int y, int z, int blockId, byte data, boolean applyPhysics){
+    private void setBlockInNativeWorld(World world, int x, int y, int z, int blockId, byte data){
         net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
         BlockPosition bp = new BlockPosition(x, y, z);
         IBlockData ibd = net.minecraft.server.v1_8_R3.Block.getByCombinedId(blockId + (data << 12));
-        nmsWorld.setTypeAndData(bp, ibd, applyPhysics ? 3 : 2);
+        nmsWorld.setTypeAndData(bp, ibd, 2);
     }
 
     private void buildCages(String createOrDestroy) {
-        for (TeamType team : matchTeam.getTeams()) {
-            BlockVector cageLocation = matchTeam.getCageLocation(team);
+        for (TeamType team : MatchTeam.getTeams()) {
+            BlockVector cageLocation = MatchTeam.getCageLocation(team);
             buildOrDestroyCageAtLocation(cageLocation, createOrDestroy, team);
         }
         if (createOrDestroy.equals("destroy"))
@@ -462,7 +425,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.teleport(matchTeam.getCagePlayerLocation(player));
+            player.teleport(MatchTeam.getCagePlayerLocation(player));
             sendTitles(player);
             resetPlayerHealthAndInventory(player);
             setGameModeForPlayer(player);
@@ -470,26 +433,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         buildCages("create");
     }
 
-    private void startPerfTiming() {
-        performanceTimingStart = System.nanoTime();
-    }
-
-    private void printTiming(String description) {
-        long now = System.nanoTime();
-        System.out.println(description + " : time elapsed since start: " + (now - performanceTimingStart) + " time since last : " + (now - performanceTimingLastCall));
-        performanceTimingLastCall = now;
-    }
-
     public void checkForGoal(Player player) throws JsonProcessingException {
         if (game.getState() != Game.GameState.DURING_GAME) return;
 
         for (GoalLocationInfo goal : BridgeGoals.getGoalList()) {
-            if (matchTeam.getTeam(player) != goal.getTeam()) {
+            if (MatchTeam.getTeam(player) != goal.getTeam()) {
                 if (goal.getBoundingBox().contains(
                         player.getLocation().getX(),
                         player.getLocation().getY(),
                         player.getLocation().getZ())) {
-                    toteScore(player, goal);
+                    toteScore(player);
                 }
             }
         }
@@ -509,17 +462,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
                 UUID id = killer.getUniqueId();
                 long timeLength = now - lastHitTimestampInMillis.get(id);
+                int MAX_TIME_FOR_KILL_ATTRIBUTION = 4001;
                 if (timeLength < MAX_TIME_FOR_KILL_ATTRIBUTION) {
                     onDeathOfPlayerImpl(player, killer, event);
                 } else {
-                    String shootaKilled = player.getName();
-                    Bukkit.broadcastMessage(matchTeam.getChatColor(player) + shootaKilled + ChatColor.GRAY + " fell into the void.");
+                    String shooter_killed = player.getName();
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + shooter_killed + ChatColor.GRAY + " fell into the void.");
                 }
 
             } else {
                 if (game.getState() == Game.GameState.DURING_GAME) {
                     String killed = player.getName();
-                    Bukkit.broadcastMessage(matchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
+                    Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
                 }
             }
             sendDeadPlayerToSpawn(player);
@@ -552,7 +506,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.out.println("player " + player.getName() + " has not previously joined.");
                 assignToTeam(player);
                 System.out.println("joined players: " + game.getNumberOfJoinedPlayers() + ", required players: " + game.getRequiredPlayers());
-                Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + matchTeam.getChatColor(player) + player.getName() + ChatColor.GRAY + "! " + matchTeam.getChatColor(player) + "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() + matchTeam.getChatColor(player) + "]");
+                Bukkit.broadcastMessage(ChatColor.GRAY + "Welcome " + MatchTeam.getChatColor(player) +
+                        player.getName() + ChatColor.GRAY + "! " + MatchTeam.getChatColor(player) +
+                        "[" + ChatColor.GRAY + game.getNumberOfJoinedPlayers() + "/" + game.getRequiredPlayers() +
+                        MatchTeam.getChatColor(player) + "]");
                 inventory.addPlayer(player);
                 if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                     startGame();
@@ -577,7 +534,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 sendDeadPlayerToSpawn(player);
                 break;
             case CAGED:
-                player.teleport(matchTeam.getCagePlayerLocation(player));
+                player.teleport(MatchTeam.getCagePlayerLocation(player));
                 break;
             default:
                 // do nothing
@@ -652,7 +609,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             public void run() {
                 if ( game.getState() == Game.GameState.AFTER_GAME ||
                         game.getState() == Game.GameState.TERMINATE) {
-                    System.out.println("cancel the startclock timer");
+                    System.out.println("cancel the start clock timer");
                     this.cancel();
                     return;
                 }
@@ -672,11 +629,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void broadcastStartMessages() {
-        for (TeamType team : matchTeam.getTeams()) {
-            for (String playerName : matchTeam.getPlayers(team)) {
+        for (TeamType team : MatchTeam.getTeams()) {
+            for (String playerName : MatchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = matchTeam.getOpposingTeam(team);
-                String opponentNames = String.join(", ", matchTeam.getPlayers(opposingTeam));
+                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
+                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
                 ChatBroadcasts.gameStartMessage(player, opponentNames, game);
             }
         }
@@ -689,7 +646,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void assignToTeam(Player player) {
         TeamType teamColor = game.getTeam(player);
-        matchTeam.addToTeam(teamColor, player);
+        MatchTeam.addToTeam(teamColor, player);
         game.playerJoined(player.getName(), player.getUniqueId());
     }
 
@@ -711,9 +668,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         new BukkitRunnable() { // terminate the container so a new, fresh, game container can launch
             public void run() {
-                if (game.getState() == Game.GameState.TERMINATE){
-                    // everything is good. Quit
-                } else {
+                if (game.getState() != Game.GameState.TERMINATE) {
                     System.out.println("ERROR: could not send end-of-game data");
                     try {
                         System.out.println("GAME JSON");
@@ -748,8 +703,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void broadcastEndMessages() {
-        for (TeamType team : matchTeam.getTeams()) {
-            for (String playerName : matchTeam.getPlayers(team)) {
+        for (TeamType team : MatchTeam.getTeams()) {
+            for (String playerName : MatchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
                 ChatBroadcasts.gameEndMessage(player, game);
             }
@@ -768,7 +723,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void onDisable() {
-        matchTeam.clearTeams();
+        MatchTeam.clearTeams();
     }
 
     @EventHandler
@@ -804,7 +759,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     if (game.hasScore()){
                         String scorerName = game.getMostRecentScorerName();
                         Player scorer = Bukkit.getPlayer(scorerName);
-                        ChatColor chatColor = matchTeam.getChatColor(scorer);
+                        ChatColor chatColor = MatchTeam.getChatColor(scorer);
                         titleText = chatColor + scorerName + " scored!";
                     }
                     Title title = new Title(titleText, "&7Cages open in: &a" + secondsUntilCagesOpen + "s&7...", 0, 3, 0);
@@ -830,13 +785,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
             Arrow arrow = (Arrow) entityHitter;
             if (arrow.getShooter() instanceof Player) {
-                Player shoota = (Player) arrow.getShooter();
+                Player shooter = (Player) arrow.getShooter();
                 Player shot = (Player) entityVictim;
 
-                UUID id = shoota.getUniqueId();
+                UUID id = shooter.getUniqueId();
                 lastHitTimestampInMillis.put(id, System.currentTimeMillis());
 
-                if (matchTeam.getTeam(shoota).equals(matchTeam.getTeam(shot))) {
+                if (MatchTeam.getTeam(shooter).equals(MatchTeam.getTeam(shot))) {
                     event.setCancelled(true);
                 } else {
                     double shotHealth = shot.getHealth();
@@ -847,105 +802,19 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     double futureHealth = shot.getHealth() - damage - absorptionDamage;
                     double formattedFutureHealth = Math.ceil(futureHealth * 10)/10;
 
-                    System.out.println("finalsdamage: " + event.getFinalDamage());
-                    System.out.println("getdamage: " + event.getDamage());
-                    System.out.println("getoriginaldamage: " + event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION));
+                    System.out.println("getFinalDamage: " + event.getFinalDamage());
+                    System.out.println("getDamage: " + event.getDamage());
+                    System.out.println("getOriginalDamage: " + event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION));
                     System.out.println(heartValue);
 
                     String shotName = shot.getName();
 
                     if (formattedFutureHealth > 0)
-                        shoota.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + formattedFutureHealth + ChatColor.GRAY + " HP!");
+                        shooter.sendMessage(ChatColor.GRAY + shotName + " is on " + ChatColor.RED + formattedFutureHealth + ChatColor.GRAY + " HP!");
                 }
 
             }
         }
-    }
-
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
-//        String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
-//        JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-//        String serialzedNewGame = jsonSerializer.serialize(myGame);
-//        System.out.println(serialzedNewGame);
-//
-//        URI uri = new URI("https://www.google.com");
-//        String foo = RestClient.create().plainText().build().doGet(uri).getResponseAsString();
-//        System.out.println(foo);
-
-        String myJson = "{\n" +
-                "  \"uuid\": \"f1543f5d-8f44-4f09-af36-6aa0a2024707\",\n" +
-                "  \"blue_team_discord_ids\": [\n" +
-                "    \"240177490906054658\"\n" +
-                "  ],\n" +
-                "  \"blue_team_discord_names\": [\n" +
-                "    \"ken\"\n" +
-                "  ],\n" +
-                "  \"red_team_discord_ids\": [\n" +
-                "    \"417766998471213061\"\n" +
-                "  ],\n" +
-                "  \"red_team_discord_names\": [\n" +
-                "    \"viceversa\"\n" +
-                "  ],\n" +
-                "  \"required_players\": 2,\n" +
-                "  \"goals_to_win\": 1,\n" +
-                "  \"game_length_in_seconds\": 120,\n" +
-                "  \"queued_at\": \"2021-10-06T00:41:53Z\",\n" +
-                "  \"accepted_by_discord_ids\": [\n" +
-                "    {\n" +
-                "      \"discord_id\": \"240177490906054658\",\n" +
-                "      \"accepted_at\": \"2021-10-06T00:41:53Z\"\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"discord_id\": \"417766998471213061\",\n" +
-                "      \"accepted_at\": \"2021-10-06T00:41:53Z\"\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"queued_via\": \"queue match\",\n" +
-                "  \"elo_before_game\": {\n" +
-                "    \"240177490906054658\": 1000,\n" +
-                "    \"417766998471213061\": 1000\n" +
-                "  },\n" +
-                "  \"blue_team_minecraft_uuids\": [\n" +
-                "    \"3bdf3018-3558-46d5-b405-a654cb40e222\"\n" +
-                "  ],\n" +
-                "  \"red_team_minecraft_uuids\": [\n" +
-                "    \"f0885cea-8291-4734-be1b-bf37f6bcab7c\"\n" +
-                "  ]\n" +
-                "}";
-
-        Game myGame = Game.deserialize(myJson);
-        myGame.addContainerMetaData();
-        //myGame.playerJoined("NitroholicPls");
-        //myGame.playerJoined("vice9");
-        myGame.setState(Game.GameState.CAGED);
-        myGame.setState(Game.GameState.DURING_GAME);
-        myGame.addGoalInfo(UUID.randomUUID());
-        Thread.sleep(1000);
-        myGame.setState(Game.GameState.AFTER_GAME);
-        myGame.setEndTime();
-        myGame.addKillInfo(UUID.randomUUID());
-        System.out.println(Game.serialize(myGame));
-
-
-        String foobar = Game.serialize(myGame);
-        System.out.println(foobar);
-        System.exit(0);
-
-//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//        String QUEUE_NAME = System.getenv("SYNDICATE_MATCH_QUEUE_NAME");
-//        System.out.println(QUEUE_NAME);
-//        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-//        System.out.println(queueUrl);
-//        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
-//        System.out.println("Messages: " + messages.size());
-//        for (Message message : messages) {
-//            System.out.println("found message:" + message.getBody());
-//            Game myGame = Game.deserialize(message.getBody());
-//            JsonSerializer jsonSerializer = JsonSerializer.DEFAULT_READABLE;
-//            String serialzedNewGame = jsonSerializer.serialize(myGame);
-//            System.out.println(serialzedNewGame);
-//            sqs.deleteMessage(queueUrl, message.getReceiptHandle());
-//        }
     }
 }
 
@@ -956,8 +825,10 @@ class BridgeSchematicBlock {
     public int id;
     public int data;
 
+    @SuppressWarnings("unused") //used via jackson deserialization
     public BridgeSchematicBlock() { }
 
+    @SuppressWarnings("unused") //used via jackson deserialization
     public BridgeSchematicBlock(int x, int y, int z, int id, int data) {
         this.x = x;
         this.y = y;

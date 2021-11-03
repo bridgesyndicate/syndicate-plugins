@@ -15,11 +15,10 @@ public class MatchTeam
     private static List<String> blueTeam;
 
     private static MapMetadata mapMetadata = null;
+    private final static World world = Bukkit.getWorld("world");
 
-    private static World world = Bukkit.getWorld("world");
-
-    MatchTeam(MapMetadata mapMetadata) {
-        this.mapMetadata = mapMetadata;
+    public static void setMapMetadata(MapMetadata mapMetadata) {
+        MatchTeam.mapMetadata = mapMetadata;
     }
 
     public static void addToTeam(final TeamType type, final Player player) {
