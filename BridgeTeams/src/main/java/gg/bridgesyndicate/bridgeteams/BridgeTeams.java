@@ -456,6 +456,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void playerMove(PlayerMoveEvent event) throws JsonProcessingException {
 
         final Player player = event.getPlayer();
+        if(player.getGameMode().equals(GameMode.SPECTATOR)){
+            return;
+        }
         if (player.getLocation().getY() < 83) {
             if ((player.getLastDamageCause() instanceof EntityDamageByEntityEvent)
                     && (game.getState() == Game.GameState.DURING_GAME)) {
