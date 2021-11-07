@@ -736,7 +736,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void entityDamageEvent(final EntityDamageEvent event) {
         if (event.getEntityType() == EntityType.PLAYER) {
-            if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+            if ((event.getCause() == EntityDamageEvent.DamageCause.FALL)
+                || (event.getCause() == EntityDamageEvent.DamageCause.VOID)){
                 event.setCancelled(true);
             }
         }
