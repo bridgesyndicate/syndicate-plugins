@@ -416,7 +416,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 buildCages("destroy");
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    setGameModeForPlayer(player);
+                    if(!player.getGameMode().equals(GameMode.SPECTATOR)) {
+                        setGameModeForPlayer(player);
+                    }
                 }
             }
         }.runTaskLater(this, 100);
@@ -425,10 +427,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.teleport(MatchTeam.getCagePlayerLocation(player));
-            sendTitles(player);
-            resetPlayerHealthAndInventory(player);
-            setGameModeForPlayer(player);
+            if(!player.getGameMode().equals(GameMode.SPECTATOR)){
+                player.teleport(MatchTeam.getCagePlayerLocation(player));
+                sendTitles(player);
+                resetPlayerHealthAndInventory(player);
+                setGameModeForPlayer(player);
+            }
         }
         buildCages("create");
     }
