@@ -2,6 +2,7 @@ package gg.bridgesyndicate.bridgeteams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
@@ -133,8 +134,10 @@ class GameScore { // Singleton
 
     private void updateScoreboardScore() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            Scoreboard board = player.getScoreboard();
-            updateScoreBubbles(board);
+            if(!player.getGameMode().equals(GameMode.SPECTATOR)){
+                Scoreboard board = player.getScoreboard();
+                updateScoreBubbles(board);
+            }
         }
     }
 
