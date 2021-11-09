@@ -87,17 +87,19 @@ class GameScore { // Singleton
         blueScore.setPrefix("");
         objective.getScore(BLUE_SCORE_LINE).setScore(5);
 
-        Team kills = board.registerNewTeam(String.valueOf(scoreboardSections.KILLS));
-        kills.addEntry(KILLS_LINE);
-        kills.setSuffix(ChatColor.GREEN + "0");
-        kills.setPrefix("");
-        objective.getScore(KILLS_LINE).setScore(4);
+        if(!player.getGameMode().equals(GameMode.SPECTATOR)) {
+            Team kills = board.registerNewTeam(String.valueOf(scoreboardSections.KILLS));
+            kills.addEntry(KILLS_LINE);
+            kills.setSuffix(ChatColor.GREEN + "0");
+            kills.setPrefix("");
+            objective.getScore(KILLS_LINE).setScore(4);
 
-        Team goals = board.registerNewTeam(String.valueOf(scoreboardSections.GOALS));
-        goals.addEntry(GOALS_LINE);
-        goals.setSuffix(ChatColor.GREEN + "0");
-        goals.setPrefix("");
-        objective.getScore(GOALS_LINE).setScore(3);
+            Team goals = board.registerNewTeam(String.valueOf(scoreboardSections.GOALS));
+            goals.addEntry(GOALS_LINE);
+            goals.setSuffix(ChatColor.GREEN + "0");
+            goals.setPrefix("");
+            objective.getScore(GOALS_LINE).setScore(3);
+        }
 
         Team mode = board.registerNewTeam(String.valueOf(scoreboardSections.MODE));
         mode.addEntry(MODE_LINE);
@@ -134,10 +136,8 @@ class GameScore { // Singleton
 
     private void updateScoreboardScore() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if(!player.getGameMode().equals(GameMode.SPECTATOR)){
-                Scoreboard board = player.getScoreboard();
-                updateScoreBubbles(board);
-            }
+            Scoreboard board = player.getScoreboard();
+            updateScoreBubbles(board);
         }
     }
 
@@ -180,9 +180,7 @@ class GameScore { // Singleton
 
     public void updateGameClock(Game game) {
         String timeRemaining = game.getRemainingTimeFormatted();
-        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
-            String playerName = it.next();
-            Player player = Bukkit.getPlayer(playerName);
+        for (Player player : Bukkit.getOnlinePlayers()) {
             if (player != null) {
                 Scoreboard board = player.getScoreboard();
                 Team timer = board.getTeam(String.valueOf(BridgeTeams.scoreboardSections.TIMER));

@@ -648,6 +648,10 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void makeSpectator(Player player) {
         player.setGameMode(GameMode.SPECTATOR);
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        createScoreboardForPlayer(manager, player);
+        Scoreboard board = player.getScoreboard();
+        GameScore.updateScoreBubbles(board);
         player.sendMessage(ChatColor.GRAY + "You have joined as a spectator");
     }
 
