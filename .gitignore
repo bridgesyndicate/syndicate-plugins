@@ -3,4 +3,5 @@
 tmp
 SyndicatePlugins.iml
 base-docker/minecraft-home/
+base-docker/minecraft-home.tar.xz
 jar-deps.tar
