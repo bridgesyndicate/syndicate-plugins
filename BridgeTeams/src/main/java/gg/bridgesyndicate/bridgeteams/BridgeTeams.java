@@ -68,6 +68,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public Inventory getInventory() { return inventory; }
+    public Game getGame() { return game; }
 
     @Override
     public void onEnable() {

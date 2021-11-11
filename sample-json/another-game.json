@@ -1,0 +1,40 @@
+{
+  "uuid": "c8a07763-b671-4af1-89c5-a9a47b777124",
+  "blue_team_discord_ids": [
+    "240177490906054658"
+  ],
+  "blue_team_discord_names": [
+    "ken"
+  ],
+  "red_team_discord_ids": [
+    "417766998471213061"
+  ],
+  "red_team_discord_names": [
+    "viceversa"
+  ],
+  "required_players": 2,
+  "goals_to_win": 3,
+  "game_length_in_seconds": 180,
+  "queued_at": "2021-11-10T18:45:56Z",
+  "accepted_by_discord_ids": [
+    {
+      "discord_id": "240177490906054658",
+      "accepted_at": "2021-11-10T18:45:56Z"
+    },
+    {
+      "discord_id": "417766998471213061",
+      "accepted_at": "2021-11-10T18:45:56Z"
+    }
+  ],
+  "queued_via": "queue match",
+  "elo_before_game": {
+    "240177490906054658": 1049,
+    "417766998471213061": 1000
+  },
+  "blue_team_minecraft_uuids": [
+    "9bf95247-d0ed-4c22-877e-0ac31532ade7"
+  ],
+  "red_team_minecraft_uuids": [
+    "f0885cea-8291-4734-be1b-bf37f6bcab7c"
+  ]
+}
