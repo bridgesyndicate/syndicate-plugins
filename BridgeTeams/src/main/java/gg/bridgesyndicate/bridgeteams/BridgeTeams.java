@@ -502,7 +502,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
 
         setGameModeForPlayer(player);
-        resetPlayerHealthAndInventory(player);
         sendDeadPlayerToSpawn(player);
         lastHitTimestampInMillis.put(id, 0L);
         arrowHandler.cancelArrowCooldown(player);
@@ -654,6 +653,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Scoreboard board = player.getScoreboard();
         GameScore.updateScoreBubbles(board);
         player.sendMessage(ChatColor.GRAY + "You have joined as a spectator");
+        inventory.fullyClearInventory(player);
     }
 
     private void assignToTeam(Player player) {

@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -143,8 +144,8 @@ public class Inventory {
     }
 
     public void setDefaultInventory(Player player) {
-        player.getInventory().clear();
-
+        fullyClearInventory(player);
+        if(player.getGameMode().equals(GameMode.SPECTATOR)) return;
         player.getInventory().setItem(
                 getInventoryLocation(player, "IRON_SWORD", 0),
                 getIronSword());
@@ -181,6 +182,13 @@ public class Inventory {
         boot.setItemMeta(leatherArmorMeta);
         player.getInventory().setBoots(boot);
         player.updateInventory();
+    }
+
+    public void fullyClearInventory(Player player){
+        player.getInventory().clear();
+        player.getInventory().setChestplate(null);
+        player.getInventory().setLeggings(null);
+        player.getInventory().setBoots(null);
     }
 
     // Arrow Regen
