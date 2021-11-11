@@ -692,7 +692,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 System.exit(0);
             }
-        }.runTaskLater(this, 120); // 6 seconds
+        }.runTaskLater(this, 300); // 15 seconds
 
         new BukkitRunnable() {
             int attempt = 0;
