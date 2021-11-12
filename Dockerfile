@@ -10,4 +10,6 @@ ADD ./run-spigot.sh .
 ADD ./pick-map.rb .
 ADD ./worlds-mainfest.json .
 ADD ./meta.json .
+RUN mkdir sample-json
+ADD sample-json/game.json sample-json/game.json
 CMD ["./run-spigot.sh"]
