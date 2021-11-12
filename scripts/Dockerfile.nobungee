@@ -5,3 +5,5 @@ ADD scripts/no-bungee.server.properties.diff .
 ADD scripts/no-bungee.spigot.yml.diff .
 RUN patch -p1 < ./no-bungee.spigot.yml.diff
 RUN patch -p1 < ./no-bungee.server.properties.diff
+RUN mkdir sample-json
+ADD sample-json/game.json sample-json/game.json

@@ -4,6 +4,7 @@ import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.entity.PlayerMock;
 import be.seeseemelk.mockbukkit.inventory.PlayerInventoryMock;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.bukkit.Bukkit;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -32,7 +33,8 @@ public class GameDataPollerFactoryTest {
     }
 
     @Test
-    public void produce() {
+    public void produce() throws JsonProcessingException {
         assertEquals(Game.GameState.BEFORE_GAME, plugin.getGame().getState());
+        assertTrue(Game.serialize(plugin.getGame()) instanceof String);
     }
 }
