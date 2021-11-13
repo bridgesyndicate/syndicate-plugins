@@ -17,8 +17,8 @@ docker run \
        -e SYNDICATE_SKIP_SERVICE_CALLS=1 \
        -e SYNDICATE_ENV=development \
        -e AWS_REGION=us-west-2 \
-       -e AWS_ACCESS_KEY_ID=$DEV_AWS_ACCESS_KEY_ID \
-       -e AWS_SECRET_KEY=$DEV_AWS_SECRET_KEY \
+       -e AWS_ACCESS_KEY_ID=$(grep aws_access_key_id $HOME/.aws/credentials | cut -f3 -d\ ) \
+       -e AWS_SECRET_KEY=$(grep aws_secret_access_key $HOME/.aws/credentials | cut -f3 -d\ ) \
        -e SYNDICATE_MATCH_QUEUE_NAME=syndicate_development_games \
        -e ECS_CONTAINER_METADATA_URI_V4=https://kenpublic.s3.amazonaws.com/2021-08-04/sAfyVbYGjZAJlKli/container-metadata.json \
        -p 25565:25565 \
