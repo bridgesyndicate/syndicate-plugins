@@ -212,6 +212,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setSaturation(20);
         player.setExp(0);
         player.setLevel(0);
+        player.setNoDamageTicks(50);
         setInventoryForPlayer(player);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
@@ -229,7 +230,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
         sendDeadPlayerToSpawn(player);
-        player.setNoDamageTicks(50);
         if(game.getState() == Game.GameState.DURING_GAME) {
             game.addKillInfo(killer.getUniqueId());
             GameScore score = GameScore.getInstance();
