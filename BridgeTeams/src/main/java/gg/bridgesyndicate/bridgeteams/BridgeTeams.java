@@ -162,50 +162,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler // removes arrows sticking onto players visually
-    public void ProjectileHit(ProjectileHitEvent event) {
-        if (event.getEntity() instanceof Arrow) {
-            Arrow arrow = (Arrow) event.getEntity();
-            arrow.remove();
-        }
-    }
-
-    @EventHandler // removes ability to hit yourself with an arrow
-    public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Arrow && event.getEntity() instanceof Player) {
-            Arrow arrow = (Arrow) event.getDamager();
-            Player shooter = (Player) arrow.getShooter();
-            Player victim = (Player) event.getEntity();
-            if (victim.equals(shooter)) {
-                event.setCancelled(true);
-            }
-        }
-    }
-
-    @EventHandler // gives the player their arrow back after 3.5 seconds
-    public void onEntityShootBowEvent(final EntityShootBowEvent event) {
-        Player player = (Player) event.getEntity();
-        arrowHandler.beginArrowCooldown(player);
-        new BukkitRunnable() {
-            int ticksSinceShootBow = 0;
-            public void run() {
-                if (arrowHandler.isArrowOnCooldown(player)){
-                    if (ticksSinceShootBow < (ARROW_COOL_DOWN_TIME_IN_MILLIS /50)) {
-                        ticksSinceShootBow++;
-                        player.setExp(1-ticksSinceShootBow / (ARROW_COOL_DOWN_TIME_IN_MILLIS /50F));
-                        player.setLevel(4-(int)Math.floor((ticksSinceShootBow+10) / 20F));
-                    } else{
-                        inventory.reload(player);
-                        player.setLevel(0);
-                        arrowHandler.cancelArrowCooldown(player);
-                    }
-                } else { // called when they die
-                    this.cancel();
-                }
-            }
-        }.runTaskTimer(this, 0, 1);
-    }
-
     public void resetPlayerHealthAndInventory(Player player) {
         player.setHealth(20.0);
         player.setFoodLevel(20);

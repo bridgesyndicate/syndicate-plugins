@@ -7,7 +7,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
@@ -27,6 +26,7 @@ public final class ArrowHandler implements Listener {
     public void onEntityShootBowEvent(final EntityShootBowEvent event) {
 
         Player player = (Player) event.getEntity();
+        ((Arrow) event.getProjectile()).setCritical(false);
         beginArrowCooldown(player);
         new BukkitRunnable() {
             int ticksSinceShootBow = 0;
