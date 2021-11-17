@@ -524,7 +524,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 System.out.println("player " + player.getName() + " already joined");
                 Scoreboard board = disconnectedPlayerScoreboard.get(player.getUniqueId());
                 player.setScoreboard(board);
-                GameScore.updateScoreBubbles(board);
+                if(game.getState() != Game.GameState.BEFORE_GAME)
+                    GameScore.updateScoreBubbles(board);
                 teleportRejoinedPlayer(player);
                 ChatBroadcasts.playerRejoinMessage(player);
             }
