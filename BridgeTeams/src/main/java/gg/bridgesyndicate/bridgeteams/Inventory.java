@@ -186,6 +186,9 @@ public class Inventory {
 
     public void fullyClearInventory(Player player){
         player.getInventory().clear();
+        ItemStack clear = new ItemStack(Material.AIR);
+        player.getOpenInventory().setCursor(clear);
+        player.getOpenInventory().getTopInventory().clear();
         player.getInventory().setChestplate(null);
         player.getInventory().setLeggings(null);
         player.getInventory().setBoots(null);
