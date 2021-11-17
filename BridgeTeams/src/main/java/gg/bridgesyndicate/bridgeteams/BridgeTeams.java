@@ -622,11 +622,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void endGame() throws JsonProcessingException {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
-        broadcastEndMessages();
         List<String> titles = BridgeTitles.getFinalTitles();
-        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
-            String playerName = it.next();
-            Player player = Bukkit.getPlayer(playerName);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            ChatBroadcasts.gameEndMessage(player, game);
             setGameModeForPlayer(player);
             sendDeadPlayerToSpawn(player);
             BridgeFireworks fireworks = new BridgeFireworks(this);
@@ -669,15 +667,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
             }
         }.runTaskTimer(this, 0, 40); // try to send the game data every 2 seconds
-    }
-
-    private void broadcastEndMessages() {
-        for (TeamType team : MatchTeam.getTeams()) {
-            for (String playerName : MatchTeam.getPlayers(team)) {
-                Player player = Bukkit.getPlayer(playerName);
-                ChatBroadcasts.gameEndMessage(player, game);
-            }
-        }
     }
 
     @EventHandler
