@@ -815,11 +815,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     double futureHealth = shot.getHealth() - damage - absorptionDamage;
                     double formattedFutureHealth = Math.ceil(futureHealth * 10)/10;
 
-                    System.out.println("getFinalDamage: " + event.getFinalDamage());
-                    System.out.println("getDamage: " + event.getDamage());
-                    System.out.println("getOriginalDamage: " + event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION));
-                    System.out.println(heartValue);
-
                     String shotName = shot.getName();
 
                     if (formattedFutureHealth > 0)
