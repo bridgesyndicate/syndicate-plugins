@@ -612,7 +612,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void playQueueAlert() {
-        for (TeamType team : MatchTeam.getTeams()) {
+       for (TeamType team : MatchTeam.getTeams()) {
             for (String playerName : MatchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
                 player.playSound(player.getLocation(), Sound.AMBIENCE_THUNDER, 2.0f, 1.0f);
