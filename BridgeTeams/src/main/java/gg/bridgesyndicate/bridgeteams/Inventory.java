@@ -29,15 +29,18 @@ import java.util.stream.Collectors;
 public class Inventory {
     private static final String SYNDICATE_ENV = System.getenv("SYNDICATE_ENV");
     private static final String BUCKET_NAME = "syndicate-" + SYNDICATE_ENV + "-bridge-kit-layouts";
-    private final AmazonS3 s3Client;
+    private AmazonS3 s3Client = null;
     private HashMap<UUID, HashMap<String, Integer>> playerKitMap = new HashMap();
+    private boolean enableKits;
 
-    Inventory() {
-        s3Client = AmazonS3ClientBuilder
-                .standard()
-                .withCredentials(new DefaultAWSCredentialsProviderChain())
-                .withRegion(new DefaultAwsRegionProviderChain().getRegion())
-                .build();
+    Inventory(boolean enableKits) {
+        this.enableKits = enableKits;
+        if (enableKits)
+            s3Client = AmazonS3ClientBuilder
+                    .standard()
+                    .withCredentials(new DefaultAWSCredentialsProviderChain())
+                    .withRegion(new DefaultAwsRegionProviderChain().getRegion())
+                    .build();
     }
 
     private String objectNameFromPlayerUUID(UUID uniqueId){

@@ -79,7 +79,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         setGameRules();
         MapMetadata mapMetadata = prepareMapMetadata();
         MatchTeam.setMapMetadata(mapMetadata);
-        inventory = new Inventory();
+        inventory = new Inventory(SyndicateEnvironment.SYNDICATE_ENV() != Environments.TEST);
         arrowHandler = new ArrowHandler(this);
         prepareCages();
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
