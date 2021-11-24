@@ -12,24 +12,22 @@ phases:
       - aws ecr get-login-password  | docker login --username AWS --password-stdin $REPOSITORY_HOST
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - aws s3 cp s3://syndicate-plugins-artifacts/craftbukkit-1.8.8-R0.1-SNAPSHOT.jar .
-      - mvn install:install-file -Dfile=craftbukkit-1.8.8-R0.1-SNAPSHOT.jar -DgroupId=org.bukkit -DartifactId=craftbukkit -Dversion=1.8.8-R0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
-      - aws s3 cp s3://syndicate-plugins-artifacts/MockBukkit.jar .
-      - mvn install:install-file -Dfile=MockBukkit.jar -DgroupId=be.seeseemelk -DartifactId=mockbukkit -Dversion=1.8 -Dpackaging=jar -DgeneratePom=true
+      - get-artifact.rb craftbukkit-1.8.8-R0.1-SNAPSHOT.jar dep-tmp/
+      - get-artifact.rb MockBukkit.jar dep-tmp/
+      - mvn install:install-file -Dfile=dep-tmp/craftbukkit-1.8.8-R0.1-SNAPSHOT.jar -DgroupId=org.bukkit -DartifactId=craftbukkit -Dversion=1.8.8-R0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
+      - mvn install:install-file -Dfile=dep-tmp/MockBukkit.jar -DgroupId=be.seeseemelk -DartifactId=mockbukkit -Dversion=1.8 -Dpackaging=jar -DgeneratePom=true
   build:
     commands:
       - echo Compile jars started on `date`
       - SYNDICATE_ENV=test MINECRAFT_HOME=$PWD mvn clean package -P package-all
       - echo Building the Docker image...
       - echo package the plugins as a tar
-      - mkdir tmp
-      - aws s3 cp s3://syndicate-plugins-artifacts/ProtocolLib.jar tmp/
+      - mkdir -p tmp
+      - get-artifact.rb ProtocolLib.jar tmp/
+      - get-artifact.rb jar-deps/jar-deps-v03.tar jar-deps.tar
+      - get-artifact.rb cage.v02.json ./cage.json
       - find . -type f -path \*target\* -name \*jar -exec cp -p {} tmp/ \;
       - tar -C tmp -cvf ./plugins.tar .
-      - echo getting the jar deps from s3
-      - aws s3 cp s3://syndicate-plugins-artifacts/jar-deps/jar-deps-v03.tar jar-deps.tar
-      - echo getting the cage schematic from s3
-      - aws s3 cp s3://syndicate-plugins-artifacts/cage.v02.json cage.json
       - echo running docker build
       - docker build -t $REPOSITORY_URI:latest .
       - echo not docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:latest
