@@ -12,16 +12,18 @@ md5_hash = {
   'MockBukkit.jar' => 'b0b6588024e558ce36a64df9e71f33c0',
   'ProtocolLib.jar' => '8e568aeaa6ac7a357cd95cfc07df5cf9',
   'cage.json' => '5cdd9c54bc06f156e2739a473f0dda5c',
-  'jar-deps-v03.tar' => '57238a1b4c5d733b200fdb9db9832828',
+  'jar-deps.tar' => '57238a1b4c5d733b200fdb9db9832828',
 }
 
-Dir.mkdir(dst) unless File.exist?(dst) or Dir.exist?(dst)
+DST_IS_DIR = Dir.exist?(dst)
 
-md5_target = dst == './' ? src_file : dst
+md5_target = DST_IS_DIR ? File.join([dst, src_file]) : dst
 
 md5_sum = `md5sum #{md5_target}`.split(/\s+/).first
 
-unless md5_sum == md5_hash[src_file]
+hash_index = DST_IS_DIR ? src_file : dst.gsub('./','')
+
+unless md5_sum == md5_hash[hash_index]
   cmd = "aws s3 cp s3://#{BUCKET}/#{src} #{dst}"
   puts "get-artifact.rb: #{cmd}"
   `#{cmd}`

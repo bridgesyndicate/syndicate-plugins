@@ -12,6 +12,7 @@ phases:
       - aws ecr get-login-password  | docker login --username AWS --password-stdin $REPOSITORY_HOST
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - mkdir -p dep-tmp/
       - get-artifact.rb craftbukkit-1.8.8-R0.1-SNAPSHOT.jar dep-tmp/
       - get-artifact.rb MockBukkit.jar dep-tmp/
       - mvn install:install-file -Dfile=dep-tmp/craftbukkit-1.8.8-R0.1-SNAPSHOT.jar -DgroupId=org.bukkit -DartifactId=craftbukkit -Dversion=1.8.8-R0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
