@@ -40,14 +40,12 @@ import org.bukkit.util.Vector;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.text.DecimalFormat;
 import java.util.*;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Game game = null;
     private static Inventory inventory = null;
     private static ArrowHandler arrowHandler = null;
-    private final int ARROW_COOL_DOWN_TIME_IN_MILLIS = 3500;
     public enum scoreboardSections {TIMER}
     private static final String TIMER_STRING = "Time Left: " + ChatColor.GREEN;
     private static final String WAS_KILLED_BY = " was killed by ";
@@ -763,9 +761,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if (MatchTeam.getTeam(shooter).equals(MatchTeam.getTeam(shot))) {
                     event.setCancelled(true);
                 } else {
-                    double shotHealth = shot.getHealth();
-                    DecimalFormat format = new DecimalFormat("##.#");
-                    String heartValue = format.format(shotHealth);
                     double damage = event.getFinalDamage();
                     double absorptionDamage = event.getOriginalDamage(EntityDamageEvent.DamageModifier.ABSORPTION);
                     double futureHealth = shot.getHealth() - damage - absorptionDamage;
