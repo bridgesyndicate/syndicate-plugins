@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.UUID;
 
 public class TestHttpGet {
 
@@ -22,8 +21,9 @@ public class TestHttpGet {
 
     private static void doTestPut() throws URISyntaxException, IOException {
         boolean development = false;
-        String uuid = "c996dae3-433c-48f4-8a90-d4ea2d50f2a6";
-        String taskArn = "10.18.0.1";
+        String uuid = "6c9c95f9-0962-41c7-877a-1a478b2e89bd";
+        String taskArn = "10.18.0.1 ♡";
+        // taskArn = "1.1.1.1";
         ObjectMapper mapper = new ObjectMapper();
         ArnUpdatePayload arnUpdatePayload = new ArnUpdatePayload(uuid, taskArn);
         String payload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arnUpdatePayload);

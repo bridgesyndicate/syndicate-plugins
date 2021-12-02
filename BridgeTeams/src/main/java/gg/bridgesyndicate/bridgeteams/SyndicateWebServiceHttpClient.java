@@ -6,13 +6,14 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ public class SyndicateWebServiceHttpClient {
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPut httpPut = new HttpPut(syndicateWebServiceRequest.getURI());
-            HttpEntity httpEntity = new StringEntity(syndicateWebServiceRequest.getBody());
+            HttpEntity httpEntity = new ByteArrayEntity(syndicateWebServiceRequest.getBody().getBytes(StandardCharsets.UTF_8));
             httpPut.setEntity(httpEntity);
             while (iterator.hasNext()) {
                 String key = iterator.next();
