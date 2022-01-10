@@ -11,5 +11,5 @@ ADD ./pick-map.rb .
 ADD ./worlds-mainfest.json .
 ADD ./meta.json .
 RUN mkdir sample-json
-ADD sample-json/game.json sample-json/game.json
+COPY sample-json sample-json
 CMD ["./run-spigot.sh"]

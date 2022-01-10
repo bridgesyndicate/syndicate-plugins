@@ -19,6 +19,7 @@ docker run \
        -e AWS_SECRET_KEY=$(grep aws_secret_access_key $HOME/.aws/credentials | cut -f3 -d\ ) \
        -e SYNDICATE_MATCH_QUEUE_NAME=syndicate_development_games \
        -e ECS_CONTAINER_METADATA_URI_V4=https://kenpublic.s3.amazonaws.com/2021-08-04/sAfyVbYGjZAJlKli/container-metadata.json \
+       -e SYNDICATE_TEST_GAME_JSON=${SYNDICATE_TEST_GAME_JSON} \
        -p 25565:25565 \
        --add-host=host.docker.internal:host-gateway \
        -it \
