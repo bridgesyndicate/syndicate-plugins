@@ -1,0 +1,36 @@
+{
+  "uuid": "e3e7fa7f-f5b0-4246-9263-5a07fe15a9e6",
+  "blue_team_discord_ids": [
+    "240177490906054658"
+  ],
+"red_team_minecraft_uuids" : ["b45aff45-4348-41e9-8494-3f926e497e36"],
+"blue_team_minecraft_uuids" : ["f0885cea-8291-4734-be1b-bf37f6bcab7c"],
+  "blue_team_discord_names": [
+    "viceversa"
+  ],
+  "red_team_discord_ids": [
+    "417766998471213062"
+  ],
+  "red_team_discord_names": [
+    "asbestosgod"
+  ],
+  "required_players": 2,
+  "goals_to_win": 1,
+  "game_length_in_seconds": 120,
+  "queued_at": "2021-10-02T15:48:53Z",
+  "accepted_by_discord_ids": [
+    {
+      "discord_id": "240177490906054658",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    },
+    {
+      "discord_id": "417766998471213062",
+      "accepted_at": "2021-10-02T15:48:53Z"
+    }
+  ],
+  "queued_via": "queue match",
+  "elo_before_game": {
+    "417766998471213062": 1000,
+    "240177490906054658": 1000
+  }
+}
