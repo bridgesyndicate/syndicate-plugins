@@ -2,7 +2,7 @@
 
 ## How to enter a container running in AWS ECS
 
-`aws ecs execute-command --cluster default --task 93e73a3ba40b4a6bb7ca3f27451a064f --command "/bin/bash" --interactive`
+`aws ecs execute-command --cluster SyndicateECSCluster --task 93e73a3ba40b4a6bb7ca3f27451a064f --command "/bin/bash" --interactive`
 
 ### How to set it up to work
 
