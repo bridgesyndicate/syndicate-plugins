@@ -1,5 +1,6 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import gg.bridgesyndicate.util.Seconds;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
@@ -19,7 +20,7 @@ public class SqsGameDataPoller implements GameDataPoller{
             public void run() {
                 System.exit(-1);
             }
-        }.runTaskLater(plugin, 5 * 20);
+        }.runTaskLater(plugin, Seconds.toTicks(5.0f));
     }
 
     private void abortGameOnTimeout(Plugin plugin, Game game) {
@@ -38,7 +39,7 @@ public class SqsGameDataPoller implements GameDataPoller{
                     quitAfterTimeout(plugin);
                 }
             }
-        }.runTaskLater(plugin, NO_START_ABORT_TIME_IN_SECONDS * 20);
+        }.runTaskLater(plugin, Seconds.toTicks(NO_START_ABORT_TIME_IN_SECONDS));
     }
 
     @Override
@@ -92,6 +93,6 @@ public class SqsGameDataPoller implements GameDataPoller{
                     this.cancel();
                 }
             }
-        }.runTaskTimer(bridgeTeams, 0, 20);
+        }.runTaskTimer(bridgeTeams, 0, Seconds.toTicks(1.0f));
     }
 }

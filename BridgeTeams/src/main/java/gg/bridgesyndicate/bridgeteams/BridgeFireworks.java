@@ -1,5 +1,6 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import gg.bridgesyndicate.util.Seconds;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
@@ -31,7 +32,7 @@ public class BridgeFireworks {
                     this.cancel();
                 }
             }
-        }.runTaskTimer(parentPlugin, 0, 20);
+        }.runTaskTimer(parentPlugin, 0, Seconds.toTicks(1.0f));
     }
 
     public void sendFirework(Player player) {

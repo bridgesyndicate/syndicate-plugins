@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import gg.bridgesyndicate.util.BoundingBox;
 import gg.bridgesyndicate.util.ReadFile;
+import gg.bridgesyndicate.util.Seconds;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import org.bukkit.*;
@@ -377,7 +378,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     }
                 }
             }
-        }.runTaskLater(this, 100);
+        }.runTaskLater(this, Seconds.toTicks(5.0f));
     }
 
     private void cagePlayers() {
@@ -598,7 +599,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     score.updateGameClock(game);
                 }
             }
-        }.runTaskTimer(this, 0, 20);
+        }.runTaskTimer(this, 0, Seconds.toTicks(1.0f));
     }
 
     private void broadcastStartMessages() {
@@ -656,7 +657,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
                 System.exit(0);
             }
-        }.runTaskLater(this, 300); // 15 seconds
+        }.runTaskLater(this, Seconds.toTicks(15.0f));
 
         new BukkitRunnable() {
             int attempt = 0;
@@ -675,7 +676,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     attempt++;
                 }
             }
-        }.runTaskTimer(this, 0, 40); // try to send the game data every 2 seconds
+        }.runTaskTimer(this, 0, Seconds.toTicks(2.0f)); // try to send the game data every 2 seconds
     }
 
     @EventHandler
@@ -740,7 +741,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     this.cancel();
                 }
             }
-        }.runTaskTimer(this, 0, 20);
+        }.runTaskTimer(this, 0, Seconds.toTicks(1.0f));
     }
 
     @EventHandler
