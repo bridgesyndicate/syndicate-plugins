@@ -24,8 +24,8 @@
     "meta_uri": "s3://syndicate-maps/galaxy/meta.json"
   },
   "hyperfrost": {
-    "world_uri": "s3://syndicate-maps/hyperfrost/world.tar.gz",
-    "meta_uri": "s3://syndicate-maps/hyperfrost/meta.json"
+    "world_uri": "s3://syndicate-maps/fortressv2/world.tar.gz",
+    "meta_uri": "s3://syndicate-maps/fortressv2/meta.json"
   },
   "sorcery": {
     "world_uri": "s3://syndicate-maps/sorcery/world.tar.gz",
