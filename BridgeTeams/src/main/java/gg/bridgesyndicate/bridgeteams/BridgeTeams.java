@@ -488,6 +488,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         } else {
             System.out.println(player.getName() + " is spectator.");
             makeSpectator(player);
+            ChatBroadcasts.spectatorJoinMessage(player);
         }
     }
 
@@ -686,7 +687,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Scoreboard board = player.getScoreboard();
         disconnectedPlayerScoreboard.put(player.getUniqueId(), board);
         if (game != null){
-            ChatBroadcasts.playerQuitMessage(player);
+            if(player.getGameMode().equals(GameMode.SPECTATOR)){
+                ChatBroadcasts.spectatorQuitMessage(player);
+            } else {
+                ChatBroadcasts.playerQuitMessage(player);
+            }
         }
     }
 

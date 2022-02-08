@@ -96,9 +96,17 @@ public class ChatBroadcasts {
                 ChatColor.GRAY + " has left the game.");
     }
 
+    public static void spectatorQuitMessage(Player spectator){
+        Bukkit.broadcastMessage(ChatColor.GRAY + spectator.getName() + " has stopped spectating.");
+    }
+
     public static void playerRejoinMessage(Player player){
         Bukkit.broadcastMessage(MatchTeam.getChatColor(player).toString() + player.getName() +
                 ChatColor.GRAY + " has rejoined.");
+    }
+
+    public static void spectatorJoinMessage(Player spectator){
+        Bukkit.broadcastMessage(ChatColor.GRAY + spectator.getName() + " has begun spectating.");
     }
 
     public static void gameStartMessage(Player player, String opponentNames, Game game){
