@@ -1,5 +1,8 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import gg.bridgesyndicate.util.Seconds;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -42,6 +45,18 @@ public class SqsGameDataPoller implements GameDataPoller{
         }.runTaskLater(plugin, Seconds.toTicks(NO_START_ABORT_TIME_IN_SECONDS));
     }
 
+    private Region determineRegion() {
+        DefaultAwsRegionProviderChain defaultAwsRegionProviderChain = new DefaultAwsRegionProviderChain();
+        String sqsRegion = defaultAwsRegionProviderChain.getRegion();
+        final String SYNDICATE_MATCH_QUEUE_REGION = "SYNDICATE_MATCH_QUEUE_REGION";
+        if ( System.getenv(SYNDICATE_MATCH_QUEUE_REGION) != null ) {
+            sqsRegion = System.getenv(SYNDICATE_MATCH_QUEUE_REGION);
+            System.out.println("Using " + SYNDICATE_MATCH_QUEUE_REGION + " from env: " + sqsRegion);
+        }
+        System.out.println("Using default " + SYNDICATE_MATCH_QUEUE_REGION + ": " + sqsRegion);
+        return Region.getRegion(Regions.fromName(sqsRegion));
+    }
+
     @Override
     public void poll(BridgeTeams bridgeTeams) {
         final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
@@ -66,6 +81,7 @@ public class SqsGameDataPoller implements GameDataPoller{
         new BukkitRunnable() {
             @Override
             public void run() {
+                finalSqs.setRegion(determineRegion());
                 final String queueUrl = finalSqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
                 ReceiveMessageRequest receive_request = new ReceiveMessageRequest()
                         .withQueueUrl(QUEUE_NAME)
