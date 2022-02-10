@@ -1,13 +1,15 @@
 package gg.bridgesyndicate.bridgeteams;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
-import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import gg.bridgesyndicate.util.Seconds;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import gg.bridgesyndicate.util.Seconds;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -45,16 +47,17 @@ public class SqsGameDataPoller implements GameDataPoller{
         }.runTaskLater(plugin, Seconds.toTicks(NO_START_ABORT_TIME_IN_SECONDS));
     }
 
-    private Region determineRegion() {
+    private Regions determineRegion() {
         DefaultAwsRegionProviderChain defaultAwsRegionProviderChain = new DefaultAwsRegionProviderChain();
         String sqsRegion = defaultAwsRegionProviderChain.getRegion();
         final String SYNDICATE_MATCH_QUEUE_REGION = "SYNDICATE_MATCH_QUEUE_REGION";
         if ( System.getenv(SYNDICATE_MATCH_QUEUE_REGION) != null ) {
             sqsRegion = System.getenv(SYNDICATE_MATCH_QUEUE_REGION);
             System.out.println("Using " + SYNDICATE_MATCH_QUEUE_REGION + " from env: " + sqsRegion);
+        } else {
+            System.out.println("Using default " + SYNDICATE_MATCH_QUEUE_REGION + ": " + sqsRegion);
         }
-        System.out.println("Using default " + SYNDICATE_MATCH_QUEUE_REGION + ": " + sqsRegion);
-        return Region.getRegion(Regions.fromName(sqsRegion));
+        return Regions.fromName(sqsRegion);
     }
 
     @Override
@@ -62,7 +65,10 @@ public class SqsGameDataPoller implements GameDataPoller{
         final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
         AmazonSQS sqs;
         try {
-            sqs = AmazonSQSClientBuilder.defaultClient();
+            sqs = AmazonSQSClientBuilder.standard()
+                    .withRegion(determineRegion())
+                    .withCredentials(new DefaultAWSCredentialsProviderChain())
+                    .build();
         } catch (Exception e) {
             System.out.println("Error building an SQS client. This container will never poll for a game.");
             if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
@@ -81,7 +87,6 @@ public class SqsGameDataPoller implements GameDataPoller{
         new BukkitRunnable() {
             @Override
             public void run() {
-                finalSqs.setRegion(determineRegion());
                 final String queueUrl = finalSqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
                 ReceiveMessageRequest receive_request = new ReceiveMessageRequest()
                         .withQueueUrl(QUEUE_NAME)
