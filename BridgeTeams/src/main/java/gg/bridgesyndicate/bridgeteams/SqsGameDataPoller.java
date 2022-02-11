@@ -1,10 +1,15 @@
 package gg.bridgesyndicate.bridgeteams;
 
-import gg.bridgesyndicate.util.Seconds;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import gg.bridgesyndicate.util.Seconds;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -42,12 +47,28 @@ public class SqsGameDataPoller implements GameDataPoller{
         }.runTaskLater(plugin, Seconds.toTicks(NO_START_ABORT_TIME_IN_SECONDS));
     }
 
+    private Regions determineRegion() {
+        DefaultAwsRegionProviderChain defaultAwsRegionProviderChain = new DefaultAwsRegionProviderChain();
+        String sqsRegion = defaultAwsRegionProviderChain.getRegion();
+        final String SYNDICATE_MATCH_QUEUE_REGION = "SYNDICATE_MATCH_QUEUE_REGION";
+        if ( System.getenv(SYNDICATE_MATCH_QUEUE_REGION) != null ) {
+            sqsRegion = System.getenv(SYNDICATE_MATCH_QUEUE_REGION);
+            System.out.println("Using " + SYNDICATE_MATCH_QUEUE_REGION + " from env: " + sqsRegion);
+        } else {
+            System.out.println("Using default " + SYNDICATE_MATCH_QUEUE_REGION + ": " + sqsRegion);
+        }
+        return Regions.fromName(sqsRegion);
+    }
+
     @Override
     public void poll(BridgeTeams bridgeTeams) {
         final String QUEUE_ENV_NAME = "SYNDICATE_MATCH_QUEUE_NAME";
         AmazonSQS sqs;
         try {
-            sqs = AmazonSQSClientBuilder.defaultClient();
+            sqs = AmazonSQSClientBuilder.standard()
+                    .withRegion(determineRegion())
+                    .withCredentials(new DefaultAWSCredentialsProviderChain())
+                    .build();
         } catch (Exception e) {
             System.out.println("Error building an SQS client. This container will never poll for a game.");
             if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
