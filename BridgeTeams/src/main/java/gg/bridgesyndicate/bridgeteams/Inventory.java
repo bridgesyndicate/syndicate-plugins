@@ -39,8 +39,18 @@ public class Inventory {
             s3Client = AmazonS3ClientBuilder
                     .standard()
                     .withCredentials(new DefaultAWSCredentialsProviderChain())
-                    .withRegion(new DefaultAwsRegionProviderChain().getRegion())
+                    .withRegion(determineRegion(new DefaultAwsRegionProviderChain().getRegion()))
                     .build();
+    }
+
+    private String determineRegion(String region) {
+        String syndicateWebServiceRegion = region;
+        final String SYNDICATE_KITS_S3_REGION = "SYNDICATE_KITS_S3_REGION";
+        if ( System.getenv(SYNDICATE_KITS_S3_REGION) != null ) {
+            syndicateWebServiceRegion = System.getenv(SYNDICATE_KITS_S3_REGION);
+            System.out.println("Using " + SYNDICATE_KITS_S3_REGION + " from env: " + syndicateWebServiceRegion);
+        }
+        return syndicateWebServiceRegion;
     }
 
     private String objectNameFromPlayerUUID(UUID uniqueId){
