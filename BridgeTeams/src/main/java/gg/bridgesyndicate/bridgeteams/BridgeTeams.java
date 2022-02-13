@@ -313,6 +313,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         game.addGoalInfo(player.getUniqueId());
         score.updatePlayersGoals(player, game);
         ChatBroadcasts.scoreMessage(game, player);
+        String playerName = MatchTeam.getChatColor(player) + player.getName();
+        game.setLastScorerName(playerName);
         if (!game.over()) {
             cagePlayers();
             BridgeFireworks fireworks = new BridgeFireworks(this);
@@ -386,7 +388,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if(!player.getGameMode().equals(GameMode.SPECTATOR)){
                 player.teleport(MatchTeam.getCagePlayerLocation(player));
-                sendTitles(player);
+                cagedPlayerCountdownTitles(player);
                 resetPlayerHealthAndInventory(player);
                 setGameModeForPlayer(player);
             }
@@ -723,7 +725,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         e.setCancelled(true);
     }
 
-    public void sendTitles(Player player) {
+    public void cagedPlayerCountdownTitles(Player player) {
         new BukkitRunnable() {
             int secondsUntilCagesOpen = 5;
 
@@ -731,10 +733,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if (secondsUntilCagesOpen > 0) {
                     String titleText = "";
                     if (game.hasScore()){
-                        String scorerName = game.getMostRecentScorerName();
-                        Player scorer = Bukkit.getPlayer(scorerName);
-                        ChatColor chatColor = MatchTeam.getChatColor(scorer);
-                        titleText = chatColor + scorerName + " scored!";
+                        String scorer = game.getLastScorerName();
+                        titleText = scorer + " scored!";
                     }
                     Title title = new Title(titleText, "&7Cages open in: &a" + secondsUntilCagesOpen + "s&7...", 0, 3, 0);
                     title.send(player);

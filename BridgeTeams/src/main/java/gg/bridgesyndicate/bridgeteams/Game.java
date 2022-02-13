@@ -47,6 +47,7 @@ public class Game {
     private HashMap<String, UUID> playerMap = new HashMap();
     private HashMap<String, Integer> eloBeforeGame = new HashMap<>();
     private String mapName;
+    private String lastScorerName;
 
     public Game() {
         this.state = state.BEFORE_GAME;
@@ -155,10 +156,12 @@ public class Game {
         killsRegistered.add(newKill);
     }
 
-    public String getMostRecentScorerName() {
-        GoalMeta lastGoal = goalsScored.get(goalsScored.size() - 1);
-        Player player = Bukkit.getPlayer(lastGoal.getPlayerUUID());
-        return(player.getName());
+    public void setLastScorerName(String scorer){
+        this.lastScorerName = scorer;
+    }
+
+    public String getLastScorerName(){
+        return lastScorerName;
     }
 
     public boolean hasScore() {
