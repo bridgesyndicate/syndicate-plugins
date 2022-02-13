@@ -10,8 +10,10 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatHandler implements Listener {
 
+    private static final String TEAM_PREFIX = ChatColor.GREEN + "[TEAM] ";
     private static final String PLAYER_PREFIX = ChatColor.GREEN + "[GAME] ";
     private static final String SPECTATOR_PREFIX = ChatColor.GRAY + "[SPECTATOR] ";
+    private static final int REQUIRED_PLAYERS_IN_SOLO = 2;
 
     public ChatHandler() {
     }
@@ -29,10 +31,25 @@ public class ChatHandler implements Listener {
     }
 
     private static void broadcastSpectatorMessage(Player spectator, String message){
-        Bukkit.broadcastMessage(SPECTATOR_PREFIX + spectator.getName() + ": " + message);
+        for (Player anyone : Bukkit.getOnlinePlayers()) {
+            if(anyone.getGameMode().equals(GameMode.SPECTATOR)){
+                anyone.sendMessage(SPECTATOR_PREFIX + spectator.getName() + ": " + message);
+            }
+        }
     }
 
     private static void broadcastPlayerMessage(Player player, String message){
-        Bukkit.broadcastMessage(PLAYER_PREFIX + MatchTeam.getChatColor(player) + player.getName() + ChatColor.WHITE + ": " + message);
+        String formattedMsg = ChatColor.WHITE + ": " + message;
+        int requiredPlayers = BridgeTeams.getRequiredPlayers();
+        if (requiredPlayers > REQUIRED_PLAYERS_IN_SOLO) {
+            for (String receiverName : MatchTeam.getPlayers(MatchTeam.getTeam(player))) {
+                Player receiver = Bukkit.getPlayer(receiverName);
+                receiver.sendMessage(TEAM_PREFIX + MatchTeam.getChatColor(player) + player.getName() + formattedMsg);
+            }
+            // only broadcast to teammates in teams modes
+        } else {
+            Bukkit.broadcastMessage(PLAYER_PREFIX + MatchTeam.getChatColor(player) + player.getName() + formattedMsg);
+            // broadcast to everyone in solo
+        }
     }
 }
