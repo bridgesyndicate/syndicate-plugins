@@ -23,7 +23,7 @@ public class SqsGameDataPoller implements GameDataPoller{
         new BukkitRunnable() {
             @Override
             public void run() {
-                System.exit(-1);
+                System.exit(0);
             }
         }.runTaskLater(plugin, Seconds.toTicks(5.0f));
     }
@@ -72,7 +72,7 @@ public class SqsGameDataPoller implements GameDataPoller{
         } catch (Exception e) {
             System.out.println("Error building an SQS client. This container will never poll for a game.");
             if (SyndicateEnvironment.SYNDICATE_ENV() == Environments.PRODUCTION) {
-                System.out.println("Exiting because this is fatal in production.");
+                System.out.println("Exiting with error: Can not start sqs polling.");
                 System.exit(-1);
             }
             return;
@@ -80,7 +80,7 @@ public class SqsGameDataPoller implements GameDataPoller{
         final String QUEUE_NAME = System.getenv(QUEUE_ENV_NAME);
         System.out.println("Polling: " + QUEUE_NAME);
         if (QUEUE_NAME == null) {
-            System.out.println("EXIT: " + QUEUE_ENV_NAME + " environment variable is null");
+            System.out.println("Exiting with error: " + QUEUE_ENV_NAME + " environment variable is null");
             System.exit(-1);
         }
         AmazonSQS finalSqs = sqs;
@@ -107,7 +107,7 @@ public class SqsGameDataPoller implements GameDataPoller{
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-                        System.out.println("EXIT: Could not add container metadata.");
+                        System.out.println("Exiting with error: Could not add container metadata.");
                         System.exit(-1);
                     }
                     finalSqs.deleteMessage(queueUrl, message.getReceiptHandle());

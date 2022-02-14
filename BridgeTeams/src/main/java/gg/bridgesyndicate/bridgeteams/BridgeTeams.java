@@ -117,7 +117,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("ERROR: Could not prepare cages. Exiting.");
+            System.out.println("Exiting with error: Could not prepare cages.");
             System.exit(-1);
         }
         cageSchematicIntegerListSize = bridgeSchematicBlockList.size();
@@ -658,6 +658,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                         System.out.println("ERROR: Yikes, I could not send the end-of-game data and I could not serialize the game. This game is gone forever.");
                         e.printStackTrace();
                     }
+                    System.out.println("Exiting with error: Game state was not TERMINATE");
+                    System.exit(-1);
                 }
                 System.exit(0);
             }
