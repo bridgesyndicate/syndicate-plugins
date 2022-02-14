@@ -3,12 +3,11 @@ package gg.bridgesyndicate.bridgeteams;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -254,6 +253,11 @@ public class Game {
         Player player = Bukkit.getPlayer(name);
         joinedPlayers.add(name);
         playerMap.put(name, uniqueId);
+    }
+
+    public void unJoinPlayer(String name) {
+        joinedPlayers.remove(name);
+        playerMap.remove(name);
     }
 
     public HashMap<String, UUID> getPlayerMap(){

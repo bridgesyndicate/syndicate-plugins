@@ -695,6 +695,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             } else {
                 ChatBroadcasts.playerQuitMessage(player);
             }
+            if (game.getState() == Game.GameState.BEFORE_GAME) {
+                game.unJoinPlayer(player.getName());
+            }
         }
     }
 
