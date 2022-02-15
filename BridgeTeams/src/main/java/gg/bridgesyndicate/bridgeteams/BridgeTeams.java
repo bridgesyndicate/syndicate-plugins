@@ -565,20 +565,19 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void startGame() {
-        cagePlayers();
-        buildScoreboards();
-        broadcastStartMessages();
-        startClock();
-        playQueueAlert();
-    }
-
-    private void playQueueAlert() {
-       for (TeamType team : MatchTeam.getTeams()) {
-            for (String playerName : MatchTeam.getPlayers(team)) {
-                Player player = Bukkit.getPlayer(playerName);
-                player.playSound(player.getLocation(), Sound.AMBIENCE_THUNDER, 2.0f, 1.0f);
-            }
+        Bukkit.broadcastMessage(ChatColor.GREEN + "The game will start in 5 seconds.");
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
         }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                cagePlayers();
+                buildScoreboards();
+                broadcastStartMessages();
+                startClock();
+            }
+        }.runTaskLater(this, Seconds.toTicks(5.0f));
     }
 
     private void startClock() {
