@@ -76,7 +76,7 @@ public class MatchTeam
     }
 
     public static Location getMapCenter() {
-        return new Location(world,0.5, 94.0, 0.5, -90, 0);
+        return new Location(world,0.5, 94.0, 0.5, 0, 0);
     }
 
     public static BlockVector getRedCageLocation() {
