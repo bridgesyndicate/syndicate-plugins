@@ -83,7 +83,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         inventory = new Inventory(SyndicateEnvironment.SYNDICATE_ENV() != Environments.TEST);
         arrowHandler = new ArrowHandler(this);
         prepareCages();
-        buildEachCage("create");
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
         gameDataPoller.poll(this);
     }
@@ -318,7 +317,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         String playerName = MatchTeam.getChatColor(player) + player.getName();
         game.setLastScorerName(playerName);
         if (!game.over()) {
-            cagePlayers(false);
+            cagePlayers();
             BridgeFireworks fireworks = new BridgeFireworks(this);
             fireworks.spawnFireworks(player);
         } else {
@@ -361,20 +360,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void buildCages(String createOrDestroy) {
-        buildEachCage(createOrDestroy);
-        if (createOrDestroy.equals("destroy"))
-            return;
-        destroyEachCage();
-    }
-
-    private void buildEachCage(String createOrDestroy) {
         for (TeamType team : MatchTeam.getTeams()) {
             BlockVector cageLocation = MatchTeam.getCageLocation(team);
             buildOrDestroyCageAtLocation(cageLocation, createOrDestroy, team);
         }
-    }
+        if (createOrDestroy.equals("destroy"))
+            return;
 
-    private void destroyEachCage() {
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -392,7 +384,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }.runTaskLater(this, Seconds.toTicks(5.0f));
     }
 
-    private void cagePlayers(boolean isStartOfGame) {
+    private void cagePlayers() {
         game.setState(Game.GameState.CAGED);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if(!player.getGameMode().equals(GameMode.SPECTATOR)){
@@ -402,11 +394,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 setGameModeForPlayer(player);
             }
         }
-        if (isStartOfGame) {
-            destroyEachCage();
-        } else {
-            buildCages("create");
-        }
+        buildCages("create");
     }
 
     public void checkForGoal(Player player) throws JsonProcessingException {
@@ -584,7 +572,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                cagePlayers(true);
+                cagePlayers();
                 buildScoreboards();
                 broadcastStartMessages();
                 startClock();
