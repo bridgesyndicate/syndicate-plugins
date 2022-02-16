@@ -44,6 +44,7 @@ public class MatchTeam
 
     public static void clearTeams() {
         MatchTeam.redTeam.clear();
+        MatchTeam.redTeam.clear();
         MatchTeam.blueTeam.clear();
     }
 
@@ -72,6 +73,10 @@ public class MatchTeam
         final Location redLoc = LocationHelper.makeLocation(world, mapMetadata.getRedRespawn(), 90, 0);
         final Location blueLoc = LocationHelper.makeLocation(world, mapMetadata.getBlueRespawn(), -90, 0);
         return MatchTeam.redTeam.contains(player.getName()) ? redLoc : blueLoc;
+    }
+
+    public static Location getMapCenter() {
+        return new Location(world,0.5, 94.0, 0.5, -90, 0);
     }
 
     public static BlockVector getRedCageLocation() {
