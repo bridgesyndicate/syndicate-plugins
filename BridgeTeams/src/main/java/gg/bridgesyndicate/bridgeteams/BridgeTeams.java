@@ -1,17 +1,11 @@
 package gg.bridgesyndicate.bridgeteams;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import gg.bridgesyndicate.util.BoundingBox;
 import gg.bridgesyndicate.util.ReadFile;
 import gg.bridgesyndicate.util.Seconds;
-import net.minecraft.server.v1_8_R3.BlockPosition;
-import net.minecraft.server.v1_8_R3.IBlockData;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -22,7 +16,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -35,13 +32,15 @@ import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
-import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
 public final class BridgeTeams extends JavaPlugin implements Listener {
     private static Game game = null;
@@ -52,11 +51,9 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private static final String WAS_KILLED_BY = " was killed by ";
     private static final String WAS_VOIDED_BY = " was thrown off a cliff by ";
     private static final String WAS_SHOT_BY = " was shot by ";
-    List<BridgeSchematicBlock> bridgeSchematicBlockList = null;
-    private int[] cageSchematicIntegerList = null;
-    private int cageSchematicIntegerListSize = 0;
     public static HashMap<UUID, Long> lastHitTimestampInMillis = new HashMap<>();
     public static HashMap<UUID, Scoreboard> disconnectedPlayerScoreboard = new HashMap<>();
+    private static Cages cages;
 
     public BridgeTeams() {
         super();
@@ -77,12 +74,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ClickHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
+        cages = new Cages(this);
         setGameRules();
         MapMetadata mapMetadata = prepareMapMetadata();
         MatchTeam.setMapMetadata(mapMetadata);
         inventory = new Inventory(SyndicateEnvironment.SYNDICATE_ENV() != Environments.TEST);
         arrowHandler = new ArrowHandler(this);
-        prepareCages();
+        cages.prepare();
+        if (!SyndicateEnvironment.SYNDICATE_ENV().equals(Environments.TEST)) {
+            cages.build();
+        }
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
         gameDataPoller.poll(this);
     }
@@ -105,30 +106,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    private void prepareCages() {
-        try {
-            final String schematicJson = ReadFile.read(ReadFile.pathToResources() + "cage.json");
-            ObjectMapper objectMapper = new ObjectMapper();
-            CollectionType typeReference =
-                    TypeFactory.defaultInstance().constructCollectionType(List.class, BridgeSchematicBlock.class);
-            bridgeSchematicBlockList = objectMapper.readValue(schematicJson, typeReference);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Exiting with error: Could not prepare cages.");
-            System.exit(-1);
-        }
-        cageSchematicIntegerListSize = bridgeSchematicBlockList.size();
-        cageSchematicIntegerList = new int[cageSchematicIntegerListSize * 5];
-        for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
-            BridgeSchematicBlock bridgeSchematicBlock = bridgeSchematicBlockList.get(i);
-            cageSchematicIntegerList[i * 5]     = bridgeSchematicBlock.x;
-            cageSchematicIntegerList[i * 5 + 1] = bridgeSchematicBlock.y;
-            cageSchematicIntegerList[i * 5 + 2] = bridgeSchematicBlock.z;
-            cageSchematicIntegerList[i * 5 + 3] = bridgeSchematicBlock.id;
-            cageSchematicIntegerList[i * 5 + 4] = bridgeSchematicBlock.data;
         }
     }
 
@@ -317,84 +294,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         String playerName = MatchTeam.getChatColor(player) + player.getName();
         game.setLastScorerName(playerName);
         if (!game.over()) {
-            cagePlayers();
+            cages.cagePlayers(false);
             BridgeFireworks fireworks = new BridgeFireworks(this);
             fireworks.spawnFireworks(player);
         } else {
             endGame();
         }
-    }
-
-    private void buildOrDestroyCageAtLocation(BlockVector cageLocation, String createOrDestroy, TeamType team) {
-        World world = Bukkit.getWorld("world");
-        int cageX = cageLocation.getBlockX();
-        int cageY = cageLocation.getBlockY();
-        int cageZ = cageLocation.getBlockZ();
-        for (int i = 0; i < cageSchematicIntegerListSize ; i++) {
-            int id = (createOrDestroy.equals("create")) ? cageSchematicIntegerList[i * 5 + 3] : 0;
-            byte data = (createOrDestroy.equals("create")) ? (byte) cageSchematicIntegerList[i * 5 + 4] : 0;
-            if (team == TeamType.BLUE) { // turn the cage blue
-                if (id == 100 && data == 0) {
-                    id = 99;
-                    data = 0;
-                }
-                if ( (id == 159 && (int) data == 14) || (id == 35 && (int) data == 14) ){
-                    data = 11;
-                }
-            }
-            setBlockInNativeWorld(world,
-                    cageX + cageSchematicIntegerList[i * 5],
-                    cageY + cageSchematicIntegerList[i * 5 + 1],
-                    cageZ + cageSchematicIntegerList[i * 5 + 2],
-                    id,
-                    data
-            );
-        }
-    }
-
-    private void setBlockInNativeWorld(World world, int x, int y, int z, int blockId, byte data){
-        net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
-        BlockPosition bp = new BlockPosition(x, y, z);
-        IBlockData ibd = net.minecraft.server.v1_8_R3.Block.getByCombinedId(blockId + (data << 12));
-        nmsWorld.setTypeAndData(bp, ibd, 2);
-    }
-
-    private void buildCages(String createOrDestroy) {
-        for (TeamType team : MatchTeam.getTeams()) {
-            BlockVector cageLocation = MatchTeam.getCageLocation(team);
-            buildOrDestroyCageAtLocation(cageLocation, createOrDestroy, team);
-        }
-        if (createOrDestroy.equals("destroy"))
-            return;
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                game.setState(Game.GameState.DURING_GAME);
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
-                }
-                buildCages("destroy");
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    if(!player.getGameMode().equals(GameMode.SPECTATOR)) {
-                        setGameModeForPlayer(player);
-                    }
-                }
-            }
-        }.runTaskLater(this, Seconds.toTicks(5.0f));
-    }
-
-    private void cagePlayers() {
-        game.setState(Game.GameState.CAGED);
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if(!player.getGameMode().equals(GameMode.SPECTATOR)){
-                player.teleport(MatchTeam.getCagePlayerLocation(player));
-                cagedPlayerCountdownTitles(player);
-                resetPlayerHealthAndInventory(player);
-                setGameModeForPlayer(player);
-            }
-        }
-        buildCages("create");
     }
 
     public void checkForGoal(Player player) throws JsonProcessingException {
@@ -524,7 +429,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
     }
 
-    private void setGameModeForPlayer(Player player) {
+    public void setGameModeForPlayer(Player player) {
         switch (game.getState()) {
             case BEFORE_GAME:
             case CAGED:
@@ -572,7 +477,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                cagePlayers();
+                cages.cagePlayers(true);
                 buildScoreboards();
                 broadcastStartMessages();
                 startClock();
@@ -732,7 +637,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void cagedPlayerCountdownTitles(Player player) {
         new BukkitRunnable() {
-            int secondsUntilCagesOpen = 5;
+            int secondsUntilCagesOpen = (int) cages.CAGED_DURATION;
 
             public void run() {
                 if (secondsUntilCagesOpen > 0) {
@@ -786,26 +691,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
             }
         }
-    }
-}
-
-class BridgeSchematicBlock {
-    public int x;
-    public int y;
-    public int z;
-    public int id;
-    public int data;
-
-    @SuppressWarnings("unused") //used via jackson deserialization
-    public BridgeSchematicBlock() { }
-
-    @SuppressWarnings("unused") //used via jackson deserialization
-    public BridgeSchematicBlock(int x, int y, int z, int id, int data) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.id = id;
-        this.data = data;
     }
 }
 
