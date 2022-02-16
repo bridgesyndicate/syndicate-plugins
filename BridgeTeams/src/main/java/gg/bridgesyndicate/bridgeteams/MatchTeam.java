@@ -44,7 +44,6 @@ public class MatchTeam
 
     public static void clearTeams() {
         MatchTeam.redTeam.clear();
-        MatchTeam.redTeam.clear();
         MatchTeam.blueTeam.clear();
     }
 
