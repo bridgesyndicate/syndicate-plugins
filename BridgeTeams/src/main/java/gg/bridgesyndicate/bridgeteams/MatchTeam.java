@@ -74,6 +74,10 @@ public class MatchTeam
         return MatchTeam.redTeam.contains(player.getName()) ? redLoc : blueLoc;
     }
 
+    public static Location getMapCenter() {
+        return new Location(world, 0.5, 94.0, 0.5, 0, 0);
+    }
+
     public static BlockVector getRedCageLocation() {
         return new BlockVector(LocationHelper.convertPlayerCageLocToActualCageLoc(mapMetadata.getRedCageLocation()));
     }
