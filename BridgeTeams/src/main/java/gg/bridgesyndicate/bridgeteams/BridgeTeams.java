@@ -33,6 +33,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
+import org.spigotmc.CustomTimingsHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,6 +87,16 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
         gameDataPoller.poll(this);
+        measureTimings();
+    }
+
+    private void measureTimings(){
+        TimingsHandler.turnTimingsOn();
+        new BukkitRunnable() {
+            public void run() {
+                TimingsHandler.pasteTimings();
+            }
+        }.runTaskLater(this, Seconds.toTicks(120.0f));
     }
 
     private MapMetadata prepareMapMetadata() {
@@ -160,6 +171,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Player player = event.getEntity();
         Player killer = player.getKiller();
         onDeathOfPlayerImpl(player, killer, event);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "/timings on");
     }
 
     private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
