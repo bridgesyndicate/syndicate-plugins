@@ -72,7 +72,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         System.out.println(this.getClass() + " is loading.");
         this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
-        //this.getServer().getPluginManager().registerEvents(new ClickHandler(),this);
+        this.getServer().getPluginManager().registerEvents(new ClickHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
         cages = new Cages(this);
         setGameRules();
