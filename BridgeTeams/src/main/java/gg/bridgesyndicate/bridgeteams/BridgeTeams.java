@@ -171,7 +171,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         Player player = event.getEntity();
         Player killer = player.getKiller();
         onDeathOfPlayerImpl(player, killer, event);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "/timings on");
     }
 
     private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
