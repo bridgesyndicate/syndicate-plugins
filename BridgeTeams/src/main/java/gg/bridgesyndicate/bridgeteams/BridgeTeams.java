@@ -27,7 +27,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.potion.PotionEffect;
@@ -38,7 +37,6 @@ import org.spigotmc.CustomTimingsHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -86,7 +84,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         cages.prepare();
         if (!SyndicateEnvironment.SYNDICATE_ENV().equals(Environments.TEST)) {
             cages.build();
-            ((SimplePluginManager) Bukkit.getPluginManager()).useTimings(true);
         }
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
         gameDataPoller.poll(this);
@@ -94,17 +91,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void measureTimings(){
-        CustomTimingsHandler customTimings = new CustomTimingsHandler("syndicate-timer");
-        customTimings.startTiming();
+        TimingsHandler.turnTimingsOn();
         new BukkitRunnable() {
-            @Override
             public void run() {
-                System.out.println("reporting measure timings");
-                PrintStream printStream = new PrintStream(System.out);
-                CustomTimingsHandler.printTimings(printStream);
-                CustomTimingsHandler.reload();
+                TimingsHandler.pasteTimings();
             }
-        }.runTaskTimer(this,0, Seconds.toTicks(2.0f));
+        }.runTaskLater(this, Seconds.toTicks(120.0f));
     }
 
     private MapMetadata prepareMapMetadata() {
