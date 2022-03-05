@@ -154,7 +154,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         && MatchTeam.getTeam((Player) event.getDamager()) != MatchTeam.getTeam((Player) event.getEntity())
         ) {
             Player damage_maker = (Player) event.getDamager();
-            damage_maker.setNoDamageTicks(0);
             UUID id = damage_maker.getUniqueId();
             lastHitTimestampInMillis.put(id, System.currentTimeMillis());
         }
