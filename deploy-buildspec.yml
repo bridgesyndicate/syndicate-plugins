@@ -4,3 +4,4 @@ phases:
     commands:
       - echo updating ecs service
       - aws ecs update-service --cluster SyndicateECSCluster --service arn:aws:ecs:us-west-2:595508394202:service/SyndicateECSCluster/SyndicateBridgeECSService --force-new-deployment
+      - aws ecs update-service --cluster SyndicateECSCluster --service arn:aws:ecs:us-east-2:595508394202:service/SyndicateECSCluster/SyndicateBridgeECSService --force-new-deployment
