@@ -58,6 +58,7 @@ class GameScore { // Singleton
     public static void initColorTags(Scoreboard board) {
         Team redTeamTag = board.registerNewTeam("RedTeamTag");
         Team blueTeamTag = board.registerNewTeam("BlueTeamTag");
+        allowFriendlyFireForTeams(redTeamTag, blueTeamTag);
         for (Player player : Bukkit.getOnlinePlayers()) {
             Team chosenTeam = null;
             ChatColor chosenColor = null;
@@ -71,6 +72,11 @@ class GameScore { // Singleton
             chosenTeam.setPrefix(chosenColor.toString());
             chosenTeam.addPlayer(player);
         }
+    }
+
+    private static void allowFriendlyFireForTeams(Team redTeamTag, Team blueTeamTag) {
+        redTeamTag.setAllowFriendlyFire(false);
+        blueTeamTag.setAllowFriendlyFire(false);
     }
 
     public static void initialize(Scoreboard board, Objective objective, Game game, Player player) {
