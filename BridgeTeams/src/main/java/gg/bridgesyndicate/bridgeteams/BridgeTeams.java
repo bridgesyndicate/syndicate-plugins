@@ -490,7 +490,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     private void startGame() {
-        Bukkit.broadcastMessage(ChatColor.GREEN + "The game will start in 5 seconds.");
+        Bukkit.broadcastMessage(ChatColor.GREEN + "The game will start in 40 seconds."); // revert this eventually
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
         }
@@ -502,7 +502,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 broadcastStartMessages();
                 startClock();
             }
-        }.runTaskLater(this, Seconds.toTicks(5.0f));
+        }.runTaskLater(this, Seconds.toTicks(40.0f));
     }
 
     private void startClock() {
