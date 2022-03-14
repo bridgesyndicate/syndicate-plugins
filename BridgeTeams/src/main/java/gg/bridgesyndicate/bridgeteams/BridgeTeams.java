@@ -1,6 +1,7 @@
 package gg.bridgesyndicate.bridgeteams;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import gg.bridgesyndicate.commands.CommandShout;
 import gg.bridgesyndicate.util.BoundingBox;
 import gg.bridgesyndicate.util.ReadFile;
 import gg.bridgesyndicate.util.Seconds;
@@ -77,6 +78,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ClickHandler(),this);
         this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
+        this.getCommand("shout").setExecutor(new CommandShout());
         cages = new Cages(this);
         setGameRules();
         MapMetadata mapMetadata = prepareMapMetadata();
