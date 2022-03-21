@@ -17,17 +17,25 @@ public class ClickHandler implements Listener {
 
     public static HashMap<UUID, Integer> lastBlockPlaceTimestamp = new HashMap<>();
     public static HashMap<UUID, Integer> lastPlaced2BlocksIn2Ticks = new HashMap<>();
+    public static HashMap<UUID, Integer> lastPlaced3BlocksIn3Ticks = new HashMap<>();
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
 
         Player player = event.getPlayer();
         UUID id = player.getUniqueId();
-        if(lastPlaced2BlocksIn2Ticks.get(id) != null) {
-            if(MinecraftServer.currentTick - lastPlaced2BlocksIn2Ticks.get(id) < 2){
+        if(lastPlaced3BlocksIn3Ticks.get(id) != null) {
+            if(MinecraftServer.currentTick - lastPlaced3BlocksIn3Ticks.get(id) < 2){
                 player.sendMessage(ChatColor.DARK_RED + "Prevented right-click mouse abuse.");
                 event.setCancelled(true);
-                // 3) if player places 3 blocks in 3 ticks, cancel
+                // 4) if player places 4 blocks in 4 ticks, cancel
+            }
+            lastPlaced3BlocksIn3Ticks.remove(id);
+        }
+        if(lastPlaced2BlocksIn2Ticks.get(id) != null) {
+            if(MinecraftServer.currentTick - lastPlaced2BlocksIn2Ticks.get(id) < 2){
+                lastPlaced3BlocksIn3Ticks.put(id, MinecraftServer.currentTick);
+                // 3) mark down when a player places 3 blocks in 3 ticks
             }
             lastPlaced2BlocksIn2Ticks.remove(id);
         }
