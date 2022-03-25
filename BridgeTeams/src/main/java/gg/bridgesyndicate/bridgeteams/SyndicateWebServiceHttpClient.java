@@ -5,6 +5,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -35,6 +36,12 @@ public class SyndicateWebServiceHttpClient {
         syndicateWebServiceRequest.setBody(payload);
         syndicateWebServiceRequest.createAndSignRequest();
         return(doPut());
+    }
+
+    public int post(String taskArn) throws IOException, URISyntaxException {
+        syndicateWebServiceRequest.setBody(taskArn);
+        syndicateWebServiceRequest.createAndSignRequest();
+        return(doPost());
     }
 
     public String getReturnValueString() {
@@ -78,6 +85,32 @@ public class SyndicateWebServiceHttpClient {
                 httpPut.addHeader(key, value);
             }
             try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    returnValueString = EntityUtils.toString(entity);
+                    for (Header header : response.getAllHeaders()) {
+                        System.out.println(header.getName() + " : " + header.getValue());
+                    }
+                }
+                return (response.getStatusLine().getStatusCode());
+            }
+        }
+    }
+
+    private int doPost() throws IOException {
+        Map<String, String> headerMap = syndicateWebServiceRequest.getRequest().getHeaders();
+        Iterator<String> iterator = headerMap.keySet().iterator();
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost httpPost = new HttpPost(syndicateWebServiceRequest.getURI());
+            HttpEntity httpEntity = new ByteArrayEntity(syndicateWebServiceRequest.getBody().getBytes(StandardCharsets.UTF_8));
+            httpPost.setEntity(httpEntity);
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                String value = headerMap.get(key);
+                httpPost.addHeader(key, value);
+            }
+            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     returnValueString = EntityUtils.toString(entity);

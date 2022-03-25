@@ -10,12 +10,21 @@ public class ContainerMetadata {
 
     private String containerMetadataJson = "";
 
-    ContainerMetadata(String url) throws IOException {
-        if (url == null) {
+    ContainerMetadata(boolean useTestData) throws IOException {
+        if (useTestData) {
             this.containerMetadataJson = HttpClient.getTestContainerMetadata();
         } else {
+            String url = System.getenv("ECS_CONTAINER_METADATA_URI_V4");
             this.containerMetadataJson = HttpClient.get(url);
         }
+    }
+
+    public String getTaskArn() {
+        JsonElement jelement = new JsonParser().parse(containerMetadataJson);
+        JsonObject jobject = jelement.getAsJsonObject();
+        return (jobject.getAsJsonObject("Labels")
+                .get("com.amazonaws.ecs.task-arn")
+                .getAsString());
     }
 
     public String getTaskIP() {
@@ -30,7 +39,7 @@ public class ContainerMetadata {
     }
 
     public static void main(String[] args) throws IOException {
-        ContainerMetadata containerMetadata = new ContainerMetadata(null);
+        ContainerMetadata containerMetadata = new ContainerMetadata(true);
         System.out.println(containerMetadata.getTaskIP());
     }
 }

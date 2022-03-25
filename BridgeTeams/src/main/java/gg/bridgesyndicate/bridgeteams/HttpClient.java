@@ -3,6 +3,8 @@ package gg.bridgesyndicate.bridgeteams;
 import com.amazonaws.http.HttpMethodName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -13,8 +15,6 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.UUID;
-
 
 public class HttpClient {
 
@@ -64,6 +64,36 @@ public class HttpClient {
         return (syndicateWebServiceHttpClient.getReturnValueString());
     }
 
+    public static String post(String taskArn) throws IOException, URISyntaxException {
+        boolean development = false;
+        if ( System.getenv("SYNDICATE_SKIP_SERVICE_CALLS") != null ) {
+            System.out.println("SYNDICATE_SKIP_SERVICE_CALLS is set. Skipping post().");
+            return ("");
+        }
+        if ( System.getenv("SYNDICATE_ENV").equals("development")) {
+            System.out.println("SYNDICATE_ENV is development, using local endpoints.");
+            System.out.println("set SYNDICATE_SKIP_SERVICE_CALLS to skip service calls in development.");
+            development = true;
+        }
+
+        String resource = "/auth/scale-in";
+        String payload = getPayloadForPost(taskArn);
+        SyndicateWebServiceHttpClient syndicateWebServiceHttpClient =
+                new SyndicateWebServiceHttpClient(resource, HttpMethodName.POST, development);
+        int httpStatus = syndicateWebServiceHttpClient.post(payload);
+        if (httpStatus != HttpStatus.SC_OK) {
+            throw new IOException("Response Status not 200, was: " + httpStatus);
+        }
+        System.out.println("scale-in called, status: 200");
+        return (syndicateWebServiceHttpClient.getReturnValueString());
+    }
+
+    private static String getPayloadForPost(String taskArn) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        PostPayload postPayload = new PostPayload(taskArn);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(postPayload);
+    }
+
     private static PutMetaObject getPaylodAndResourceForPut(Game game, PUT_REASONS put_reason) throws JsonProcessingException {
         String payload = null;
         String resource = null;
@@ -85,79 +115,57 @@ public class HttpClient {
     }
 
     public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
-        String gameJson = "{  \"blueTeam\": [\n" +
-                "    \"vice9\"\n" +
-                "  ],\n" +
-                "  \"uuid\": \"12345678-d05a-4b36-a489-8584b10deb7a\",\n" +
-                "  \"requiredPlayers\": 2,\n" +
-                "  \"goalsToWin\": 2,\n" +
-                "  \"gameLengthInSeconds\": 600,\n" +
-                "  \"redTeam\": [\n" +
-                "    \"NitroholicPls\"\n" +
-                "  ]\n" +
-                "}}\n";
-        Game game = Game.deserialize(gameJson);
-        game.addContainerMetaData();
-//        game.playerJoined("NitroholicPls");
-//        game.playerJoined("vice9");
-        game.setState(Game.GameState.CAGED);
-        game.setState(Game.GameState.DURING_GAME);
-        game.addGoalInfo(UUID.randomUUID());
-//        Thread.sleep(2000);
-        game.setState(Game.GameState.AFTER_GAME);
-        game.setEndTime();
-        game.addKillInfo(UUID.randomUUID());
-        System.out.println(Game.serialize(game));
-        String foo = put(game, PUT_REASONS.FINISHED_GAME);
-        System.out.println(foo);
+        String taskArn = "arn:aws:ecs:us-east-2:595508394202:task/SyndicateECSCluster/250d85bc107e4dcbb39666340c2a3d11";
+        String payload = getPayloadForPost(taskArn);
+        System.out.println(payload);
     }
 
     public static String getTestContainerMetadata(){
         return ("{\n" +
-                "  \"DockerId\": \"5b42900b6d094b249db5315b7cb83612-2590604502\",\n" +
-                "  \"Name\": \"bridge-dev-server\",\n" +
-                "  \"DockerName\": \"bridge-dev-server\",\n" +
-                "  \"Image\": \"595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers\",\n" +
-                "  \"ImageID\": \"sha256:95d7ff1afab8632f4fad8a05a68c7f19fd69f989f1fcbebdfdcfe08684648b9a\",\n" +
+                "  \"DockerId\": \"250d85bc107e4dcbb39666340c2a3d1e-1942472365\",\n" +
+                "  \"Name\": \"SyndicateBridgeTask\",\n" +
+                "  \"DockerName\": \"SyndicateBridgeTask\",\n" +
+                "  \"Image\": \"595508394202.dkr.ecr.us-west-2.amazonaws.com/syn-bridge-servers:latest\",\n" +
+                "  \"ImageID\": \"sha256:40a17781c6efe883d633db4b9134a5ac613998d8856e9b7b19805641e0c6d009\",\n" +
                 "  \"Labels\": {\n" +
-                "    \"com.amazonaws.ecs.cluster\": \"arn:aws:ecs:us-west-2:595508394202:cluster/default\",\n" +
-                "    \"com.amazonaws.ecs.container-name\": \"bridge-dev-server\",\n" +
-                "    \"com.amazonaws.ecs.task-arn\": \"arn:aws:ecs:us-west-2:595508394202:task/default/5b42900b6d094b249db5315b7cb83612\",\n" +
-                "    \"com.amazonaws.ecs.task-definition-family\": \"bridge-dev-server\",\n" +
-                "    \"com.amazonaws.ecs.task-definition-version\": \"4\"\n" +
+                "    \"com.amazonaws.ecs.cluster\": \"arn:aws:ecs:us-east-2:595508394202:cluster/SyndicateECSCluster\",\n" +
+                "    \"com.amazonaws.ecs.container-name\": \"SyndicateBridgeTask\",\n" +
+                "    \"com.amazonaws.ecs.task-arn\": \"arn:aws:ecs:us-east-2:595508394202:task/SyndicateECSCluster/250d85bc107e4dcbb39666340c2a3d11\",\n" +
+                "    \"com.amazonaws.ecs.task-definition-family\": \"SyndicateBridgeTaskDefinition\",\n" +
+                "    \"com.amazonaws.ecs.task-definition-version\": \"5\"\n" +
                 "  },\n" +
                 "  \"DesiredStatus\": \"RUNNING\",\n" +
                 "  \"KnownStatus\": \"RUNNING\",\n" +
                 "  \"Limits\": {\n" +
                 "    \"CPU\": 2\n" +
                 "  },\n" +
-                "  \"CreatedAt\": \"2021-08-01T18:48:46.83778976Z\",\n" +
-                "  \"StartedAt\": \"2021-08-01T18:48:46.83778976Z\",\n" +
+                "  \"CreatedAt\": \"2022-03-23T03:32:38.199359593Z\",\n" +
+                "  \"StartedAt\": \"2022-03-23T03:32:38.199359593Z\",\n" +
                 "  \"Type\": \"NORMAL\",\n" +
                 "  \"Networks\": [\n" +
                 "    {\n" +
                 "      \"NetworkMode\": \"awsvpc\",\n" +
                 "      \"IPv4Addresses\": [\n" +
-                "        \"10.0.0.35\"\n" +
+                "        \"10.1.15.193\"\n" +
                 "      ],\n" +
                 "      \"AttachmentIndex\": 0,\n" +
-                "      \"MACAddress\": \"06:87:73:2d:ba:a9\",\n" +
-                "      \"IPv4SubnetCIDRBlock\": \"10.0.0.0/24\",\n" +
+                "      \"MACAddress\": \"02:ba:db:de:5f:34\",\n" +
+                "      \"IPv4SubnetCIDRBlock\": \"10.1.0.0/20\",\n" +
                 "      \"DomainNameServers\": [\n" +
-                "        \"10.0.0.2\"\n" +
+                "        \"10.1.0.2\"\n" +
                 "      ],\n" +
                 "      \"DomainNameSearchList\": [\n" +
-                "        \"us-west-2.compute.internal\"\n" +
+                "        \"us-east-2.compute.internal\"\n" +
                 "      ],\n" +
-                "      \"PrivateDNSName\": \"ip-10-0-0-35.us-west-2.compute.internal\",\n" +
-                "      \"SubnetGatewayIpv4Address\": \"10.0.0.1/24\"\n" +
+                "      \"PrivateDNSName\": \"ip-10-1-15-193.us-east-2.compute.internal\",\n" +
+                "      \"SubnetGatewayIpv4Address\": \"10.1.0.1/20\"\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"ContainerARN\": \"arn:aws:ecs:us-west-2:595508394202:container/default/5b42900b6d094b249db5315b7cb83612/f6af1056-cadb-4547-bf7c-a61988aab72c\",\n" +
+                "  \"ContainerARN\": \"arn:aws:ecs:us-east-2:595508394202:container/SyndicateECSCluster/250d85bc107e4dcbb39666340c2a3d1e/4cd5ef94-4d1b-4608-8570-1df2d310817b\",\n" +
                 "  \"LogOptions\": {\n" +
-                "    \"awslogs-group\": \"/ecs/bridge-dev-server\",\n" +
-                "    \"awslogs-region\": \"us-west-2\",\n" +
-                "    \"awslogs-stream\": \"ecs/bridge-dev-server/5b42900b6d094b249db5315b7cb83612\"\n" +
+                "    \"awslogs-group\": \"/ecs/SyndicateBridgeTask\",\n" +
+                "    \"awslogs-region\": \"us-east-2\",\n" +
+                "    \"awslogs-stream\": \"ecs/SyndicateBridgeTask/250d85bc107e4dcbb39666340c2a3d1e\"\n" +
                 "  },\n" +
                 "  \"LogDriver\": \"awslogs\"\n" +
                 "}\n");
@@ -170,6 +178,14 @@ class PutMetaObject {
     PutMetaObject(String resource, String payload){
         this.payload = payload;
         this.resource = resource;
+    }
+}
+
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+class PostPayload {
+    public final String taskArn;
+    PostPayload(String taskArn) {
+        this.taskArn = taskArn;
     }
 }
 

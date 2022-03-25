@@ -1,5 +1,6 @@
 #!/bin/bash
 set -evx
+export AWS_DEFAULT_REGION=us-east-2
 if [[ -z $1 ]]
 then
     echo 'set the number of desired instances'

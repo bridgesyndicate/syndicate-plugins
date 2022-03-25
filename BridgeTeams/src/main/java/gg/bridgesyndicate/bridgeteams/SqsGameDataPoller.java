@@ -13,8 +13,12 @@ import gg.bridgesyndicate.util.Seconds;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class SqsGameDataPoller implements GameDataPoller{
@@ -112,6 +116,24 @@ public class SqsGameDataPoller implements GameDataPoller{
                     }
                     finalSqs.deleteMessage(queueUrl, message.getReceiptHandle());
                     this.cancel();
+                } else {
+                    ContainerMetadata containerMetadata = null;
+                    try {
+                        containerMetadata = new ContainerMetadata(false);
+                    } catch (IOException e) {
+                        System.out.println("ERROR: fetching container metadata for scale-in check. Continue polling");
+                    }
+                    if (containerMetadata != null) {
+                        String taskArn = containerMetadata.getTaskArn();
+                        try {
+                            HttpClient.post(taskArn);
+                            new FileOutputStream("KYS").close();
+                            System.exit(0);
+                        } catch (IOException | URISyntaxException e) {
+                            e.printStackTrace();
+                            System.out.println("ERROR: posting to scale-in or writing KYS file. Continue polling.");
+                        }
+                    }
                 }
             }
         }.runTaskTimer(bridgeTeams, 0, Seconds.toTicks(1.0f));
