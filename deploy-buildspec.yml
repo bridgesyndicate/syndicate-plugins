@@ -1,7 +1,0 @@
-version: 0.2
-phases:
-  build:
-    commands:
-      - echo updating ecs service
-      - aws ecs update-service --region us-west-2 --cluster SyndicateECSCluster --service arn:aws:ecs:us-west-2:595508394202:service/SyndicateECSCluster/SyndicateBridgeECSService --force-new-deployment
-      - aws ecs update-service --region us-east-2 --cluster SyndicateECSCluster --service arn:aws:ecs:us-east-2:595508394202:service/SyndicateECSCluster/SyndicateBridgeECSService --force-new-deployment
