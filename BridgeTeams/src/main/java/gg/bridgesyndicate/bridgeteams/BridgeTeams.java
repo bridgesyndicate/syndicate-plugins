@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -139,8 +138,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
-        if ( (game.getState() != Game.GameState.DURING_GAME &&
-                game.getState() != Game.GameState.CAGED)
+        if ( (!game.isDuringGame())
                 ||
                 (event.getEntity() instanceof Player && event.getDamager() instanceof Player
                         && MatchTeam.getTeam((Player) event.getDamager()) == MatchTeam.getTeam((Player) event.getEntity())
@@ -185,7 +183,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void onDeathOfPlayerImpl(Player player, Player killer, Event event){
         sendDeadPlayerToSpawn(player);
-        if(game.getState() == Game.GameState.DURING_GAME) {
+        if(game.getState() == Game.GameState.PLAYING) {
             game.addKillInfo(killer.getUniqueId());
             GameScore score = GameScore.getInstance();
             score.updateKillersKills(killer, game);
@@ -231,7 +229,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerUse(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (game.getState() == Game.GameState.CAGED) {
+        if (game.getState() == Game.GameState.IN_CAGES) {
             if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 if (player.getItemInHand().getType() == Material.STAINED_CLAY) {
                     player.sendMessage(ChatColor.RED + "You can't place blocks there!");
@@ -324,7 +322,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     }
 
     public void checkForGoal(Player player) throws JsonProcessingException {
-        if (game.getState() != Game.GameState.DURING_GAME) return;
+        if (game.getState() != Game.GameState.PLAYING) return;
 
         for (GoalLocationInfo goal : BridgeGoals.getGoalList()) {
             if (MatchTeam.getTeam(player) != goal.getTeam()) {
@@ -347,7 +345,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         if (player.getLocation().getY() < 83) {
             if ((player.getLastDamageCause() instanceof EntityDamageByEntityEvent)
-                    && (game.getState() == Game.GameState.DURING_GAME)) {
+                    && (game.getState() == Game.GameState.PLAYING)) {
 
                 long now = System.currentTimeMillis();
                 Entity entity = ((EntityDamageByEntityEvent) player.getLastDamageCause()).getDamager();
@@ -364,7 +362,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 }
 
             } else {
-                if (game.getState() == Game.GameState.DURING_GAME) {
+                if (game.getState() == Game.GameState.PLAYING) {
                     String killed = player.getName();
                     Bukkit.broadcastMessage(MatchTeam.getChatColor(player) + killed + ChatColor.GRAY + " fell into the void.");
                 }
@@ -407,13 +405,18 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 if (game.getNumberOfJoinedPlayers() == game.getRequiredPlayers())
                     startGame();
             } else {
-                System.out.println("player " + player.getName() + " already joined");
-                Scoreboard board = disconnectedPlayerScoreboard.get(player.getUniqueId());
-                player.setScoreboard(board);
-                if(game.getState() != Game.GameState.BEFORE_GAME)
-                    GameScore.updateScoreBubbles(board);
-                teleportRejoinedPlayer(player);
                 ChatBroadcasts.playerRejoinMessage(player);
+                if(!game.isBeforeGame()) {
+                    Scoreboard board = disconnectedPlayerScoreboard.get(player.getUniqueId());
+                    if (board == null) { // if they haven't joined since before the game started
+                        createScoreboardForPlayer(Bukkit.getScoreboardManager(), player);
+                        GameScore.updateScoreBubbles(player.getScoreboard());
+                    } else {
+                        player.setScoreboard(board);
+                        GameScore.updateScoreBubbles(board);
+                    }
+                    teleportRejoinedPlayer(player);
+                }
             }
         } else {
             System.out.println(player.getName() + " is spectator.");
@@ -425,10 +428,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void teleportRejoinedPlayer(Player player) {
         //teleport to the right place, depending upon game mode
         switch (game.getState()) {
-            case DURING_GAME:
+            case PLAYING:
                 sendDeadPlayerToSpawn(player);
                 break;
-            case CAGED:
+            case IN_CAGES:
+            case TRIGGERED:
                 player.teleport(MatchTeam.getCagePlayerLocation(player));
                 break;
             default:
@@ -438,12 +442,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void setInventoryForPlayer(Player player) {
         switch (game.getState()) {
-            case BEFORE_GAME:
+            case AWAITING_PLAYERS:
+            case TRIGGERED:
             case AFTER_GAME:
                 player.getInventory().clear();
                 break;
-            case DURING_GAME:
-            case CAGED:
+            case PLAYING:
+            case IN_CAGES:
                 inventory.setDefaultInventory(player);
                 break;
             default:
@@ -453,12 +458,13 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     public void setGameModeForPlayer(Player player) {
         switch (game.getState()) {
-            case BEFORE_GAME:
-            case CAGED:
+            case AWAITING_PLAYERS:
+            case TRIGGERED:
+            case IN_CAGES:
             case AFTER_GAME:
                 player.setGameMode(GameMode.ADVENTURE);
                 break;
-            case DURING_GAME:
+            case PLAYING:
                 player.setGameMode(GameMode.SURVIVAL);
                 break;
             default:
@@ -468,9 +474,8 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
 
     private void buildScoreboards() {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
-        for (Iterator<String> it = game.getJoinedPlayers(); it.hasNext(); ) {
-            String playerName = it.next();
-            createScoreboardForPlayer(manager, Bukkit.getPlayer(playerName));
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            createScoreboardForPlayer(manager, player);
         }
     }
 
@@ -505,6 +510,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                 startClock();
             }
         }.runTaskLater(this, Seconds.toTicks(5.0f));
+        game.setState(Game.GameState.TRIGGERED);
     }
 
     private void startClock() {
@@ -536,9 +542,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         for (TeamType team : MatchTeam.getTeams()) {
             for (String playerName : MatchTeam.getPlayers(team)) {
                 Player player = Bukkit.getPlayer(playerName);
-                TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
-                String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
-                ChatBroadcasts.gameStartMessage(player, opponentNames, game);
+                if (player != null) { // if they are online
+                    TeamType opposingTeam = MatchTeam.getOpposingTeam(team);
+                    String opponentNames = String.join(", ", MatchTeam.getPlayers(opposingTeam));
+                    ChatBroadcasts.gameStartMessage(player, opponentNames, game);
+                }
             }
         }
     }
@@ -615,16 +623,15 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     public void onQuit(final PlayerQuitEvent e) {
         Player player = e.getPlayer();
         e.setQuitMessage("");
-        Scoreboard board = player.getScoreboard();
-        disconnectedPlayerScoreboard.put(player.getUniqueId(), board);
         if (game != null){
             if(player.getGameMode().equals(GameMode.SPECTATOR)){
                 ChatBroadcasts.spectatorQuitMessage(player);
             } else {
                 ChatBroadcasts.playerQuitMessage(player);
             }
-            if (game.getState() == Game.GameState.BEFORE_GAME) {
-                game.unJoinPlayer(player.getName());
+            if (game.isDuringGame()) {
+                Scoreboard board = player.getScoreboard();
+                disconnectedPlayerScoreboard.put(player.getUniqueId(), board);
             }
         }
     }

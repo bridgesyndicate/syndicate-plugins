@@ -105,7 +105,7 @@ public class Cages {
         new BukkitRunnable() {
             @Override
             public void run() {
-                plugin.getGame().setState(Game.GameState.DURING_GAME);
+                plugin.getGame().setState(Game.GameState.PLAYING);
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.playSound(player.getLocation(), Sound.NOTE_PIANO, 1.0f, 1.0f);
                 }
@@ -120,7 +120,7 @@ public class Cages {
     }
 
     public void cagePlayers(boolean isStartOfGame) {
-        plugin.getGame().setState(Game.GameState.CAGED);
+        plugin.getGame().setState(Game.GameState.IN_CAGES);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if(!player.getGameMode().equals(GameMode.SPECTATOR)){
                 player.teleport(MatchTeam.getCagePlayerLocation(player));
