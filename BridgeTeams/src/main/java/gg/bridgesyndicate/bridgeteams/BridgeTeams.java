@@ -156,7 +156,11 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
             Player damage_maker = (Player) event.getDamager();
             UUID id = damage_maker.getUniqueId();
             lastHitTimestampInMillis.put(id, System.currentTimeMillis());
+            if (damage_maker.getNoDamageTicks() > 10) {
+                damage_maker.setNoDamageTicks(0);
+            }
         }
+
     }
 
     public void resetPlayerHealthAndInventory(Player player) {
