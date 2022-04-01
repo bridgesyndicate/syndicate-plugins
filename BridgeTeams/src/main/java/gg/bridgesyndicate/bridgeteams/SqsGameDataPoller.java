@@ -1,7 +1,5 @@
 package gg.bridgesyndicate.bridgeteams;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.regions.Regions;
@@ -13,12 +11,9 @@ import gg.bridgesyndicate.util.Seconds;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 public class SqsGameDataPoller implements GameDataPoller{
@@ -36,7 +31,7 @@ public class SqsGameDataPoller implements GameDataPoller{
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (game.getState() == Game.GameState.BEFORE_GAME) {
+                if (game.getState() == Game.GameState.AWAITING_PLAYERS) {
                     System.out.println("Game has not started in " + NO_START_ABORT_TIME_IN_SECONDS
                             + " seconds. Aborting.");
                     game.setState(Game.GameState.ABORTED);

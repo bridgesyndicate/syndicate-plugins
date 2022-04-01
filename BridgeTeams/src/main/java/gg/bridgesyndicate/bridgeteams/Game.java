@@ -29,7 +29,7 @@ public class Game {
     public long gameEndedAt = 0;
     private String taskArn;
 
-    public enum GameState { BEFORE_GAME, DURING_GAME, AFTER_GAME, CAGED, TERMINATE, ABORTED }
+    public enum GameState {AWAITING_PLAYERS, TRIGGERED, IN_CAGES, PLAYING, AFTER_GAME, TERMINATE, ABORTED }
     private GameState state;
     private String taskIP;
     private List redTeamMinecraftUuids;
@@ -51,9 +51,19 @@ public class Game {
     private String lastScorerName;
 
     public Game() {
-        this.state = state.BEFORE_GAME;
+        this.state = state.AWAITING_PLAYERS;
         this.dequeuedAt = Game.getIso8601NowString();
         this.gameScore = GameScore.getInstance();
+    }
+
+    public boolean isBeforeGame() {
+        return(this.state == GameState.AWAITING_PLAYERS ||
+                this.state == GameState.TRIGGERED);
+    }
+
+    public boolean isDuringGame() {
+        return(this.state == GameState.IN_CAGES ||
+                this.state == GameState.PLAYING);
     }
 
     /* METHODS */
@@ -217,7 +227,7 @@ public class Game {
     }
 
     public void setState(GameState state) {
-        if (this.state == GameState.BEFORE_GAME && state == GameState.CAGED) { //only happens once
+        if (this.state == GameState.TRIGGERED && state == GameState.IN_CAGES) { //only happens once
             gameTimer = new GameTimer(gameLengthInSeconds);
             gameStartedAt = gameTimer.getGameStartedUnixTime();
         }
