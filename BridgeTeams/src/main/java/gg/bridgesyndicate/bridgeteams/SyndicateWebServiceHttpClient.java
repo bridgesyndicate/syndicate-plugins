@@ -89,7 +89,7 @@ public class SyndicateWebServiceHttpClient {
                 if (entity != null) {
                     returnValueString = EntityUtils.toString(entity);
                     for (Header header : response.getAllHeaders()) {
-                        System.out.println(header.getName() + " : " + header.getValue());
+                        // System.out.println(header.getName() + " : " + header.getValue());
                     }
                 }
                 return (response.getStatusLine().getStatusCode());
@@ -115,7 +115,7 @@ public class SyndicateWebServiceHttpClient {
                 if (entity != null) {
                     returnValueString = EntityUtils.toString(entity);
                     for (Header header : response.getAllHeaders()) {
-                        System.out.println(header.getName() + " : " + header.getValue());
+                        // System.out.println(header.getName() + " : " + header.getValue());
                     }
                 }
                 return (response.getStatusLine().getStatusCode());
