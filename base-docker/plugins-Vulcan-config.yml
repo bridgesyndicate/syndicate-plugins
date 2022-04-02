@@ -2746,7 +2746,7 @@ checks:
           decay: 0.75
     scaffold:
       a:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2758,7 +2758,7 @@ checks:
         punishment-commands:
         - kick %player% &c[Vulcan] Unfair Advantage
       b:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2774,7 +2774,7 @@ checks:
           multiple: 0.25
           decay: 0.25
       c:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2790,7 +2790,7 @@ checks:
           multiple: 0.25
           decay: 0.5
       d:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2806,7 +2806,7 @@ checks:
           multiple: 0.25
           decay: 0.5
       e:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2822,7 +2822,7 @@ checks:
           multiple: 0.25
           decay: 0.5
       g:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2838,7 +2838,7 @@ checks:
           multiple: 0.25
           decay: 0.25
       h:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2854,7 +2854,7 @@ checks:
           multiple: 0.25
           decay: 0.35
       i:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2866,7 +2866,7 @@ checks:
         punishment-commands:
         - kick %player% &c[Vulcan] Unfair Advantage
       j:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2878,7 +2878,7 @@ checks:
         punishment-commands:
         - kick %player% &c[Vulcan] Unfair Advantage
       k:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
@@ -2895,7 +2895,7 @@ checks:
           decay: 0.35
         max-blocks: 6
       m:
-        enabled: true
+        enabled: false
         punishable: false
         discord-alert-interval: 3
         broadcast-punishment: false
