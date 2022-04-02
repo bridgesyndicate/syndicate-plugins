@@ -16,7 +16,33 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-public class SqsGameDataPoller implements GameDataPoller{
+public class SqsGameDataPoller implements GameDataPoller {
+
+    static class EmptyPollCounter {
+        private int emptyPolls;
+
+        EmptyPollCounter() {
+            this.emptyPolls = 0;
+        }
+
+        public int getEmptyPolls() {
+            return emptyPolls;
+        }
+
+        public void incrementEmptyPollCount() {
+            emptyPolls = emptyPolls + 1;
+        }
+
+        public void reset() {
+            emptyPolls = 0;
+        }
+    }
+
+    private final EmptyPollCounter emptyPollCounter;
+
+    SqsGameDataPoller(){
+        emptyPollCounter = new EmptyPollCounter();
+    }
 
     private void quitAfterTimeout(Plugin plugin){
         new BukkitRunnable() {
@@ -112,21 +138,26 @@ public class SqsGameDataPoller implements GameDataPoller{
                     finalSqs.deleteMessage(queueUrl, message.getReceiptHandle());
                     this.cancel();
                 } else {
-                    ContainerMetadata containerMetadata = null;
-                    try {
-                        containerMetadata = new ContainerMetadata(false);
-                    } catch (IOException e) {
-                        System.out.println("ERROR: fetching container metadata for scale-in check. Continue polling");
-                    }
-                    if (containerMetadata != null) {
-                        String taskArn = containerMetadata.getTaskArn();
+                    emptyPollCounter.incrementEmptyPollCount();
+                    System.out.println("no messages on " + QUEUE_NAME + " " + emptyPollCounter.getEmptyPolls() + " times.");
+                    if (emptyPollCounter.getEmptyPolls() > 15) { // 15 * 20 = 300 = 5 minutes
+                        ContainerMetadata containerMetadata = null;
                         try {
-                            HttpClient.post(taskArn);
-                            new FileOutputStream("KYS").close();
-                            System.exit(0);
-                        } catch (IOException | URISyntaxException e) {
-                            e.printStackTrace();
-                            System.out.println("ERROR: posting to scale-in or writing KYS file. Continue polling.");
+                            containerMetadata = new ContainerMetadata(false);
+                        } catch (IOException e) {
+                            System.out.println("ERROR: fetching container metadata for scale-in check. Continue polling");
+                        }
+                        if (containerMetadata != null) {
+                            String taskArn = containerMetadata.getTaskArn();
+                            try {
+                                HttpClient.post(taskArn);
+                                new FileOutputStream("KYS").close();
+                                System.exit(0);
+                            } catch (IOException | URISyntaxException e) {
+                                e.printStackTrace();
+                                emptyPollCounter.reset();
+                                System.out.println("404 from scale-in, reset counter, continue polling.");
+                            }
                         }
                     }
                 }
