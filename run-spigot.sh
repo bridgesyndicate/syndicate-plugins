@@ -12,6 +12,8 @@ do
     else
       $(./pick-map.rb)
       echo picked map $SYNDICATE_MAP_NAME
+      echo map uri    $SYNDICATE_MAP_URI
+      echo map meta   $SYNDICATE_MAP_META
       rm -rf world && tar -xf world.tar.gz
       java -Xms768M -Xmx768M -XX:+UseG1GC -DmapName=$SYNDICATE_MAP_NAME -jar spigot-1.8.8.jar nogui --noconsole
       rm -rf world # clean up

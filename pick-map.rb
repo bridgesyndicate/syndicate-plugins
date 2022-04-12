@@ -16,5 +16,7 @@ end
 # echo the map name
 export_cmd = <<EOD
 export SYNDICATE_MAP_NAME=#{map}
+export SYNDICATE_MAP_URI=#{world}
+export SYNDICATE_MAP_META=#{metadata}
 EOD
 puts export_cmd
