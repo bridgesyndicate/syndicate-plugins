@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
@@ -73,10 +74,12 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         System.out.println(this.getClass() + " is loading.");
-        this.getServer().getPluginManager().registerEvents(this, this);
-        this.getServer().getPluginManager().registerEvents(new ChatHandler(),this);
-        this.getServer().getPluginManager().registerEvents(new ClickHandler(),this);
-        this.getServer().getPluginManager().registerEvents(new ArrowHandler(this),this);
+        PluginManager pluginManager = this.getServer().getPluginManager();
+        pluginManager.registerEvents(this, this);
+        pluginManager.registerEvents(new ArrowHandler(this),this);
+        pluginManager.registerEvents(new ChatHandler(),this);
+        pluginManager.registerEvents(new ClickHandler(),this);
+        pluginManager.registerEvents(new DamageHandler(this), this);
         this.getCommand("shout").setExecutor(new CommandShout());
         cages = new Cages(this);
         setGameRules();
@@ -134,29 +137,6 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         String mapName = System.getProperty("mapName", "errorMapNotSet");
         System.out.println("using map " + mapName);
         BridgeTeams.game.setMapName(mapName);
-    }
-
-    @EventHandler
-    public void onDamage(EntityDamageByEntityEvent event) {
-        if ( (!game.isDuringGame())
-                ||
-                (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-                        && MatchTeam.getTeam((Player) event.getDamager()) == MatchTeam.getTeam((Player) event.getEntity())
-                 )
-        ) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onHit(EntityDamageByEntityEvent event) {
-        if (event.getEntity() instanceof Player && event.getDamager() instanceof Player
-        && MatchTeam.getTeam((Player) event.getDamager()) != MatchTeam.getTeam((Player) event.getEntity())
-        ) {
-            Player damage_maker = (Player) event.getDamager();
-            UUID id = damage_maker.getUniqueId();
-            lastHitTimestampInMillis.put(id, System.currentTimeMillis());
-        }
     }
 
     public void resetPlayerHealthAndInventory(Player player) {

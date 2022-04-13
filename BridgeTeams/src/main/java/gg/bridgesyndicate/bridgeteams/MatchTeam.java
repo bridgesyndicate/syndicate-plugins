@@ -157,5 +157,9 @@ public class MatchTeam
     public static ChatColor getChatColorForTeamType(TeamType teamType) {
         return (teamType == TeamType.RED) ? ChatColor.RED : ChatColor.BLUE;
     }
+    
+    public static boolean onSameTeam(Player playerOne, Player playerTwo) {
+        return MatchTeam.getTeam(playerOne) == MatchTeam.getTeam(playerTwo);
+    }
 }
 
