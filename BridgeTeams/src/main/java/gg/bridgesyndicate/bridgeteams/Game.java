@@ -40,6 +40,7 @@ public class Game {
     private List blueTeamDiscordNames;
     private String queuedAt;
     private String queuedVia;
+    private String season;
     private List acceptedByDiscordIds;
     private HashSet<String> joinedPlayers = new HashSet();
     private GameTimer gameTimer;
@@ -73,6 +74,7 @@ public class Game {
     public String getDequeuedAt() { return dequeuedAt; }
     public String getQueuedAt() { return queuedAt; }
     public String getQueuedVia() { return queuedVia; }
+    public String getSeason() { return season; }
     public void setMapName(String mapName) { this.mapName = mapName; }
     public String getMapName() { return mapName; }
     public String getUuid() {
