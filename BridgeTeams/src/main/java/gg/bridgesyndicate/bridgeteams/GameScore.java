@@ -19,7 +19,7 @@ class GameScore { // Singleton
     private static final String KILLS_LINE = ChatColor.WHITE + "Kills: ";
     private static final String GOALS_LINE = ChatColor.WHITE + "Goals: ";
     private static final String MODE_LINE = ChatColor.WHITE + "Mode: ";
-    private static final String IP_LINE = ChatColor.YELLOW + "buckytour.com";
+    private static final String IP_LINE = ChatColor.YELLOW + "bridgesyndicate.gg";
     private static final String BLANK1_LINE = "";
 
     private static int goalsToWin = 0;
