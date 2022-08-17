@@ -94,7 +94,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         }
         GameDataPoller gameDataPoller = GameDataPollerFactory.produce();
         gameDataPoller.poll(this);
-        measureTimings();
+        // measureTimings();
     }
 
     private void measureTimings(){
