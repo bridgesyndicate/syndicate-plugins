@@ -10,11 +10,19 @@ import static org.junit.Assert.*;
 
 public class GameTest {
 
+    private String readJson() throws IOException {
+        return ReadFile.read(ReadFile.pathToResources() + "sample-json/another-game.json");
+    }
+
     @Test
     public void deserialize() throws IOException {
-        String json = ReadFile.read(ReadFile.pathToResources()  + "sample-json/another-game.json");
-        Game game = Game.deserialize(json);
+        Game game = Game.deserialize(readJson());
         assertTrue(game instanceof Game);
+    }
+    @Test
+    public void serialize() throws IOException{
+        String json = readJson();
+        Game game = Game.deserialize(json);
         assertTrue(Game.serialize(game) instanceof String);
         ObjectMapper mapper = new ObjectMapper();
         String newJson = Game.serialize(game);
