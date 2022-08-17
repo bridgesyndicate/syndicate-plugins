@@ -12,6 +12,7 @@
   "red_team_discord_names": [
     "viceversa"
   ],
+  "season": "season1",
   "required_players": 2,
   "goals_to_win": 3,
   "game_length_in_seconds": 180,
