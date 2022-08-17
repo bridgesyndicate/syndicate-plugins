@@ -16,6 +16,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+class EloBeforeGame {
+    public Object season_elos;
+    public Integer elo;
+}
+
 @JsonIgnoreProperties(value = { "most_recent_scorer_name" })
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Game {
@@ -47,7 +52,7 @@ public class Game {
     private List<GoalMeta> goalsScored = new ArrayList<>();
     private List<KillMeta> killsRegistered = new ArrayList<>();
     private HashMap<String, UUID> playerMap = new HashMap();
-    private HashMap<String, Integer> eloBeforeGame = new HashMap<>();
+    private HashMap<String, EloBeforeGame> eloBeforeGame = new HashMap<>();
     private String mapName;
     private String lastScorerName;
 
@@ -68,7 +73,7 @@ public class Game {
     }
 
     /* METHODS */
-    public HashMap<String, Integer> getEloBeforeGame() {
+    public HashMap<String, EloBeforeGame> getEloBeforeGame() {
         return eloBeforeGame;
     }
     public String getDequeuedAt() { return dequeuedAt; }
