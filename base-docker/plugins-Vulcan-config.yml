@@ -1,4 +1,4 @@
-prefix: '&4&lBehindBarrs &8»'
+prefix: '&4&lSyndicateAnticheat &8»'
 alerts:
   format: '%prefix% &f%player% &7failed &f%check% %dev%&7(&fType %type%&7)%dev% &7[&4%vl%&7/&4%max-vl%&7]'
   hover-message:
@@ -13,13 +13,13 @@ alerts:
   - ''
   - '&7Click to teleport to &b%player%&7.'
   click-commands:
-  - /behindbarrs clickalert %player%
+  - /SyndicateAnticheat clickalert %player%
   click-alert-command-commands:
   - tp %player%
-  toggled-on-message: '%prefix% &7BehindBarrs alerts &aenabled&7!'
-  toggled-off-message: '%prefix% &7BehindBarrs alerts &cdisabled&7!'
+  toggled-on-message: '%prefix% &7SyndicateAnticheat alerts &aenabled&7!'
+  toggled-off-message: '%prefix% &7SyndicateAnticheat alerts &cdisabled&7!'
   print-to-console: true
-  console-format: '[BehindBarrs] %player% failed %check% %dev%(Type %type%)%dev% (%vl%/%max-vl%)'
+  console-format: '[SyndicateAnticheat] %player% failed %check% %dev%(Type %type%)%dev% (%vl%/%max-vl%)'
   custom-commands: []
   severity:
     violations:
@@ -58,8 +58,8 @@ verbose:
   - '&7Click to teleport to &b%player%&7.'
   click-commands:
   - /tp %player%
-  toggled-on-message: '%prefix% &7BehindBarrs verbose &aenabled&7!'
-  toggled-off-message: '%prefix% &7BehindBarrs verbose &cdisabled&7!'
+  toggled-on-message: '%prefix% &7SyndicateAnticheat verbose &aenabled&7!'
+  toggled-off-message: '%prefix% &7SyndicateAnticheat verbose &cdisabled&7!'
 log-file:
   enabled: false
   alert-message: '%player% failed %check% %dev%(Type %type%)%dev% [VL: %vl%] [Ping:
@@ -82,7 +82,7 @@ client-brand-alerts:
   blocked-client-brands: []
   unallowed-client-brand-kick-message: '&cYou can''t join with %client-brand%!'
   console: false
-  console-message: '[BehindBarrs] %player% joined using %client-brand%!'
+  console-message: '[SyndicateAnticheat] %player% joined using %client-brand%!'
   whitelist-enabled: false
   whitelisted-client-brands: []
 connection:
@@ -92,7 +92,7 @@ connection:
     kick-message: 'Internal Exception: io.netty.handler.timeout.ReadTimeoutException'
     staff-alert-message: '%prefix% &c%player% &7was kicked for not replying to Transaction
       Packets! &7(&c%delay%ms&7)'
-    console-message: '[BehindBarrs] &c%player% &7was kicked for not replying to Transaction
+    console-message: '[SyndicateAnticheat] &c%player% &7was kicked for not replying to Transaction
       Packets! &7(&c%delay%ms&7)'
   keepalive:
     kick-enabled: false
@@ -100,7 +100,7 @@ connection:
     kick-message: 'Internal Exception: io.netty.handler.timeout.ReadTimeoutException'
     staff-alert-message: '%prefix% &c%player% &7was kicked for not replying to KeepAlive
       Packets! &7(&c%delay%ms&7)'
-    console-message: '[BehindBarrs] &c%player% &7was kicked for not replying to KeepAlive
+    console-message: '[SyndicateAnticheat] &c%player% &7was kicked for not replying to KeepAlive
       Packets! &7(&c%delay%ms&7)'
   max-ping:
     kick-enabled: false
@@ -109,29 +109,29 @@ connection:
     kick-message: 'Internal Exception: io.netty.handler.timeout.ReadTimeoutException'
     staff-alert-message: '%prefix% &c%player% &7was kicked for having too high ping!
       &7(&c%ping%ms&7)'
-    console-message: '[BehindBarrs] &c%player% &7kicked for having too high ping!
+    console-message: '[SyndicateAnticheat] &c%player% &7kicked for having too high ping!
       &7(&c%ping%ms&7)'
 punishments:
   message: '%prefix% &c%player% &7was punished for &f%check% &7(&fType %type%&7) &7[&4x%vl%&7]'
   broadcast:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&cBehindBarrs &7has detected &c%player% &7to be cheating and has removed them
+  - '&cSyndicateAnticheat &7has detected &c%player% &7to be cheating and has removed them
     from the network.'
   - '&7&m---»--*-------------------------------------*--«---'
 judgement-days:
   started-broadcast:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&cBehindBarrs Judgement Day v1 has commenced...'
+  - '&cSyndicateAnticheat Judgement Day v1 has commenced...'
   - '&7&m---»--*-------------------------------------*--«---'
   ended-broadcast:
   - '&7&m---»--*-------------------------------------*--«---'
   - '&cThe Judgement Day has ended... %amount% players were punished.'
   - '&7&m---»--*-------------------------------------*--«---'
   commands:
-  - ban %player% &c[BehindBarrs] Judgement Day v1
+  - ban %player% &c[SyndicateAnticheat] Judgement Day v1
   broadcast:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&c%player% &7was banned for &c[BehindBarrs] Judgement Day v1&7.'
+  - '&c%player% &7was banned for &c[SyndicateAnticheat] Judgement Day v1&7.'
   - '&7&m---»--*-------------------------------------*--«---'
   cooldown: 1000
   run-at-interval: false
@@ -153,7 +153,7 @@ kick-alert-messages:
       Packet&7!'
     too-many-packets: '%prefix% &c%player% &7was kicked for &bToo Many Packets&7!'
 gui:
-  title: BehindBarrs AntiCheat
+  title: SyndicateAnticheat AntiCheat
 ghost-blocks-fix:
   enabled: false
   ghost-water-fix: false
@@ -174,13 +174,13 @@ ghost-blocks-fix:
 messages:
   no-permission: '&cYou don''t have permission to execute this command!'
   cant-execute-from-console: '&cYou can''t execute this command from console!'
-  ban-command-syntax: '%prefix% &7Proper Syntax: &c/behindbarrs ban (player)&7.'
-  kb-command-syntax: '%prefix% &7Proper Syntax: &c/behindbarrs knockback (player)
-    &8| &c/behindbarrs kb (player)&7.'
-  profile-command-syntax: '%prefix% &7Proper Syntax: &c/behindbarrs profile (player)&7.'
+  ban-command-syntax: '%prefix% &7Proper Syntax: &c/SyndicateAnticheat ban (player)&7.'
+  kb-command-syntax: '%prefix% &7Proper Syntax: &c/SyndicateAnticheat knockback (player)
+    &8| &c/SyndicateAnticheat kb (player)&7.'
+  profile-command-syntax: '%prefix% &7Proper Syntax: &c/SyndicateAnticheat profile (player)&7.'
   jday-command-syntax: '%prefix% &7Proper Syntax: &c/jday add (player) &8| &c/jday
     execute &8| &c/jday list &8| &c/jday remove (player)&7.'
-  reload-success: '%prefix% &aSuccessfully reloaded BehindBarrs!'
+  reload-success: '%prefix% &aSuccessfully reloaded SyndicateAnticheat!'
   invalid-target: '%prefix% &cThe specified player could not be found!'
   kb-test-success: '%prefix% &aSuccessfully performed knockback test on %player%!'
   jday-no-pending-bans: '%prefix% &cThere are no pending bans!'
@@ -231,31 +231,31 @@ messages:
     or CANCEL to exit!'
   remove-punishment-command: '%prefix% &cEnter the index of the command you want to
     remove. Type STOP or CANCEL to exit!'
-  disable-check-command-syntax: '%prefix% &cProper Syntax: /behindbarrs disablecheck
+  disable-check-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat disablecheck
     (check name) - case sensitive.'
   invalid-check: '%prefix% &cInvalid check name! Examples: AimA, BadPacketsF, AutoClickerJ.'
   removed-check: '%prefix% &cDisabled check %check%!'
-  violations-command-syntax: '%prefix% &cProper Syntax: /behindbarrs violations (player)'
+  violations-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat violations (player)'
   no-logs: '%prefix% &cThis player set off no logs!'
-  cps-command-syntax: '%prefix% &cProper Syntax: /behindbarrs cps (player)'
-  connection-command-syntax: '%prefix% &cProper Syntax: /behindbarrs connection (player)'
+  cps-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat cps (player)'
+  connection-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat connection (player)'
   logs-command-syntax: '%prefix% &cProper Syntax: /logs (player) (page)'
   no-logs-file: '%prefix% &cThere is no logs file!'
   logs-command-no-logs: '%prefix% &cThere were no logs found for %player%!'
   no-page: '%prefix% &cThere is no page %page% for %player%!'
-  update-available: '%prefix% &7A new update for &cBehindBarrs &7is available! (&cv%new-version%&7)'
-  latest-version: '%prefix% &aYou are running the latest version of BehindBarrs!'
+  update-available: '%prefix% &7A new update for &cSyndicateAnticheat &7is available! (&cv%new-version%&7)'
+  latest-version: '%prefix% &aYou are running the latest version of SyndicateAnticheat!'
   injection-failure: You joined too quickly. Please try again!
   frozen: '&cYou are frozen! Please await instructions from staff.'
   logged-out-while-frozen: '%prefix% &c%player% logged out while frozen!'
   froze: '%prefix% &7You froze &a%player%&7!'
   unfroze: '%prefix% &7You unfroze &c%player%!'
-  freeze-command-syntax: '%prefix% &cProper Syntax: /behindbarrs freeze (player)'
-  shuffle-command-syntax: '%prefix% &cProper Syntax: /behindbarrs shuffle (player)'
+  freeze-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat freeze (player)'
+  shuffle-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat shuffle (player)'
   shuffled-hotbar: '%prefix% &aSuccessfully shuffled hotbar for %player%!'
-  rotate-command-syntax: '%prefix% &cProper Syntax: /behindbarrs rotate (player)'
+  rotate-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat rotate (player)'
   randomly-rotated: '%prefix% &aSuccessfully rotated %player%!'
-  reset-command-syntax: '%prefix% &cProper Syntax: /behindbarrs reset (player)'
+  reset-command-syntax: '%prefix% &cProper Syntax: /SyndicateAnticheat reset (player)'
   violations-reset: '%prefix% &aSuccessfully reset violations for %player%!'
   unknown-command: '%prefix% &cUnknown command!'
   unfroze-staff-broadcast: '%prefix% &c%player% &7was unfrozen by &c%staff%&7!'
@@ -267,27 +267,27 @@ messages:
 commands:
   help:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&cBehindBarrs Cheat Detection v%version%'
+  - '&cSyndicateAnticheat Cheat Detection v%version%'
   - '&r'
-  - '&c/behindbarrs help &8- &7Opens this help menu'
-  - '&c/behindbarrs menu &8| &c/behindbarrs gui &8- &7Open BehindBarrs''s GUI'
-  - '&c/behindbarrs profile &8 - &7Show''s a player''s BehindBarrs profile.'
-  - '&c/behindbarrs ban (player) &8- &7Ban a player through BehindBarrs.'
-  - '&c/behindbarrs reload &8- &7Reload all files.'
-  - '&c/behindbarrs disablecheck (check) &8- &7Disables a check (case sensitive).'
-  - '&c/behindbarrs violations (player) &8- &7Shows all violations of the specified
+  - '&c/SyndicateAnticheat help &8- &7Opens this help menu'
+  - '&c/SyndicateAnticheat menu &8| &c/SyndicateAnticheat gui &8- &7Open SyndicateAnticheat''s GUI'
+  - '&c/SyndicateAnticheat profile &8 - &7Show''s a player''s SyndicateAnticheat profile.'
+  - '&c/SyndicateAnticheat ban (player) &8- &7Ban a player through SyndicateAnticheat.'
+  - '&c/SyndicateAnticheat reload &8- &7Reload all files.'
+  - '&c/SyndicateAnticheat disablecheck (check) &8- &7Disables a check (case sensitive).'
+  - '&c/SyndicateAnticheat violations (player) &8- &7Shows all violations of the specified
     player.'
-  - '&c/behindbarrs cps (player) &8- &7Displays the CPS of the player.'
-  - '&c/behindbarrs kb (player) &8 | &c/behindbarrs knockback (player) &8- &7Applies
+  - '&c/SyndicateAnticheat cps (player) &8- &7Displays the CPS of the player.'
+  - '&c/SyndicateAnticheat kb (player) &8 | &c/SyndicateAnticheat knockback (player) &8- &7Applies
     knockback to a player.'
-  - '&c/behindbarrs checks &8- &7Shows all enabled checks.'
-  - '&c/behindbarrs connection (player) &8- &7Shows connection info of the player.'
-  - '&c/behindbarrs freeze (player) &8- &7Freezes/unfreezes a player.'
-  - '&c/behindbarrs rotate (player) &8- &7Randomly rotates a player''s yaw/pitch.'
-  - '&c/behindbarrs shuffle (player) &8- &7Randomly shuffle a player''s hotbar slot.'
-  - '&c/behindbarrs top &8- &7Display the players with highest violations for each
+  - '&c/SyndicateAnticheat checks &8- &7Shows all enabled checks.'
+  - '&c/SyndicateAnticheat connection (player) &8- &7Shows connection info of the player.'
+  - '&c/SyndicateAnticheat freeze (player) &8- &7Freezes/unfreezes a player.'
+  - '&c/SyndicateAnticheat rotate (player) &8- &7Randomly rotates a player''s yaw/pitch.'
+  - '&c/SyndicateAnticheat shuffle (player) &8- &7Randomly shuffle a player''s hotbar slot.'
+  - '&c/SyndicateAnticheat top &8- &7Display the players with highest violations for each
     category.'
-  - '&c/behindbarrs testalert &8- &7Tests Discord webhooks/integration.'
+  - '&c/SyndicateAnticheat testalert &8- &7Tests Discord webhooks/integration.'
   - '&r'
   - '&c/jday add (player) &8- &7Adds a player to Judgement Day.'
   - '&c/jday execute &8- &7Executes a Judgement Day.'
@@ -300,15 +300,15 @@ commands:
   - '&7&m---»--*-------------------------------------*--«---'
   ban:
     commands:
-    - ban %player% &c[BehindBarrs] Unfair Advantage
+    - ban %player% &c[SyndicateAnticheat] Unfair Advantage
     broadcast:
     - '&7&m---»--*-------------------------------------*--«---'
-    - '&cBehindBarrs &7has detected &c%player% &7to be cheating and has removed them
+    - '&cSyndicateAnticheat &7has detected &c%player% &7to be cheating and has removed them
       from the network.'
     - '&7&m---»--*-------------------------------------*--«---'
   profile:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&cBehindBarrs Profile for %player%:'
+  - '&cSyndicateAnticheat Profile for %player%:'
   - ' &8» &7%uuid%'
   - ''
   - '&7Version: &c%client-version%'
@@ -384,7 +384,7 @@ punishment-statistics-broadcast:
   interval: 18000
   broadcast:
   - '&7&m---»--*-------------------------------------*--«---'
-  - '&7In the past 7 days, &cBehindBarrs &7has punished &c%amount% &7players.'
+  - '&7In the past 7 days, &cSyndicateAnticheat &7has punished &c%amount% &7players.'
   - '&7&m---»--*-------------------------------------*--«---'
 settings:
   toggle-alerts-on-join: true
@@ -429,10 +429,10 @@ hooks:
     enable-hook: false
     alerts-channel-id: channel_id_here
     punishment-channel-id: channel_id_here
-    command-prefix: '!behindbarrs'
+    command-prefix: '!SyndicateAnticheat'
     alerts-format:
       color: ORANGE
-      title: BehindBarrs Alert
+      title: SyndicateAnticheat Alert
       description: '%player% failed %check% (Type: %type%) (VL:%vl%)'
       image: https://crafatar.com/avatars/%uuid%
       content:
@@ -444,19 +444,19 @@ hooks:
       - Server TPS|%tps%|false
     punishment-format:
       color: RED
-      title: BehindBarrs Punishment
+      title: SyndicateAnticheat Punishment
       description: '%player% was banned for  %check% (Type: %type%) (VL:%vl%)'
       image: https://crafatar.com/avatars/%uuid%
 discord-webhook:
   alerts:
     enabled: true
-    url: https://discord.com/api/webhooks/958433395451498516/VOUmb2adZNOZh3mBmiWD5V4JHuwRwJbUSxmbTZtG74LDqHLihN23tf-uOSxiaQnQ2g64
-    avatar: https://s3.us-west-2.amazonaws.com/www.buckytour.com/buckytour-icon-128x128.png
+    url: https://discord.com/api/webhooks/1028067173240938498/ggWEIJXRIKzMTDSaHvzQ_lpbJXmNQXrMrcKz_6DlrtZSWH4Zz73zNUO2jhNULDaur-Ss
+    avatar: https://s3.us-west-2.amazonaws.com/www.bridgesyndicate.gg/bridge-icon-128x128-transparent.png
     thumbnail: http://cravatar.eu/avatar/%name%/64.png
     color-r: 3
     color-g: 201
     color-b: 255
-    username: BehindBarrs
+    username: SyndicateAnticheat
     title: Alert
     description: '**%player%** failed %check% %dev%(Type %type%)%dev% [%vl%/%max-vl%]'
     content: ''
@@ -475,8 +475,8 @@ discord-webhook:
     color-r: 255
     color-g: 0
     color-b: 0
-    username: BehindBarrs
-    title: BehindBarrs Punishment
+    username: SyndicateAnticheat
+    title: SyndicateAnticheat Punishment
     description: '**%player%** was punished for %check% (Type %type%) [VL: %vl%]'
     content: ''
     description-field: false
