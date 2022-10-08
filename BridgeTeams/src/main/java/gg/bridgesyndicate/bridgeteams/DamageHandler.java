@@ -27,7 +27,7 @@ public class DamageHandler implements Listener {
         Player playerDamager = null;
         if (entityDamager instanceof Player) {
             playerDamager = (Player) entityDamager;
-        } else if (entityDamager instanceof Arrow) {
+        } else {
             Arrow arrow = (Arrow) entityDamager;
             playerDamager = (Player) arrow.getShooter();
         }
