@@ -30,7 +30,7 @@ public class GameTimer {
     }
 
     public long getRemainingTimeInSeconds() {
-        return (getRemainingTimeInMillis() / 1000);
+        return (long) Math.floor(getRemainingTimeInMillis() / 1000);
     }
 
     public String formatSeconds(int seconds) {

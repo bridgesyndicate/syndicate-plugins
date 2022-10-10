@@ -503,7 +503,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
                     this.cancel();
                     return;
                 }
-                if (game.getRemainingTimeInSeconds() < 0 ) {
+                if (game.getRemainingTimeInSeconds() < 1 ) {
                     this.cancel();
                     try {
                         endGame();
