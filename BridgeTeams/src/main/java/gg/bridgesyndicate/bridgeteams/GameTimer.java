@@ -29,8 +29,9 @@ public class GameTimer {
         return (endTime - currentTime);
     }
 
-    public long getRemainingTimeInSeconds() {
-        return (long) Math.floor(getRemainingTimeInMillis() / 1000);
+    public int getRemainingTimeInSeconds() {
+        long remainingTimeInMillis = getRemainingTimeInMillis();
+        return (int) Math.floor((float) remainingTimeInMillis / 1000);
     }
 
     public String formatSeconds(int seconds) {
@@ -40,9 +41,7 @@ public class GameTimer {
     }
 
     public String getRemainingTimeFormatted() {
-        long remainingTimeInMillis = getRemainingTimeInMillis();
-        int remainingTimeInSeconds = (int) Math.ceil((float) remainingTimeInMillis / 1000);
-        return formatSeconds(remainingTimeInSeconds);
+        return formatSeconds(getRemainingTimeInSeconds());
     }
 
     public int convertMillisToSeconds(long m) {

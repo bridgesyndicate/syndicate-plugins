@@ -550,6 +550,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
     private void endGame() throws JsonProcessingException {
         game.setState(Game.GameState.AFTER_GAME);
         game.setEndTime();
+        GameScore.getInstance().updateGameClock(game);
         List<String> titles = BridgeTitles.getFinalTitles();
         for (Player player : Bukkit.getOnlinePlayers()) {
             ChatBroadcasts.gameEndMessage(player, game);
