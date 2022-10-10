@@ -1,40 +1,49 @@
 {
-  "uuid": "e3e7fa7f-f5b0-4246-9263-5a07fe15a9e6",
+  "uuid": "ed78d552-7c6c-4cd9-a9df-a686e4a12cc2",
   "blue_team_discord_ids": [
-    "240177490906054658"
+      "246107858712788993"
   ],
-"red_team_minecraft_uuids" : ["9bf95247-d0ed-4c22-877e-0ac31532ade7"],
-"blue_team_minecraft_uuids" : ["f0885cea-8291-4734-be1b-bf37f6bcab7c"],
   "blue_team_discord_names": [
-    "ken"
+      "bdamja"
   ],
   "red_team_discord_ids": [
-    "417766998471213062"
+      "882712836852301886"
   ],
   "red_team_discord_names": [
-    "viceversa"
+      "ign ottoclicker"
   ],
   "required_players": 2,
-  "goals_to_win": 1,
-  "game_length_in_seconds": 120,
-  "queued_at": "2021-10-02T15:48:53Z",
+  "goals_to_win": 5,
+  "game_length_in_seconds": 900,
+  "queued_at": "2022-10-08T17:39:54Z",
   "accepted_by_discord_ids": [
-    {
-      "discord_id": "240177490906054658",
-      "accepted_at": "2021-10-02T15:48:53Z"
-    },
-    {
-      "discord_id": "417766998471213062",
-      "accepted_at": "2021-10-02T15:48:53Z"
-    }
+      {
+          "discord_id": "882712836852301886",
+          "accepted_at": "2022-10-08T17:39:54Z"
+      },
+      {
+          "discord_id": "246107858712788993",
+          "accepted_at": "2022-10-08T17:39:54Z"
+      }
   ],
   "queued_via": "queue match",
+  "season": "season1",
   "elo_before_game": {
-    "417766998471213062": {
-      "elo": 1000
-    },
-    "240177490906054658": {
-      "elo": 1000
-    }
-  }
+      "824691369813344307": {
+          "elo": 986,
+          "season_elos": {}
+      },
+      "424603967331237891": {
+          "elo": 1043,
+          "season_elos": {
+              "season1": 980
+          }
+      }
+  },
+  "blue_team_minecraft_uuids": [
+      "2b7fa93b-f690-46b8-bfe6-a07b2ec42563"
+  ],
+  "red_team_minecraft_uuids": [
+      "c21842bf-f4b3-4e28-ad5d-72cf0679fa64"
+  ]
 }
