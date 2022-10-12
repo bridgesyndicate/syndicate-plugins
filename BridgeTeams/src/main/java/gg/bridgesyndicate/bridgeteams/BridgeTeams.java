@@ -464,7 +464,7 @@ public final class BridgeTeams extends JavaPlugin implements Listener {
         player.setScoreboard(board);
 
         Objective objective = board.registerNewObjective("title", "dummy");
-        objective.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "BRIDGE");
+        objective.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "THE BRIDGE");
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         Team timer = board.registerNewTeam(String.valueOf(scoreboardSections.TIMER));
